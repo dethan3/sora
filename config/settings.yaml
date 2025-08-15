@@ -1,0 +1,83 @@
+# AI 辅助投资决策的基金跟踪系统配置文件
+
+# 基金配置
+funds:
+  # 持有基金列表
+  owned:
+    - code: "110022"
+      name: "易方达消费行业"
+    - code: "000001" 
+      name: "华夏成长混合"
+    - code: "163402"
+      name: "兴全趋势投资"
+  
+  # 关注基金列表
+  watchlist:
+    - code: "270042"
+      name: "广发纳指联接A"
+    - code: "007360"
+      name: "易方达中短期美元债A"
+
+# 决策参数
+strategy:
+  # 买入阈值 (当前价格 < 历史均值 * buy_threshold)
+  buy_threshold: 0.95
+  
+  # 卖出阈值 (当前价格 > 历史均值 * sell_threshold)  
+  sell_threshold: 1.05
+  
+  # 历史数据分析天数
+  analysis_days: 60
+  
+  # 最大置信度
+  max_confidence: 0.9
+
+# 数据源配置
+data:
+  # 数据更新频率 (分钟)
+  update_interval: 30
+  
+  # 缓存过期时间 (小时)
+  cache_expire_hours: 24
+  
+  # API 请求超时 (秒)
+  request_timeout: 10
+  
+  # 最大重试次数
+  max_retries: 3
+
+# 输出配置
+output:
+  # 终端输出格式
+  format: "table"  # table, json, simple
+  
+  # 显示详细信息
+  verbose: true
+  
+  # 颜色输出
+  colored: true
+
+# 日志配置
+logging:
+  # 日志级别
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  
+  # 日志文件路径
+  file: "data/logs/fund_tracker.log"
+  
+  # 日志轮转大小 (MB)
+  max_size: 10
+  
+  # 保留日志文件数量
+  backup_count: 5
+
+# 系统配置
+system:
+  # 工作目录
+  work_dir: "."
+  
+  # 数据目录
+  data_dir: "data"
+  
+  # 缓存目录
+  cache_dir: "data/cache"
