@@ -1,16 +1,16 @@
 """
-决策引擎模块
-
-基于分析结果提供投资决策建议
+投资决策引擎
+基于量化分析结果生成投资决策信号，专为国内ETF联接基金优化
 """
 
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
+from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
+from dataclasses import dataclass
 from enum import Enum
+import numpy as np
 from loguru import logger
 
-from ..analytics.calculator import AnalysisResult
+from ..config.manager import ConfigManager
 from ..config.manager import StrategyConfig
 
 
@@ -21,313 +21,415 @@ class DecisionType(Enum):
     HOLD = "hold"
 
 
+class DecisionSignal(Enum):
+    """投资决策信号枚举"""
+    STRONG_BUY = "strong_buy"
+    BUY = "buy"
+    HOLD = "hold"
+    SELL = "sell"
+    STRONG_SELL = "strong_sell"
+
+
 @dataclass
-class Decision:
+class InvestmentDecision:
     """投资决策数据类"""
     fund_code: str
     fund_name: str
-    decision_type: DecisionType
-    confidence: float  # 0-1，决策信心度
-    reasoning: List[str]  # 决策理由
-    target_price: Optional[float] = None  # 目标价格
-    stop_loss: Optional[float] = None  # 止损价格
-    decision_date: datetime = None
+    signal: DecisionSignal
+    confidence: float  # 0-1之间
+    score: float      # 0-1之间的综合评分
+    target_position: float  # 建议仓位 0-1之间
+    reasons: List[str]
+    risk_level: str   # low, medium, high
+    expected_return: Optional[float] = None
+    max_drawdown_risk: Optional[float] = None
+    holding_period: Optional[str] = None
+    timestamp: datetime = None
     
     def __post_init__(self):
-        if self.decision_date is None:
-            self.decision_date = datetime.now()
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
 
 
 class DecisionEngine:
-    """决策引擎"""
+    """投资决策引擎 - 专为国内ETF联接基金优化"""
     
-    def __init__(self, strategy_config: StrategyConfig):
-        """
-        初始化决策引擎
+    def __init__(self, config_manager: ConfigManager):
+        """初始化决策引擎"""
+        self.config_manager = config_manager
+        self.strategy_config = config_manager.strategy
         
-        Args:
-            strategy_config: 策略配置
-        """
-        self.strategy_config = strategy_config
-        self.buy_threshold = strategy_config.buy_threshold
-        self.sell_threshold = strategy_config.sell_threshold
-        
-        logger.info(f"决策引擎初始化完成 - 买入阈值: {self.buy_threshold}%, 卖出阈值: {self.sell_threshold}%")
+        logger.info("投资决策引擎初始化完成")
     
-    def make_decision(self, analysis_result: AnalysisResult, 
-                     is_owned: bool = False,
-                     purchase_price: Optional[float] = None) -> Decision:
+    def make_decision(self, fund_code: str, fund_name: str, 
+                     analysis_result: Dict[str, Any]) -> InvestmentDecision:
         """
         基于分析结果做出投资决策
         
         Args:
-            analysis_result: 分析结果
-            is_owned: 是否已持有
-            purchase_price: 购买价格（如果已持有）
+            fund_code: 基金代码
+            fund_name: 基金名称
+            analysis_result: 分析结果字典
             
         Returns:
-            投资决策
+            InvestmentDecision: 投资决策对象
         """
-        logger.debug(f"开始决策分析: {analysis_result.fund_code}")
-        
-        reasoning = []
-        confidence = 0.5  # 基础信心度
-        
-        # 基于价格相对均值的决策
-        price_ratio = analysis_result.price_vs_mean_ratio
-        current_price = analysis_result.current_price
-        
-        # 决策逻辑
-        if is_owned:
-            # 已持有基金的决策逻辑
-            decision_type, confidence, reasoning = self._decide_for_owned(
-                analysis_result, purchase_price, price_ratio
+        try:
+            # 计算综合评分
+            score = self._calculate_composite_score(analysis_result)
+            
+            # 确定决策信号
+            signal = self._determine_signal(score)
+            
+            # 计算信心度
+            confidence = self._calculate_confidence(analysis_result)
+            
+            # 计算目标仓位
+            target_position = self._calculate_target_position(signal, score, confidence)
+            
+            # 评估风险等级
+            risk_level = self._assess_risk_level(analysis_result)
+            
+            # 生成决策理由
+            reasons = self._generate_reasons(analysis_result, signal)
+            
+            # 估算预期收益和风险
+            expected_return = self._estimate_expected_return(analysis_result, signal)
+            max_drawdown_risk = self._estimate_max_drawdown(analysis_result)
+            
+            # 确定持有期建议
+            holding_period = self._suggest_holding_period(signal, analysis_result)
+            
+            decision = InvestmentDecision(
+                fund_code=fund_code,
+                fund_name=fund_name,
+                signal=signal,
+                confidence=confidence,
+                score=score,
+                target_position=target_position,
+                reasons=reasons,
+                risk_level=risk_level,
+                expected_return=expected_return,
+                max_drawdown_risk=max_drawdown_risk,
+                holding_period=holding_period
             )
-        else:
-            # 未持有基金的决策逻辑
-            decision_type, confidence, reasoning = self._decide_for_watchlist(
-                analysis_result, price_ratio
-            )
+            
+            logger.info(f"基金 {fund_code} 决策生成: {signal.value}, 评分: {score:.3f}, 信心度: {confidence:.3f}")
+            return decision
+            
+        except Exception as e:
+            logger.error(f"基金 {fund_code} 决策生成失败: {str(e)}")
+            return self._create_default_decision(fund_code, fund_name)
+    
+    def _calculate_composite_score(self, analysis_result: Dict[str, Any]) -> float:
+        """计算综合评分"""
+        scores = []
+        weights = []
         
-        # 计算目标价格和止损价格
-        target_price, stop_loss = self._calculate_price_targets(
-            current_price, decision_type, analysis_result
+        # 趋势分析权重：30%
+        if 'trend_analysis' in analysis_result:
+            trend_score = analysis_result['trend_analysis'].get('score', 0.5)
+            scores.append(trend_score)
+            weights.append(0.30)
+        
+        # 技术指标权重：40%
+        if 'technical_indicators' in analysis_result:
+            tech_score = analysis_result['technical_indicators'].get('composite_score', 0.5)
+            scores.append(tech_score)
+            weights.append(0.40)
+        
+        # 动量分析权重：20%
+        if 'momentum' in analysis_result:
+            momentum_score = analysis_result['momentum'].get('score', 0.5)
+            scores.append(momentum_score)
+            weights.append(0.20)
+        
+        # 波动性分析权重：10%
+        if 'volatility' in analysis_result:
+            volatility = analysis_result['volatility'].get('annualized', 0.2)
+            # 波动性越低越好，转换为评分
+            volatility_score = max(0, 1 - volatility / 0.5)
+            scores.append(volatility_score)
+            weights.append(0.10)
+        
+        if not scores:
+            return 0.5
+        
+        total_weight = sum(weights)
+        if total_weight == 0:
+            return 0.5
+            
+        weighted_score = sum(score * weight for score, weight in zip(scores, weights)) / total_weight
+        return np.clip(weighted_score, 0, 1)
+    
+    def _determine_signal(self, score: float) -> DecisionSignal:
+        """根据评分确定决策信号"""
+        if score >= self.strategy_config.strong_buy_threshold:
+            return DecisionSignal.STRONG_BUY
+        elif score >= self.strategy_config.buy_threshold:
+            return DecisionSignal.BUY
+        elif score >= self.strategy_config.hold_threshold:
+            return DecisionSignal.HOLD
+        elif score >= self.strategy_config.strong_sell_threshold:
+            return DecisionSignal.SELL
+        else:
+            return DecisionSignal.STRONG_SELL
+    
+    def _calculate_confidence(self, analysis_result: Dict[str, Any]) -> float:
+        """计算决策信心度"""
+        confidence_factors = []
+        
+        # 数据完整性
+        expected_indicators = ['trend_analysis', 'technical_indicators', 'momentum', 'volatility', 'performance']
+        data_completeness = sum(1 for indicator in expected_indicators if indicator in analysis_result) / len(expected_indicators)
+        confidence_factors.append(data_completeness)
+        
+        # 技术指标一致性
+        if 'technical_indicators' in analysis_result:
+            indicators = analysis_result['technical_indicators']
+            buy_signals = 0
+            sell_signals = 0
+            total_signals = 0
+            
+            for indicator, data in indicators.items():
+                if isinstance(data, dict) and 'signal' in data:
+                    total_signals += 1
+                    if data['signal'] in ['buy', 'strong_buy']:
+                        buy_signals += 1
+                    elif data['signal'] in ['sell', 'strong_sell']:
+                        sell_signals += 1
+            
+            if total_signals > 0:
+                # 信号一致性越高，信心度越高
+                max_consistent = max(buy_signals, sell_signals)
+                consistency = max_consistent / total_signals
+                confidence_factors.append(consistency)
+        
+        # 趋势强度
+        if 'trend_analysis' in analysis_result:
+            trend_strength = analysis_result['trend_analysis'].get('strength', 0.5)
+            confidence_factors.append(trend_strength)
+        
+        return np.mean(confidence_factors) if confidence_factors else 0.5
+    
+    def _calculate_target_position(self, signal: DecisionSignal, score: float, confidence: float) -> float:
+        """计算目标仓位"""
+        base_position = {
+            DecisionSignal.STRONG_BUY: 0.8,
+            DecisionSignal.BUY: 0.6,
+            DecisionSignal.HOLD: 0.4,
+            DecisionSignal.SELL: 0.2,
+            DecisionSignal.STRONG_SELL: 0.0
+        }.get(signal, 0.4)
+        
+        # 根据信心度调整仓位
+        adjusted_position = base_position * confidence
+        
+        # 确保不超过单只基金最大仓位限制
+        max_position = self.strategy_config.max_single_position
+        return min(adjusted_position, max_position)
+    
+    def _assess_risk_level(self, analysis_result: Dict[str, Any]) -> str:
+        """评估风险等级"""
+        risk_factors = []
+        
+        # 波动性风险
+        if 'volatility' in analysis_result:
+            volatility = analysis_result['volatility'].get('annualized', 0.2)
+            if volatility > 0.3:
+                risk_factors.append('high_volatility')
+            elif volatility < 0.15:
+                risk_factors.append('low_volatility')
+        
+        # 流动性风险
+        if 'liquidity' in analysis_result:
+            avg_volume = analysis_result['liquidity'].get('avg_volume', 0)
+            if avg_volume < 1000000:  # 日均交易量低于100万
+                risk_factors.append('low_liquidity')
+        
+        # 趋势风险
+        if 'trend_analysis' in analysis_result:
+            trend_direction = analysis_result['trend_analysis'].get('direction', 'sideways')
+            trend_strength = analysis_result['trend_analysis'].get('strength', 0.5)
+            if trend_direction == 'downward' and trend_strength > 0.7:
+                risk_factors.append('strong_downtrend')
+        
+        # 综合风险评级
+        high_risk_count = sum(1 for factor in risk_factors if 'high' in factor or 'strong_downtrend' in factor)
+        low_risk_count = sum(1 for factor in risk_factors if 'low' in factor)
+        
+        if high_risk_count >= 2:
+            return 'high'
+        elif low_risk_count >= 2 and high_risk_count == 0:
+            return 'low'
+        else:
+            return 'medium'
+    
+    def _generate_reasons(self, analysis_result: Dict[str, Any], signal: DecisionSignal) -> List[str]:
+        """生成决策理由"""
+        reasons = []
+        
+        # 基于趋势分析
+        if 'trend_analysis' in analysis_result:
+            trend = analysis_result['trend_analysis']
+            direction = trend.get('direction', 'sideways')
+            strength = trend.get('strength', 0.5)
+            
+            if direction == 'upward' and signal in [DecisionSignal.BUY, DecisionSignal.STRONG_BUY]:
+                reasons.append(f"上升趋势明确，趋势强度: {strength:.2f}")
+            elif direction == 'downward' and signal in [DecisionSignal.SELL, DecisionSignal.STRONG_SELL]:
+                reasons.append(f"下降趋势明确，趋势强度: {strength:.2f}")
+        
+        # 基于技术指标
+        if 'technical_indicators' in analysis_result:
+            indicators = analysis_result['technical_indicators']
+            
+            # RSI信号
+            if 'rsi' in indicators:
+                rsi_data = indicators['rsi']
+                rsi_value = rsi_data.get('value', 50)
+                if rsi_value < 30 and signal in [DecisionSignal.BUY, DecisionSignal.STRONG_BUY]:
+                    reasons.append(f"RSI超卖信号: {rsi_value:.1f}")
+                elif rsi_value > 70 and signal in [DecisionSignal.SELL, DecisionSignal.STRONG_SELL]:
+                    reasons.append(f"RSI超买信号: {rsi_value:.1f}")
+            
+            # MACD信号
+            if 'macd' in indicators:
+                macd_data = indicators['macd']
+                macd_signal = macd_data.get('signal', 'neutral')
+                if macd_signal == 'bullish' and signal in [DecisionSignal.BUY, DecisionSignal.STRONG_BUY]:
+                    reasons.append("MACD金叉买入信号")
+                elif macd_signal == 'bearish' and signal in [DecisionSignal.SELL, DecisionSignal.STRONG_SELL]:
+                    reasons.append("MACD死叉卖出信号")
+        
+        # 基于动量分析
+        if 'momentum' in analysis_result:
+            momentum = analysis_result['momentum']
+            momentum_score = momentum.get('score', 0.5)
+            if momentum_score > 0.7 and signal in [DecisionSignal.BUY, DecisionSignal.STRONG_BUY]:
+                reasons.append(f"动量指标强劲: {momentum_score:.2f}")
+            elif momentum_score < 0.3 and signal in [DecisionSignal.SELL, DecisionSignal.STRONG_SELL]:
+                reasons.append(f"动量指标疲软: {momentum_score:.2f}")
+        
+        # 基于波动性分析
+        if 'volatility' in analysis_result:
+            volatility = analysis_result['volatility']
+            vol_value = volatility.get('annualized', 0.2)
+            if vol_value < 0.15:
+                reasons.append(f"波动性较低，风险可控: {vol_value:.2%}")
+            elif vol_value > 0.3:
+                reasons.append(f"波动性较高，注意风险: {vol_value:.2%}")
+        
+        if not reasons:
+            reasons.append("基于综合量化分析")
+        
+        return reasons
+    
+    def _estimate_expected_return(self, analysis_result: Dict[str, Any], signal: DecisionSignal) -> Optional[float]:
+        """估算预期收益率"""
+        if 'performance' not in analysis_result:
+            return None
+        
+        performance = analysis_result['performance']
+        recent_return = performance.get('1m_return', 0.0)
+        
+        # 基于信号调整预期收益
+        signal_multiplier = {
+            DecisionSignal.STRONG_BUY: 1.5,
+            DecisionSignal.BUY: 1.2,
+            DecisionSignal.HOLD: 1.0,
+            DecisionSignal.SELL: 0.8,
+            DecisionSignal.STRONG_SELL: 0.5
+        }.get(signal, 1.0)
+        
+        expected_return = recent_return * signal_multiplier
+        return np.clip(expected_return, -0.3, 0.3)  # 限制在-30%到30%之间
+    
+    def _estimate_max_drawdown(self, analysis_result: Dict[str, Any]) -> Optional[float]:
+        """估算最大回撤风险"""
+        if 'volatility' not in analysis_result:
+            return None
+        
+        volatility = analysis_result['volatility'].get('annualized', 0.2)
+        # 简单估算：最大回撤约为年化波动率的1.5倍
+        max_drawdown = volatility * 1.5
+        return min(max_drawdown, 0.5)  # 最大不超过50%
+    
+    def _suggest_holding_period(self, signal: DecisionSignal, analysis_result: Dict[str, Any]) -> str:
+        """建议持有期"""
+        if signal in [DecisionSignal.STRONG_BUY, DecisionSignal.BUY]:
+            return "3-6个月"
+        elif signal == DecisionSignal.HOLD:
+            return "1-3个月"
+        else:
+            return "立即处理"
+    
+    def _create_default_decision(self, fund_code: str, fund_name: str) -> InvestmentDecision:
+        """创建默认决策（数据不足时）"""
+        return InvestmentDecision(
+            fund_code=fund_code,
+            fund_name=fund_name,
+            signal=DecisionSignal.HOLD,
+            confidence=0.0,
+            score=0.5,
+            target_position=0.0,
+            reasons=["数据不足，建议观望"],
+            risk_level="medium"
         )
-        
-        decision = Decision(
-            fund_code=analysis_result.fund_code,
-            fund_name=analysis_result.fund_name,
-            decision_type=decision_type,
-            confidence=confidence,
-            reasoning=reasoning,
-            target_price=target_price,
-            stop_loss=stop_loss
-        )
-        
-        logger.debug(f"决策完成: {analysis_result.fund_code} - {decision_type.value} (信心度: {confidence:.2f})")
-        return decision
     
-    def _decide_for_owned(self, analysis_result: AnalysisResult, 
-                         purchase_price: Optional[float],
-                         price_ratio: float) -> tuple:
-        """
-        已持有基金的决策逻辑
+    def batch_make_decisions(self, fund_analysis_results: Dict[str, Dict[str, Any]]) -> List[InvestmentDecision]:
+        """批量生成投资决策"""
+        decisions = []
         
-        Returns:
-            (决策类型, 信心度, 理由列表)
-        """
-        reasoning = []
-        confidence = 0.5
-        
-        current_price = analysis_result.current_price
-        
-        # 计算收益率
-        if purchase_price:
-            profit_ratio = (current_price - purchase_price) / purchase_price
-            reasoning.append(f"当前收益率: {profit_ratio*100:+.2f}%")
-        
-        # 基于价格相对均值判断
-        if price_ratio >= self.sell_threshold / 100:
-            # 价格明显高于均值，考虑卖出
-            decision_type = DecisionType.SELL
-            confidence += 0.3
-            reasoning.append(f"当前价格比历史均值高 {(price_ratio-1)*100:.1f}%，建议获利了结")
-            
-            # 额外卖出信号
-            if analysis_result.rsi > 70:
-                confidence += 0.1
-                reasoning.append(f"RSI指标 {analysis_result.rsi:.1f} 显示超买")
-            
-            if analysis_result.trend_direction == 'down':
-                confidence += 0.1
-                reasoning.append("价格趋势转为下跌")
-                
-        elif price_ratio <= self.buy_threshold / 100:
-            # 价格明显低于均值，考虑加仓
-            decision_type = DecisionType.BUY
-            confidence += 0.2
-            reasoning.append(f"当前价格比历史均值低 {(1-price_ratio)*100:.1f}%，可考虑加仓")
-            
-            # 额外买入信号
-            if analysis_result.rsi < 30:
-                confidence += 0.1
-                reasoning.append(f"RSI指标 {analysis_result.rsi:.1f} 显示超卖")
-            
-            if analysis_result.trend_direction == 'up':
-                confidence += 0.1
-                reasoning.append("价格趋势开始上涨")
-        else:
-            # 价格在合理范围内，持有
-            decision_type = DecisionType.HOLD
-            reasoning.append("价格在合理范围内，建议继续持有")
-            
-            # 持有的额外考虑因素
-            if analysis_result.sharpe_ratio > 1.0:
-                confidence += 0.1
-                reasoning.append(f"夏普比率 {analysis_result.sharpe_ratio:.2f} 表现良好")
-            
-            if analysis_result.risk_level == 'low':
-                confidence += 0.1
-                reasoning.append("风险等级较低，适合长期持有")
-        
-        return decision_type, min(confidence, 0.95), reasoning
-    
-    def _decide_for_watchlist(self, analysis_result: AnalysisResult, 
-                            price_ratio: float) -> tuple:
-        """
-        关注基金的决策逻辑
-        
-        Returns:
-            (决策类型, 信心度, 理由列表)
-        """
-        reasoning = []
-        confidence = 0.4  # 关注基金的基础信心度较低
-        
-        # 基于价格相对均值判断
-        if price_ratio <= self.buy_threshold / 100:
-            # 价格低于买入阈值
-            decision_type = DecisionType.BUY
-            confidence += 0.3
-            reasoning.append(f"当前价格比历史均值低 {(1-price_ratio)*100:.1f}%，出现买入机会")
-            
-            # 额外买入信号
-            if analysis_result.rsi < 30:
-                confidence += 0.15
-                reasoning.append(f"RSI指标 {analysis_result.rsi:.1f} 显示严重超卖")
-            elif analysis_result.rsi < 50:
-                confidence += 0.05
-                reasoning.append(f"RSI指标 {analysis_result.rsi:.1f} 偏低")
-            
-            if analysis_result.trend_direction == 'up' and analysis_result.trend_strength > 0.6:
-                confidence += 0.1
-                reasoning.append("价格趋势强劲上涨")
-            
-            if analysis_result.sharpe_ratio > 0.5:
-                confidence += 0.05
-                reasoning.append(f"夏普比率 {analysis_result.sharpe_ratio:.2f} 风险调整收益良好")
-                
-        elif price_ratio >= self.sell_threshold / 100:
-            # 价格高于卖出阈值，不建议买入
-            decision_type = DecisionType.HOLD
-            confidence += 0.1
-            reasoning.append(f"当前价格比历史均值高 {(price_ratio-1)*100:.1f}%，不建议买入")
-            
-            if analysis_result.rsi > 70:
-                reasoning.append(f"RSI指标 {analysis_result.rsi:.1f} 显示超买")
-        else:
-            # 价格在合理范围内
-            decision_type = DecisionType.HOLD
-            reasoning.append("价格在合理范围内，可继续观察")
-            
-            # 观察的额外因素
-            if analysis_result.trend_direction == 'up':
-                confidence += 0.1
-                reasoning.append("价格趋势向上，可关注买入时机")
-            
-            if analysis_result.volatility < 0.15:
-                confidence += 0.05
-                reasoning.append("波动率较低，风险可控")
-        
-        return decision_type, min(confidence, 0.85), reasoning
-    
-    def _calculate_price_targets(self, current_price: float, 
-                               decision_type: DecisionType,
-                               analysis_result: AnalysisResult) -> tuple:
-        """
-        计算目标价格和止损价格
-        
-        Returns:
-            (目标价格, 止损价格)
-        """
-        target_price = None
-        stop_loss = None
-        
-        if decision_type == DecisionType.BUY:
-            # 买入时设置目标价格和止损
-            target_price = analysis_result.mean_price * 1.1  # 目标价格为均值的110%
-            stop_loss = current_price * 0.95  # 止损为当前价格的95%
-            
-        elif decision_type == DecisionType.SELL:
-            # 卖出时的目标价格就是当前价格
-            target_price = current_price
-            
-        return target_price, stop_loss
-    
-    def batch_decide(self, analysis_results: Dict[str, AnalysisResult],
-                    owned_funds: Dict[str, Dict] = None) -> Dict[str, Decision]:
-        """
-        批量决策
-        
-        Args:
-            analysis_results: 分析结果字典
-            owned_funds: 持有基金信息字典
-            
-        Returns:
-            决策结果字典
-        """
-        logger.info(f"开始批量决策 {len(analysis_results)} 只基金")
-        
-        decisions = {}
-        owned_funds = owned_funds or {}
-        
-        for fund_code, analysis_result in analysis_results.items():
+        for fund_code, analysis_result in fund_analysis_results.items():
             try:
-                # 检查是否已持有
-                fund_info = owned_funds.get(fund_code, {})
-                is_owned = bool(fund_info)
-                purchase_price = fund_info.get('purchase_price')
-                
-                decision = self.make_decision(
-                    analysis_result, is_owned, purchase_price
-                )
-                decisions[fund_code] = decision
-                
+                fund_name = analysis_result.get('fund_info', {}).get('name', fund_code)
+                decision = self.make_decision(fund_code, fund_name, analysis_result)
+                decisions.append(decision)
             except Exception as e:
-                logger.error(f"决策失败: {fund_code} - {e}")
+                logger.error(f"批量决策处理基金 {fund_code} 失败: {str(e)}")
+                decisions.append(self._create_default_decision(fund_code, fund_code))
         
-        logger.info(f"批量决策完成: {len(decisions)}/{len(analysis_results)} 只基金成功")
+        # 按评分排序
+        decisions.sort(key=lambda x: x.score, reverse=True)
+        
+        logger.info(f"批量决策完成，共处理 {len(decisions)} 只基金")
         return decisions
     
-    def get_decision_summary(self, decisions: Dict[str, Decision]) -> Dict[str, Any]:
-        """
-        获取决策摘要
+    def get_portfolio_allocation_suggestion(self, decisions: List[InvestmentDecision], 
+                                         total_capital: float = 1.0) -> Dict[str, Any]:
+        """获取投资组合配置建议"""
+        buy_decisions = [d for d in decisions if d.signal in [DecisionSignal.STRONG_BUY, DecisionSignal.BUY]]
         
-        Args:
-            decisions: 决策结果字典
-            
-        Returns:
-            摘要信息
-        """
-        if not decisions:
-            return {}
+        if not buy_decisions:
+            return {
+                'total_allocation': 0.0,
+                'fund_allocations': {},
+                'cash_position': total_capital,
+                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0}
+            }
         
-        # 统计决策分布
-        decision_distribution = {}
-        confidence_levels = {'high': 0, 'medium': 0, 'low': 0}
+        # 计算总目标仓位
+        total_target_position = sum(d.target_position for d in buy_decisions)
         
-        total_decisions = len(decisions)
-        avg_confidence = 0
+        # 标准化仓位分配
+        fund_allocations = {}
+        risk_distribution = {'low': 0, 'medium': 0, 'high': 0}
         
-        for decision in decisions.values():
-            # 决策类型分布
-            decision_type = decision.decision_type.value
-            decision_distribution[decision_type] = decision_distribution.get(decision_type, 0) + 1
-            
-            # 信心度分布
-            if decision.confidence >= 0.7:
-                confidence_levels['high'] += 1
-            elif decision.confidence >= 0.5:
-                confidence_levels['medium'] += 1
-            else:
-                confidence_levels['low'] += 1
-            
-            avg_confidence += decision.confidence
-        
-        avg_confidence /= total_decisions
+        for decision in buy_decisions:
+            if total_target_position > 0:
+                normalized_position = (decision.target_position / total_target_position) * min(total_capital, 0.8)  # 最多80%仓位
+                fund_allocations[decision.fund_code] = {
+                    'allocation': normalized_position,
+                    'signal': decision.signal.value,
+                    'confidence': decision.confidence,
+                    'risk_level': decision.risk_level
+                }
+                risk_distribution[decision.risk_level] += normalized_position
         
         return {
-            'total_decisions': total_decisions,
-            'decision_distribution': decision_distribution,
-            'confidence_levels': confidence_levels,
-            'average_confidence': avg_confidence
+            'total_allocation': sum(fund_allocations[f]['allocation'] for f in fund_allocations),
+            'fund_allocations': fund_allocations,
+            'cash_position': total_capital - sum(fund_allocations[f]['allocation'] for f in fund_allocations),
+            'risk_distribution': risk_distribution
         }

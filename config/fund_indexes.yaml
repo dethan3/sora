@@ -1,0 +1,219 @@
+# 全球基金指数配置文件
+# 定义各类指数的基本信息、相关ETF和基金产品
+
+us_indexes:
+  sp500:
+    name: "标准普尔500指数"
+    description: "美国500家大型公司股票指数"
+    benchmark_symbol: "^GSPC"
+    currency: "USD"
+    region: "US"
+    category: "large_cap"
+    popular_etfs:
+      - "SPY"
+      - "VOO" 
+      - "IVV"
+    popular_funds: []
+    key_metrics:
+      historical_return_10y: 0.13
+      volatility: 0.16
+      expense_ratio_typical: 0.0009
+
+  nasdaq100:
+    name: "纳斯达克100指数"
+    description: "纳斯达克100家最大非金融公司"
+    benchmark_symbol: "^NDX"
+    currency: "USD"
+    region: "US"
+    category: "technology_growth"
+    popular_etfs:
+      - "QQQ"
+      - "TQQQ"
+    popular_funds: []
+    key_metrics:
+      historical_return_10y: 0.17
+      volatility: 0.20
+      expense_ratio_typical: 0.002
+
+  us_total_market:
+    name: "美国全市场指数"
+    description: "覆盖美国全部股票市场"
+    benchmark_symbol: "VTI"
+    currency: "USD"
+    region: "US"
+    category: "total_market"
+    popular_etfs:
+      - "VTI"
+      - "ITOT"
+    popular_funds:
+      - "VTSAX"
+    key_metrics:
+      historical_return_10y: 0.12
+      volatility: 0.15
+      expense_ratio_typical: 0.0003
+
+china_indexes:
+  csi300:
+    name: "沪深300指数"
+    description: "沪深两市300只大盘股"
+    benchmark_symbol: "000300.SH"
+    currency: "CNY"
+    region: "China"
+    category: "large_cap"
+    popular_etfs:
+      - "510300"
+      - "159919"
+    popular_funds: []
+    key_metrics:
+      historical_return_5y: 0.07
+      volatility: 0.25
+      expense_ratio_typical: 0.005
+
+  chinext:
+    name: "创业板指数"
+    description: "深圳创业板综合指数"
+    benchmark_symbol: "399006.SZ"
+    currency: "CNY"
+    region: "China"
+    category: "growth"
+    popular_etfs:
+      - "159915"
+      - "159952"
+    popular_funds: []
+    key_metrics:
+      historical_return_5y: 0.12
+      volatility: 0.30
+      expense_ratio_typical: 0.005
+
+  csi500:
+    name: "中证500指数"
+    description: "中证500只中小盘股票"
+    benchmark_symbol: "000905.SH"
+    currency: "CNY"
+    region: "China"
+    category: "mid_cap"
+    popular_etfs:
+      - "510500"
+      - "159922"
+    popular_funds: []
+    key_metrics:
+      historical_return_5y: 0.05
+      volatility: 0.28
+      expense_ratio_typical: 0.005
+
+international_indexes:
+  eafe:
+    name: "欧澳远东指数"
+    description: "发达市场(除美国外)"
+    benchmark_symbol: "EFA"
+    currency: "USD"
+    region: "International"
+    category: "developed_international"
+    popular_etfs:
+      - "EFA"
+      - "VEA"
+    popular_funds:
+      - "VTIAX"
+    key_metrics:
+      historical_return_10y: 0.07
+      volatility: 0.18
+      expense_ratio_typical: 0.0007
+
+  emerging_markets:
+    name: "新兴市场指数"
+    description: "新兴市场股票综合指数"
+    benchmark_symbol: "EEM"
+    currency: "USD"
+    region: "Emerging"
+    category: "emerging_markets"
+    popular_etfs:
+      - "EEM"
+      - "VWO"
+    popular_funds:
+      - "VEMAX"
+    key_metrics:
+      historical_return_10y: 0.04
+      volatility: 0.22
+      expense_ratio_typical: 0.001
+
+  india_msci:
+    name: "MSCI印度指数"
+    description: "印度大中型股票指数"
+    benchmark_symbol: "INDA"
+    currency: "USD"
+    region: "India"
+    category: "single_country"
+    popular_etfs:
+      - "INDA"
+      - "MINDX"
+    popular_funds: []
+    key_metrics:
+      historical_return_5y: 0.08
+      volatility: 0.25
+      expense_ratio_typical: 0.008
+
+  vietnam_index:
+    name: "越南股票指数"
+    description: "越南主要股票市场指数"
+    benchmark_symbol: "VNM"
+    currency: "USD"
+    region: "Vietnam"
+    category: "frontier_market"
+    popular_etfs:
+      - "VanEck Vietnam ETF"
+    popular_funds: []
+    key_metrics:
+      historical_return_5y: 0.06
+      volatility: 0.35
+      expense_ratio_typical: 0.015
+
+bond_indexes:
+  us_aggregate_bond:
+    name: "美国总债券指数"
+    description: "美国投资级债券市场"
+    benchmark_symbol: "AGG"
+    currency: "USD"
+    region: "US"
+    category: "investment_grade_bond"
+    popular_etfs:
+      - "AGG"
+      - "BND"
+    popular_funds:
+      - "VBTLX"
+    key_metrics:
+      historical_return_10y: 0.03
+      volatility: 0.04
+      expense_ratio_typical: 0.0005
+
+  us_treasury_20y:
+    name: "美国20年期国债"
+    description: "20年以上美国国债"
+    benchmark_symbol: "TLT"
+    currency: "USD"
+    region: "US"
+    category: "long_term_treasury"
+    popular_etfs:
+      - "TLT"
+      - "EDV"
+    popular_funds: []
+    key_metrics:
+      historical_return_10y: 0.04
+      volatility: 0.12
+      expense_ratio_typical: 0.0015
+
+commodity_indexes:
+  gold_spot:
+    name: "黄金现货"
+    description: "黄金现货价格指数"
+    benchmark_symbol: "GLD"
+    currency: "USD"
+    region: "Global"
+    category: "precious_metal"
+    popular_etfs:
+      - "GLD"
+      - "IAU"
+    popular_funds: []
+    key_metrics:
+      historical_return_10y: 0.01
+      volatility: 0.16
+      expense_ratio_typical: 0.004

@@ -1,83 +1,200 @@
-# AI 辅助投资决策的基金跟踪系统配置文件
-
-# 基金配置
-funds:
-  # 持有基金列表
-  owned:
-    - code: "110022"
-      name: "易方达消费行业"
-    - code: "000001" 
-      name: "华夏成长混合"
-    - code: "163402"
-      name: "兴全趋势投资"
-  
-  # 关注基金列表
-  watchlist:
-    - code: "270042"
-      name: "广发纳指联接A"
-    - code: "007360"
-      name: "易方达中短期美元债A"
-
-# 决策参数
-strategy:
-  # 买入阈值 (当前价格 < 历史均值 * buy_threshold)
-  buy_threshold: 0.95
-  
-  # 卖出阈值 (当前价格 > 历史均值 * sell_threshold)  
-  sell_threshold: 1.05
-  
-  # 历史数据分析天数
-  analysis_days: 60
-  
-  # 最大置信度
-  max_confidence: 0.9
-
-# 数据源配置
-data:
-  # 数据更新频率 (分钟)
-  update_interval: 30
-  
-  # 缓存过期时间 (小时)
-  cache_expire_hours: 24
-  
-  # API 请求超时 (秒)
-  request_timeout: 10
-  
-  # 最大重试次数
-  max_retries: 3
-
-# 输出配置
-output:
-  # 终端输出格式
-  format: "table"  # table, json, simple
-  
-  # 显示详细信息
-  verbose: true
-  
-  # 颜色输出
-  colored: true
-
-# 日志配置
-logging:
-  # 日志级别
-  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
-  
-  # 日志文件路径
-  file: "data/logs/fund_tracker.log"
-  
-  # 日志轮转大小 (MB)
-  max_size: 10
-  
-  # 保留日志文件数量
-  backup_count: 5
+# ETF 量化分析平台配置文件
 
 # 系统配置
 system:
-  # 工作目录
-  work_dir: "."
+  name: "Sora ETF量化分析平台"
+  version: "2.0.0"
+  environment: "production"  # development, testing, production
   
   # 数据目录
   data_dir: "data"
-  
-  # 缓存目录
+  database_dir: "data/database"
   cache_dir: "data/cache"
+  reports_dir: "data/reports"
+  logs_dir: "data/logs"
+
+# 数据源配置
+data_source:
+  # AKShare API配置
+  akshare:
+    enabled: true
+    timeout: 30
+    max_retries: 3
+    retry_delay: 1.0
+    rate_limit_delay: 0.5
+    
+  # 数据更新配置
+  update:
+    force_update_interval_hours: 24  # 强制更新间隔
+    cache_expire_hours: 6            # 缓存过期时间
+    batch_size: 20                   # 批量获取大小
+    
+  # 数据质量检查
+  quality_check:
+    min_volume: 1000000             # 最小成交量
+    max_price_change: 0.15          # 最大价格变动15%
+    data_completeness: 0.95         # 数据完整度要求
+
+# ETF筛选配置
+etf_selection:
+  # 总数控制
+  max_etfs: 100
+  
+  # 筛选条件
+  criteria:
+    min_market_cap: 1000000000      # 最小市值10亿
+    min_daily_volume: 5000000       # 最小日成交量500万
+    min_listing_days: 252           # 最少上市天数（1年）
+    
+  # 行业分布
+  sector_allocation:
+    technology: 0.25    # 科技25%
+    finance: 0.20       # 金融20%
+    consumer: 0.15      # 消费15%
+    healthcare: 0.10    # 医疗10%
+    energy: 0.10        # 能源10%
+    materials: 0.10     # 材料10%
+    others: 0.10        # 其他10%
+
+# 量化策略配置
+strategy:
+  # 分析时间窗口
+  analysis_windows:
+    short_term: 7       # 短期：7天
+    medium_term: 21     # 中期：21天  
+    long_term: 63       # 长期：63天
+    
+  # 技术指标参数
+  technical_indicators:
+    rsi_period: 14
+    macd_fast: 12
+    macd_slow: 26
+    macd_signal: 9
+    bollinger_period: 20
+    bollinger_std: 2
+    
+  # 决策阈值
+  thresholds:
+    strong_buy: 0.8     # 强买信号
+    buy: 0.6            # 买入信号
+    hold: 0.4           # 持有信号
+    sell: 0.2           # 卖出信号
+    strong_sell: 0.1    # 强卖信号
+    
+  # 风险控制
+  risk_management:
+    max_single_position: 0.1        # 单只ETF最大仓位10%
+    stop_loss: 0.08                 # 止损8%
+    take_profit: 0.15               # 止盈15%
+    max_drawdown: 0.05              # 最大回撤5%
+
+# 定时任务配置
+scheduler:
+  # 数据更新任务
+  data_update:
+    enabled: true
+    schedule: "0 9 * * 1"           # 每周一9点
+    timezone: "Asia/Shanghai"
+    
+  # 分析任务
+  analysis:
+    enabled: true
+    schedule: "30 9 * * 1"          # 每周一9点30分
+    
+  # 报告生成
+  report_generation:
+    enabled: true
+    schedule: "0 10 * * 1"          # 每周一10点
+    
+  # 数据清理
+  data_cleanup:
+    enabled: true
+    schedule: "0 2 * * 0"           # 每周日2点
+    retention_days: 90              # 保留90天数据
+
+# 存储配置
+storage:
+  # SQLite数据库
+  database:
+    file: "sora_etf.db"
+    echo: false                     # SQL日志
+    pool_size: 5
+    max_overflow: 10
+    
+  # 数据导出
+  export:
+    formats: ["excel", "csv", "json"]
+    excel_sheets:
+      - "investment_signals"
+      - "performance_metrics" 
+      - "risk_analysis"
+      - "portfolio_allocation"
+
+# 日志配置
+logging:
+  level: "INFO"                     # DEBUG, INFO, WARNING, ERROR
+  format: "detailed"                # simple, detailed
+  
+  # 文件日志
+  file:
+    enabled: true
+    max_size_mb: 10
+    backup_count: 5
+    
+  # 控制台日志
+  console:
+    enabled: true
+    colored: true
+
+# 报告配置
+reporting:
+  # 投资建议报告
+  investment_signals:
+    enabled: true
+    include_charts: false           # 暂不包含图表
+    confidence_threshold: 0.5       # 最低信心度
+    
+  # 绩效分析报告  
+  performance:
+    enabled: true
+    benchmark: "000300.SH"          # 沪深300作为基准
+    
+  # 风险分析报告
+  risk_analysis:
+    enabled: true
+    var_confidence: 0.95            # VaR置信度
+    
+  # 邮件通知（可选）
+  notifications:
+    email:
+      enabled: false
+      smtp_server: ""
+      smtp_port: 587
+      username: ""
+      password: ""
+      recipients: []
+
+# API配置（预留）
+api:
+  # Web API（未来扩展）
+  web:
+    enabled: false
+    host: "localhost"
+    port: 8000
+    
+  # Webhook（未来扩展）
+  webhook:
+    enabled: false
+    endpoints: []
+
+# 开发配置
+development:
+  # 调试模式
+  debug: false
+  
+  # 性能监控
+  profiling: false
+  
+  # 测试数据
+  use_mock_data: false
+  mock_data_file: "tests/mock_data.json"

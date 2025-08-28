@@ -1,11 +1,8 @@
 """
-决策引擎模块
-
-提供基于分析结果的投资决策建议
+投资决策引擎模块
+负责基于量化分析结果生成投资决策信号
 """
 
-from .engine import DecisionEngine, Decision
+from .engine import DecisionEngine, InvestmentDecision, DecisionSignal
 
-__all__ = ['DecisionEngine', 'Decision']
-
-__version__ = "0.1.0"
+__all__ = ['DecisionEngine', 'InvestmentDecision', 'DecisionSignal']

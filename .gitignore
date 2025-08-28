@@ -166,6 +166,10 @@ cython_debug/
 data/cache/
 data/logs/
 
+# 生成报告与日志
+data/reports/
+logs/
+
 # 临时文件
 *.tmp
 *.temp
@@ -177,6 +181,12 @@ config/secrets.yaml
 config/private.yaml
 *.key
 *.pem
+
+# 数据库文件（Storage 模块/本地开发）
+data/db/
+*.sqlite
+*.sqlite3
+*.db
 
 # 测试输出
 test_output/

@@ -1,52 +1,232 @@
-# 基金列表配置文件
-# 支持两种配置方式：持有基金和关注基金
+# 全球指数基金量化分析平台 - 基金配置
+# 重点监控国内可投资的ETF联接基金和核心ETF
 
-# 持有基金 - 重点监控
-owned_funds:
-  - code: "000001"
-    name: "华夏成长混合"
-    purchase_price: 2.8000
-    purchase_date: "2024-02-20"
-  
-  - code: "110022"
-    name: "易方达消费行业"
-    purchase_price: 3.1500
-    purchase_date: "2024-01-15"
-  
-  - code: "519066"
-    name: "汇添富蓝筹稳健"
-    purchase_price: 3.2000
-    purchase_date: "2024-03-10"
+# 优先级基金 - 主要投资标的（ETF联接基金为主）
+priority_funds:
+  # 美股指数联接基金
+  - code: "270042"
+    name: "广发纳指100ETF联接A"
+    region: "us_market"
+    category: "etf_feeder"
+    underlying_index: "nasdaq100"
+    currency: "CNY"
+    data_source: "akshare"
+    priority: "high"
+    enabled: true
+    reason: "纳指100最主流的国内联接基金"
+    
+  - code: "050025"  
+    name: "博时标普500ETF联接A"
+    region: "us_market"
+    category: "etf_feeder" 
+    underlying_index: "sp500"
+    currency: "CNY"
+    data_source: "akshare"
+    priority: "high"
+    enabled: true
+    reason: "标普500国内联接基金代表"
+    
+  # 美股指数直接QDII ETF
+  - code: "513100"
+    name: "纳斯达克100ETF"
+    region: "us_market"
+    category: "qdii_etf"
+    underlying_index: "nasdaq100"
+    currency: "CNY"
+    data_source: "akshare"
+    priority: "high"
+    enabled: true
+    reason: "纳指100直接ETF，流动性好"
+    
+  - code: "513500"
+    name: "标普500ETF"
+    region: "us_market"  
+    category: "qdii_etf"
+    underlying_index: "sp500"
+    currency: "CNY"
+    data_source: "akshare"
+    priority: "high"
+    enabled: true
+    reason: "标普500直接ETF"
 
-# 关注基金 - 潜在投资目标
-watchlist_funds:
-  - code: "001717"
-    name: "工银前沿医疗股票"
-    reason: "医疗健康主题，长期看好"
-  
-  - code: "005827"
-    name: "易方达蓝筹精选混合"
-    reason: "蓝筹股投资，稳健增长"
-  
-  - code: "001156"
-    name: "申万菱信新能源汽车"
-    reason: "新能源汽车主题，未来趋势"
-  
-  - code: "161725"
-    name: "招商中证白酒指数"
-    reason: "白酒行业指数，消费升级"
+region_funds:
+  # 美国市场 - 主要通过国内ETF联接基金投资
+  us_market:
+    - code: "270042"
+      name: "广发纳指100ETF联接A"
+      category: "etf_feeder"
+      underlying_index: "nasdaq100"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "high"
+      enabled: true
+      
+    - code: "050025"
+      name: "博时标普500ETF联接A"
+      category: "etf_feeder"
+      underlying_index: "sp500"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "high"
+      enabled: true
+      
+    - code: "513100"
+      name: "纳斯达克100ETF"
+      category: "qdii_etf"
+      underlying_index: "nasdaq100"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "high"
+      enabled: true
+      
+    - code: "513500"
+      name: "标普500ETF"
+      category: "qdii_etf"
+      underlying_index: "sp500"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "medium"
+      enabled: true
 
-# 基金分组配置
-groups:
-  equity:  # 股票型基金
-    - "110022"
-    - "001717"
-    - "001156"
-  
-  mixed:  # 混合型基金
-    - "000001"
-    - "519066"
-    - "005827"
-  
-  index:  # 指数型基金
-    - "161725"
+  # 中国市场 - 核心宽基指数ETF  
+  china_market:
+    - code: "510300"
+      name: "沪深300ETF"
+      category: "index_etf"
+      underlying_index: "csi300"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "high"
+      enabled: true
+      
+    - code: "159915"
+      name: "创业板ETF"
+      category: "index_etf"
+      underlying_index: "chinext"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "high"
+      enabled: true
+      
+    - code: "510500"
+      name: "中证500ETF"
+      category: "index_etf"
+      underlying_index: "csi500"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "medium"
+      enabled: true
+      
+    - code: "588000"
+      name: "科创50ETF"
+      category: "index_etf"
+      underlying_index: "kcb50"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "medium"
+      enabled: true
+
+  # 发达市场 - 通过QDII基金投资
+  developed_markets:
+    - code: "513030"
+      name: "德国30ETF"
+      category: "qdii_etf"
+      underlying_index: "dax30"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "low"
+      enabled: true
+      
+    - code: "513520"
+      name: "日经225ETF"
+      category: "qdii_etf"  
+      underlying_index: "nikkei225"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "low"
+      enabled: true
+
+  # 新兴市场 - 港股及中概股
+  emerging_markets:
+    - code: "513660"
+      name: "恒生ETF"
+      category: "qdii_etf"
+      underlying_index: "hsi"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "medium"
+      enabled: true
+      
+    - code: "513050"
+      name: "中概互联ETF"
+      category: "qdii_etf"
+      underlying_index: "kweb"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "high"
+      enabled: true
+      
+    - code: "159920"
+      name: "恒生ETF"
+      category: "qdii_etf"
+      underlying_index: "hsi"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "medium"
+      enabled: true
+
+  # 债券商品 - 固收类投资
+  bonds_commodities:
+    - code: "511010"
+      name: "国债ETF"
+      category: "bond_etf"
+      underlying_index: "treasury_bond"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "low"
+      enabled: true
+      
+    - code: "518800"
+      name: "黄金ETF"
+      category: "commodity_etf"
+      underlying_index: "gold_spot"
+      currency: "CNY"
+      data_source: "akshare"
+      priority: "low"
+      enabled: true
+
+# 监控配置
+monitoring_config:
+  auto_discovery:
+    enabled: true
+    frequency: "monthly"
+    criteria:
+      min_aum: 1000000000    # 10亿资产管理规模
+      min_volume: 5000000     # 500万日均交易量
+      expense_ratio_max: 0.015  # 管理费率上限1.5%
+      
+  rebalancing:
+    enabled: true
+    frequency: "quarterly" 
+    max_deviation: 0.05
+    
+  # 重点关注ETF联接基金
+  focus_categories:
+    - "etf_feeder"     # ETF联接基金
+    - "qdii_etf"       # QDII ETF
+    - "index_etf"      # 国内指数ETF
+    
+  # 数据源优先级
+  data_source_priority:
+    primary: "akshare"     # 主要使用akshare
+    fallback: "yfinance"   # 备用数据源
+
+# 投资策略说明
+strategy_notes:
+  focus: "国内可投资ETF联接基金和QDII ETF"
+  rationale: "重点监控实际可投资标的，而非海外原始指数"
+  advantages:
+    - "包含汇率风险因素"
+    - "反映国内投资者实际收益"
+    - "考虑跟踪误差和管理费用"
+    - "符合监管和资金流动限制"
