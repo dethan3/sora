@@ -46,12 +46,21 @@ class AnalysisResult:
     # 风险评估
     risk_level: str  # 'low', 'medium', 'high'
     max_drawdown: float
+    
+    # 扩展字段，用于新增策略结果（如低位均值折价等）
+    extra: Dict[str, Any] = None
 
 
 class AnalyticsCalculator:
     """分析计算器"""
     
-    def __init__(self, analysis_days: int = 60):
+    def __init__(self, analysis_days: int = 60,
+                 # 低位均值策略参数（提供安全默认值）
+                 lm_rolling_mean_days: int = 20,
+                 lm_windows: List[Any] = None,  # [756, 252, 'all']
+                 lm_min_required_days: int = 120,
+                 lm_use_ema_fallback: bool = True,
+                 lm_ema_days: int = 20):
         """
         初始化分析计算器
         
@@ -59,6 +68,13 @@ class AnalyticsCalculator:
             analysis_days: 分析天数
         """
         self.analysis_days = analysis_days
+        self._lm_cfg = {
+            'rolling_mean_days': lm_rolling_mean_days,
+            'windows': lm_windows if lm_windows is not None else [756, 252, 'all'],
+            'min_required_days': lm_min_required_days,
+            'use_ema_fallback': lm_use_ema_fallback,
+            'ema_days': lm_ema_days,
+        }
         logger.info(f"分析计算器初始化完成 - 分析天数: {analysis_days}")
     
     def analyze_fund(self, fund_data: FundData, 
@@ -128,7 +144,8 @@ class AnalyticsCalculator:
             
             # 风险评估
             risk_level='medium',
-            max_drawdown=0.05
+            max_drawdown=0.05,
+            extra={'low_mean': {'window_used': 'insufficient', 'discount_ratio': None}}
         )
     
     def _full_analysis(self, fund_data: FundData, 
@@ -177,7 +194,7 @@ class AnalyticsCalculator:
         risk_level = self._assess_risk(volatility, sharpe_ratio)
         max_drawdown = self._calculate_max_drawdown(prices)
         
-        return AnalysisResult(
+        result = AnalysisResult(
             fund_code=fund_data.code,
             fund_name=fund_data.name,
             current_price=fund_data.current_price,
@@ -206,8 +223,19 @@ class AnalyticsCalculator:
             
             # 风险评估
             risk_level=risk_level,
-            max_drawdown=max_drawdown
+            max_drawdown=max_drawdown,
+            extra={}
         )
+        
+        # 低位均值折价计算（含窗口回退与EMA兜底）
+        try:
+            low_mean = self._compute_low_mean_discount(prices, dates, fund_data.current_price)
+            result.extra['low_mean'] = low_mean
+        except Exception as e:
+            logger.warning(f"低位均值折价计算失败: {e}")
+            result.extra['low_mean'] = {'window_used': 'error', 'discount_ratio': None, 'error': str(e)}
+        
+        return result
     
     def _calculate_rsi(self, prices: np.ndarray, period: int = 14) -> float:
         """
@@ -386,4 +414,87 @@ class AnalyticsCalculator:
                 'volatility': avg_volatility,
                 'rsi': avg_rsi
             }
+        }
+
+    # --- Low-Mean strategy helpers ---
+    def _compute_low_mean_discount(self, prices: np.ndarray, dates: List[datetime], current_price: float) -> Dict[str, Any]:
+        """计算低位均值折价与所用窗口，带回退与EMA兜底。
+        返回结构:
+        {
+          'window_used': str,
+          'lma_value': float|None,
+          'discount_ratio': float|None,
+          'rolling_mean_days': int,
+          'effective_days': int,
+          'notes': List[str]
+        }
+        """
+        cfg = self._lm_cfg
+        notes: List[str] = []
+        rolling_m = cfg['rolling_mean_days']
+
+        # helper to compute LMA on a slice
+        def lma_on_window(series: np.ndarray, m: int) -> Tuple[Optional[float], int]:
+            if len(series) < m:
+                return None, len(series)
+            try:
+                s = pd.Series(series)
+                ma = s.rolling(m, min_periods=m).mean().to_numpy()
+            except Exception:
+                kernel = np.ones(m) / m
+                valid = np.convolve(series, kernel, mode='valid')
+                ma = np.concatenate([np.full(m-1, np.nan), valid])
+            valid_ma = ma[~np.isnan(ma)]
+            if len(valid_ma) == 0:
+                return None, len(series)
+            return float(np.min(valid_ma)), len(series)
+
+        window_used = 'insufficient'
+        lma_value: Optional[float] = None
+        effective_days = 0
+        total_len = len(prices)
+
+        for w in cfg['windows']:
+            if w == 'all':
+                slice_series = prices
+                label = 'all'
+            else:
+                w = int(w)
+                slice_series = prices[-w:] if total_len >= 1 else prices
+                label = f"{w}d"
+            lma, eff = lma_on_window(slice_series, rolling_m)
+            if lma is not None and eff >= max(cfg['min_required_days'], rolling_m):
+                lma_value = lma
+                effective_days = eff
+                window_used = label
+                break
+            else:
+                notes.append(f"window {label} insufficient (eff={eff})")
+
+        # EMA fallback
+        if lma_value is None and cfg['use_ema_fallback'] and total_len >= 2:
+            try:
+                s = pd.Series(prices)
+                ema = s.ewm(span=cfg['ema_days'], adjust=False).mean()
+                ema_min = float(ema.min())
+                lma_value = ema_min
+                window_used = 'ema_proxy'
+                effective_days = total_len
+                notes.append('used EMA proxy')
+            except Exception as e:
+                notes.append(f"ema_fallback_failed: {e}")
+
+        discount_ratio: Optional[float]
+        if lma_value and lma_value > 0:
+            discount_ratio = max(0.0, 1.0 - (current_price / lma_value))
+        else:
+            discount_ratio = None
+
+        return {
+            'window_used': window_used,
+            'lma_value': lma_value,
+            'discount_ratio': discount_ratio,
+            'rolling_mean_days': rolling_m,
+            'effective_days': effective_days,
+            'notes': notes,
         }

@@ -91,6 +91,23 @@ class TechnicalIndicatorsConfig:
 
 
 @dataclass
+class LowMeanStrategyConfig:
+    """低位均值折价策略配置"""
+    rolling_mean_days: int = 20
+    windows: List[Any] = None  # 例如 [756, 252, 'all']
+    min_required_days: int = 120
+    use_ema_fallback: bool = True
+    ema_days: int = 20
+    # 触发阈值
+    buy_threshold: float = 0.20
+    strong_buy_threshold: float = 0.30
+    
+    def __post_init__(self):
+        if self.windows is None:
+            self.windows = [756, 252, 'all']
+
+
+@dataclass
 class StrategyConfig:
     """策略配置数据类"""
     # 分析时间窗口
@@ -114,9 +131,14 @@ class StrategyConfig:
     take_profit: float = 0.15
     max_drawdown: float = 0.05
     
+    # 低位均值策略参数
+    low_mean: LowMeanStrategyConfig = None
+    
     def __post_init__(self):
         if self.technical_indicators is None:
             self.technical_indicators = TechnicalIndicatorsConfig()
+        if self.low_mean is None:
+            self.low_mean = LowMeanStrategyConfig()
 
 
 @dataclass
@@ -423,6 +445,15 @@ class ConfigManager:
                     'stop_loss': 0.08,
                     'take_profit': 0.15,
                     'max_drawdown': 0.05
+                },
+                'low_mean': {
+                    'rolling_mean_days': 20,
+                    'windows': [756, 252, 'all'],
+                    'min_required_days': 120,
+                    'use_ema_fallback': True,
+                    'ema_days': 20,
+                    'buy_threshold': 0.20,
+                    'strong_buy_threshold': 0.30
                 }
             },
             'scheduler': {
@@ -980,6 +1011,7 @@ class ConfigManager:
         technical_indicators = strategy_config.get('technical_indicators', {})
         thresholds = strategy_config.get('thresholds', {})
         risk_management = strategy_config.get('risk_management', {})
+        low_mean_config = strategy_config.get('low_mean', {})
         
         tech_indicators = TechnicalIndicatorsConfig(
             rsi_period=technical_indicators.get('rsi_period', 14),
@@ -988,6 +1020,16 @@ class ConfigManager:
             macd_signal=technical_indicators.get('macd_signal', 9),
             bollinger_period=technical_indicators.get('bollinger_period', 20),
             bollinger_std=technical_indicators.get('bollinger_std', 2.0)
+        )
+        
+        low_mean = LowMeanStrategyConfig(
+            rolling_mean_days=low_mean_config.get('rolling_mean_days', 20),
+            windows=low_mean_config.get('windows', [756, 252, 'all']),
+            min_required_days=low_mean_config.get('min_required_days', 120),
+            use_ema_fallback=low_mean_config.get('use_ema_fallback', True),
+            ema_days=low_mean_config.get('ema_days', 20),
+            buy_threshold=low_mean_config.get('buy_threshold', 0.20),
+            strong_buy_threshold=low_mean_config.get('strong_buy_threshold', 0.30),
         )
         
         self.strategy = StrategyConfig(
@@ -1003,7 +1045,8 @@ class ConfigManager:
             max_single_position=risk_management.get('max_single_position', 0.1),
             stop_loss=risk_management.get('stop_loss', 0.08),
             take_profit=risk_management.get('take_profit', 0.15),
-            max_drawdown=risk_management.get('max_drawdown', 0.05)
+            max_drawdown=risk_management.get('max_drawdown', 0.05),
+            low_mean=low_mean
         )
         
         # 调度器配置

@@ -46,8 +46,10 @@ class DataCache:
         self.current_data_dir = self.cache_dir / "current"
         self.historical_data_dir = self.cache_dir / "historical"
         self.fund_info_dir = self.cache_dir / "info"
+        self.analysis_dir = self.cache_dir / "analysis"
+        self.reports_dir = self.cache_dir / "reports"
         
-        for dir_path in [self.current_data_dir, self.historical_data_dir, self.fund_info_dir]:
+        for dir_path in [self.current_data_dir, self.historical_data_dir, self.fund_info_dir, self.analysis_dir, self.reports_dir]:
             dir_path.mkdir(exist_ok=True)
         
         logger.info(f"数据缓存初始化完成 - 目录:{cache_dir}, 过期:{expire_hours}h, 最大:{max_cache_size_mb}MB")
@@ -61,6 +63,8 @@ class DataCache:
             return self.historical_data_dir / f"{fund_code}{suffix}"
         elif cache_type == "info":
             return self.fund_info_dir / f"{fund_code}{suffix}"
+        elif cache_type == "analysis":
+            return self.analysis_dir / f"{fund_code}{suffix}"
         else:
             raise ValueError(f"未知的缓存类型: {cache_type}")
     
@@ -319,7 +323,8 @@ class DataCache:
         for cache_type, cache_dir in [
             ('current', self.current_data_dir),
             ('historical', self.historical_data_dir),
-            ('info', self.fund_info_dir)
+            ('info', self.fund_info_dir),
+            ('analysis', self.analysis_dir)
         ]:
             total_size = 0
             for file_path in cache_dir.glob("*"):
@@ -345,7 +350,7 @@ class DataCache:
                 
                 # 按修改时间排序，删除最旧的文件
                 all_files = []
-                for cache_dir in [self.current_data_dir, self.historical_data_dir, self.fund_info_dir]:
+                for cache_dir in [self.current_data_dir, self.historical_data_dir, self.fund_info_dir, self.analysis_dir]:
                     for file_path in cache_dir.glob("*"):
                         if file_path.is_file():
                             all_files.append((file_path.stat().st_mtime, file_path))
@@ -383,7 +388,8 @@ class DataCache:
         for cache_type, cache_dir in [
             ('current', self.current_data_dir),
             ('historical', self.historical_data_dir),
-            ('info', self.fund_info_dir)
+            ('info', self.fund_info_dir),
+            ('analysis', self.analysis_dir)
         ]:
             file_counts[cache_type] = len(list(cache_dir.glob("*")))
         
@@ -396,3 +402,63 @@ class DataCache:
             'max_size_mb': self.max_cache_size_mb,
             'cache_dir': str(self.cache_dir)
         }
+
+    # ===== 兼容 Scheduler 的适配层方法 =====
+    def save_fund_data(self, fund_code: str, fund_data: FundData) -> bool:
+        """适配: 保存当前基金数据（别名）"""
+        return self.cache_current_data(fund_code, fund_data)
+
+    def get_fund_data(self, fund_code: str) -> Optional[FundData]:
+        """适配: 获取当前基金数据（别名）"""
+        return self.get_cached_current_data(fund_code)
+
+    def save_historical_data(self, fund_code: str, historical_data: HistoricalData) -> bool:
+        """适配: 保存历史数据（别名）"""
+        return self.cache_historical_data(fund_code, historical_data)
+
+    def save_analysis_result(self, fund_code: str, result: Dict[str, Any]) -> bool:
+        """保存分析结果到 JSON 文件（最小实现）"""
+        try:
+            file_path = self._get_cache_file_path("analysis", fund_code, ".json")
+            payload = {
+                "fund_code": fund_code,
+                "result": result,
+                "saved_at": datetime.now().isoformat()
+            }
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2, default=str)
+            logger.debug(f"分析结果保存成功: {fund_code}")
+            return True
+        except Exception as e:
+            logger.error(f"保存分析结果失败: {fund_code} - {e}")
+            return False
+
+    def get_analysis_result(self, fund_code: str) -> Optional[Dict[str, Any]]:
+        """读取分析结果（最小实现）"""
+        try:
+            file_path = self._get_cache_file_path("analysis", fund_code, ".json")
+            if not file_path.exists():
+                return None
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data.get("result") if isinstance(data, dict) else data
+        except Exception as e:
+            logger.error(f"读取分析结果失败: {fund_code} - {e}")
+            return None
+
+    def save_report(self, report: Dict[str, Any], path: str) -> bool:
+        """保存报告到指定路径，并确保目录存在（最小实现）"""
+        try:
+            report_path = Path(path)
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(report, f, ensure_ascii=False, indent=2, default=str)
+            logger.debug(f"报告保存成功: {report_path}")
+            return True
+        except Exception as e:
+            logger.error(f"保存报告失败: {path} - {e}")
+            return False
+
+    def cleanup_expired_data(self) -> Dict[str, int]:
+        """适配: 清理过期缓存（别名）"""
+        return self.clear_expired_cache()

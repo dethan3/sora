@@ -155,15 +155,4 @@ src/storage/
 - Mock 为先：外部资源（网络/时间/磁盘权限）统一 Mock，提升稳定性。
 - 渐进集成：Storage 先旁路写入，再逐步替代读取路径。
 
-建议下一步
-请确认文档内容是否需要调整：
-
-是否采用 SQLite + SQLAlchemy 的技术选型？
-storage 实体/表结构是否需要新增字段（如基准指数、账户/持仓）？
-先落地哪一块：优先实现 src/storage/ 骨架，还是先补齐 DataCache/DataFetcher 测试？
-我建议按文档里程碑推进：
-
-先补齐 DataCache/DataFetcher 单测（M1），
-并行敲定 src/storage/ 目录与 API（M4），
-再推进调度与报告测试（M3）与存储接入（M5）。
-确认后我就开始创建 src/storage/ 目录与模型骨架，并提交首批测试用例。
+继续补充首批单测文件（DataCache、DataFetcher）与在 CLI/init 路径中调用 StorageService.init_db() 的最小接入

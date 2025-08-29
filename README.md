@@ -71,14 +71,14 @@ pip install -r requirements.txt
 # 3. 初始化系统
 python main.py init
 
-# 4. 查看ETF配置
+# 4. 查看ETF配
 cat config/funds.yaml
 ```
 
 ### 核心命令
 ```bash
 # 激活虚拟环境
-source venv/bin/activate
+source .venv/bin/activate
 # 分析单个ETF
 python main.py analyze --etf 510300
 

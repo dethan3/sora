@@ -88,6 +88,16 @@ strategy:
     take_profit: 0.15               # 止盈15%
     max_drawdown: 0.05              # 最大回撤5%
 
+  # 低位均值折价策略
+  low_mean:
+    rolling_mean_days: 20
+    windows: [756, 252, 'all']   # 3年、1年、全样本
+    min_required_days: 120
+    use_ema_fallback: true
+    ema_days: 20
+    buy_threshold: 0.05          # 折价≥20%触发买入
+    strong_buy_threshold: 0.20   # 折价≥30%强触发
+
 # 定时任务配置
 scheduler:
   # 数据更新任务
