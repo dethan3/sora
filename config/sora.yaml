@@ -1,0 +1,8 @@
+database_path: data/sora.db
+analysis:
+  lookback_days: 90
+  short_window: 7
+  long_window: 30
+notifications:
+  request_timeout_seconds: 10
+  webhook_urls: {}

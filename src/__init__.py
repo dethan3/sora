@@ -1,16 +1,5 @@
-"""
-AI 辅助投资决策的基金跟踪系统 (Sora)
+"""Sora monitoring engine workspace."""
 
-一个基于 Python 的智能基金投资决策系统，通过分析基金历史数据和当前价格，
-提供买入、卖出或持有建议。
-
-主要功能：
-- 实时基金数据获取
-- 历史数据分析
-- 智能投资决策
-- 个性化配置管理
-"""
-
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Sora Team"
-__description__ = "AI 辅助投资决策的基金跟踪系统"
+__description__ = "Sora monitoring engine"

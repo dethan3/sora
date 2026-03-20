@@ -1,394 +1,798 @@
 #!/usr/bin/env python3
-"""
-Sora - ETF 量化分析平台
+"""Sora CLI entrypoint."""
 
-专注中国市场ETF的数据驱动量化投资分析平台
-"""
+from __future__ import annotations
 
-import sys
-import os
-from pathlib import Path
-from datetime import datetime
-
-# 添加项目根目录到 Python 路径
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
+import json
+from typing import Optional
 
 import click
-from loguru import logger
-from rich.console import Console
 from rich.table import Table
 
-console = Console()
+from src.sora.analysis import AnalysisEngine
+from src.sora.alerts import AlertEvaluator
+from src.sora.config import load_config
+from src.sora.domain import (
+    AlertDirection,
+    AlertEvent,
+    AlertMetric,
+    AlertRule,
+    AlertScope,
+    Asset,
+    AssetType,
+    Market,
+    NotificationStatus,
+)
+from src.sora.notifications import NotificationDispatcher
+from src.sora.notifiers import WebhookNotifier
+from src.sora.orchestrator import SoraOrchestrator
+from src.sora.presenter import (
+    build_asset_report_markdown as _build_asset_report_markdown,
+    build_asset_report_payload as _build_asset_report_payload,
+    build_portfolio_report_markdown as _build_portfolio_report_markdown,
+    build_portfolio_report_payload as _build_portfolio_report_payload,
+    console,
+    format_baseline_at as _format_baseline_at,
+    format_baseline_value as _format_baseline_value,
+    format_optional_number as _format_optional_number,
+    format_optional_pct as _format_optional_pct,
+    format_optional_signed_number as _format_optional_signed_number,
+    format_position_cost_amount as _format_position_cost_amount,
+    format_position_units as _format_position_units,
+    format_run_datetime as _format_run_datetime,
+    format_run_duration as _format_run_duration,
+    format_since_entry_pct as _format_since_entry_pct,
+    format_unrealized_pnl_amount as _format_unrealized_pnl_amount,
+    format_unrealized_pnl_pct as _format_unrealized_pnl_pct,
+    render_asset_overview as _render_asset_overview,
+    render_portfolio_positions as _render_portfolio_positions,
+    render_portfolio_summary as _render_portfolio_summary,
+    render_provider_capabilities as _render_provider_capabilities,
+    render_run_record as _render_run_record,
+)
+from src.sora.providers import (
+    AkshareMarketDataProvider,
+    ProviderRegistry,
+    SnapshotCacheMarketDataProvider,
+    YahooFinanceMarketDataProvider,
+)
+from src.sora.repository import SQLiteRepository
+
+
+def build_provider_registry(repository: SQLiteRepository) -> ProviderRegistry:
+    return ProviderRegistry(
+        [
+            AkshareMarketDataProvider(),
+            YahooFinanceMarketDataProvider(),
+            SnapshotCacheMarketDataProvider(repository),
+        ]
+    )
+
+
+def build_app(config_path: Optional[str] = None) -> tuple[SQLiteRepository, SoraOrchestrator]:
+    config = load_config(config_path)
+    repository = SQLiteRepository(config.database_path)
+    repository.initialize()
+    provider = build_provider_registry(repository)
+    engine = AnalysisEngine(
+        short_window=config.analysis.short_window,
+        long_window=config.analysis.long_window,
+    )
+    orchestrator = SoraOrchestrator(
+        repository=repository,
+        provider=provider,
+        engine=engine,
+        alert_evaluator=AlertEvaluator(),
+        lookback_days=config.analysis.lookback_days,
+    )
+    return repository, orchestrator
+
+
+def build_notification_dispatcher(config_path: Optional[str] = None) -> tuple[SQLiteRepository, NotificationDispatcher]:
+    config = load_config(config_path)
+    repository = SQLiteRepository(config.database_path)
+    repository.initialize()
+    dispatcher = NotificationDispatcher(
+        repository=repository,
+        notifiers=[
+            WebhookNotifier(
+                config.notifications.webhook_urls,
+                timeout_seconds=config.notifications.request_timeout_seconds,
+            )
+        ],
+    )
+    return repository, dispatcher
+
+
+def _should_record_baseline(
+    asset: Asset,
+    *,
+    is_new_asset: bool,
+    baseline_mode: str | None,
+) -> bool:
+    if asset.asset_type != AssetType.FUND:
+        return False
+    if baseline_mode == "record":
+        return True
+    if baseline_mode == "skip":
+        return False
+    if not is_new_asset:
+        return False
+    return click.confirm(
+        "Record current fund value as entry baseline for future gain tracking?",
+        default=True,
+    )
+
 
 @click.group()
-@click.version_option(version="2.0.0", prog_name="Sora ETF量化分析平台")
-def cli():
-    """🚀 Sora - ETF 量化分析平台
-    
-    专注中国市场ETF的数据驱动量化投资分析平台
-    """
-    setup_logging()
+@click.option("--config", "config_path", default="config/sora.yaml", show_default=True)
+@click.pass_context
+def cli(ctx: click.Context, config_path: str) -> None:
+    """Sora monitoring engine for fund/index analysis."""
+    ctx.ensure_object(dict)
+    ctx.obj["config_path"] = config_path
 
-@cli.command()
-def init():
-    """🔧 初始化系统配置和数据库"""
-    console.print("[bold green]🔧 正在初始化 Sora ETF量化分析平台...[/bold green]")
-    
-    try:
-        from src.utils.initializer import SystemInitializer
-        
-        initializer = SystemInitializer()
-        success = initializer.initialize()
-        
-        if success:
-            # Initialize database via StorageService (best-effort)
-            try:
-                from src.storage.service import StorageService
-                StorageService().init_db()
-                console.print("[green]🗄️ 数据库已初始化[/green]")
-            except Exception as db_e:  # noqa: PIE786
-                logger.warning(f"数据库初始化跳过或失败（占位继续）: {db_e}")
-            
-            console.print("[bold green]✅ 系统初始化完成！[/bold green]")
-            console.print("[yellow]📋 下一步：运行 'python main.py analyze' 开始分析[/yellow]")
-        else:
-            console.print("[bold red]❌ 系统初始化失败[/bold red]")
-            sys.exit(1)
-            
-    except ImportError as e:
-        logger.warning(f"可选模块缺失，使用占位初始化: {e}")
-        console.print("[yellow]⚠️ 未找到完整的初始化模块，已跳过实际初始化步骤（占位返回成功）。[/yellow]")
-        # Try to init DB anyway if storage is available
+
+@cli.command("init-db")
+@click.pass_context
+def init_db(ctx: click.Context) -> None:
+    """Initialize SQLite tables."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    repository.initialize()
+    console.print(f"[green]Database ready:[/green] {repository.db_path}")
+
+
+@cli.group()
+def watchlist() -> None:
+    """Manage watchlist assets."""
+
+
+@watchlist.command("add")
+@click.option("--code", required=True)
+@click.option("--name", default="")
+@click.option("--asset-type", "asset_type", type=click.Choice(["fund", "index"]), required=True)
+@click.option("--market", type=click.Choice(["cn", "global"]), default="cn", show_default=True)
+@click.option("--enabled/--disabled", default=True, show_default=True)
+@click.option(
+    "--record-baseline",
+    "baseline_mode",
+    flag_value="record",
+    default=None,
+    help="Record current fund value as the entry baseline.",
+)
+@click.option(
+    "--skip-baseline",
+    "baseline_mode",
+    flag_value="skip",
+    help="Skip baseline capture when adding a new fund.",
+)
+@click.option("--position-units", type=float, default=None, help="Fund units currently held.")
+@click.option(
+    "--position-cost-amount",
+    type=float,
+    default=None,
+    help="Total cost amount for the current holding.",
+)
+@click.pass_context
+def watchlist_add(
+    ctx: click.Context,
+    code: str,
+    name: str,
+    asset_type: str,
+    market: str,
+    enabled: bool,
+    baseline_mode: str | None,
+    position_units: float | None,
+    position_cost_amount: float | None,
+) -> None:
+    """Add or update an asset."""
+    repository, orchestrator = build_app(ctx.obj["config_path"])
+    existing_assets = repository.list_assets(enabled_only=False, code=code.strip())
+    is_new_asset = not existing_assets
+    if (position_units is None) != (position_cost_amount is None):
+        raise click.ClickException(
+            "--position-units and --position-cost-amount must be provided together"
+        )
+    asset = Asset(
+        code=code.strip(),
+        name=name.strip() or code.strip(),
+        asset_type=AssetType(asset_type),
+        market=Market(market),
+        enabled=enabled,
+    )
+    check_support = getattr(orchestrator.provider, "check_support", None)
+    if callable(check_support):
+        support = check_support(asset)
+        if not support.supported:
+            raise click.ClickException(
+                f"Unsupported asset for current Sora providers: "
+                f"{asset.code} ({asset.market.value}/{asset.asset_type.value})"
+                f" [{support.reason}]"
+            )
+    elif not orchestrator.provider.supports(asset):
+        raise click.ClickException(
+            f"Unsupported asset for current Sora provider: "
+            f"{asset.code} ({asset.market.value}/{asset.asset_type.value})"
+        )
+    repository.upsert_asset(asset)
+    console.print(f"[green]Saved asset:[/green] {asset.code} ({asset.asset_type.value})")
+    if _should_record_baseline(asset, is_new_asset=is_new_asset, baseline_mode=baseline_mode):
         try:
-            from src.storage.service import StorageService
-            StorageService().init_db()
-            console.print("[green]🗄️ 数据库已初始化（在占位模式下）[/green]")
-        except Exception as db_e:  # noqa: PIE786
-            logger.warning(f"数据库初始化跳过或失败（占位继续）: {db_e}")
-        return
-    except Exception as e:
-        logger.error(f"初始化失败: {e}")
-        console.print(f"[bold red]❌ 初始化失败: {e}[/bold red]")
-        sys.exit(1)
-
-@cli.command()
-@click.option('--force-update', '-f', is_flag=True, help='强制更新所有数据')
-@click.option('--etf-code', '-e', help='分析特定ETF代码')
-def analyze(force_update: bool, etf_code: str):
-    """📊 运行ETF量化分析"""
-    console.print("[bold blue]📊 启动ETF量化分析...[/bold blue]")
-    
-    try:
-        from src.core.analyzer import ETFAnalyzer
-        
-        analyzer = ETFAnalyzer()
-        
-        if etf_code:
-            console.print(f"[yellow]🎯 分析特定ETF: {etf_code}[/yellow]")
-            results = analyzer.analyze_single(etf_code, force_update)
-        else:
-            console.print("[yellow]📈 分析所有ETF基金...[/yellow]")
-            results = analyzer.analyze_all(force_update)
-        
-        if results:
-            console.print("[bold green]✅ 分析完成！[/bold green]")
-            display_analysis_summary(results)
-        else:
-            console.print("[bold red]❌ 分析失败[/bold red]")
-            
-    except ImportError as e:
-        logger.warning(f"Analyzer 模块缺失，输出占位结果: {e}")
-        placeholder = {
-            'total_etfs': 0 if etf_code else 3,
-            'successful_fetches': 0,
-            'buy_signals': 0,
-            'sell_signals': 0,
-            'analysis_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        console.print("[yellow]⚠️ Analyzer 未就绪，返回占位分析结果。[/yellow]")
-        display_analysis_summary(placeholder)
-        return
-    except Exception as e:
-        logger.error(f"分析失败: {e}")
-        console.print(f"[bold red]❌ 分析失败: {e}[/bold red]")
-        sys.exit(1)
-
-@cli.command()
-@click.option('--format', '-f', type=click.Choice(['table', 'excel', 'json']), 
-              default='table', help='报告格式')
-@click.option('--days', '-d', default=7, help='显示最近N天的建议')
-def report(format: str, days: int):
-    """📋 生成投资建议报告"""
-    console.print("[bold cyan]📋 生成投资建议报告...[/bold cyan]")
-    
-    try:
-        from src.core.reporter import ETFReporter
-        
-        reporter = ETFReporter()
-        report_data = reporter.generate_report(days)
-        
-        if format == 'table':
-            display_investment_recommendations(report_data)
-        elif format == 'excel':
-            file_path = reporter.export_excel(report_data)
-            console.print(f"[green]📊 Excel报告已保存: {file_path}[/green]")
-        elif format == 'json':
-            file_path = reporter.export_json(report_data)
-            console.print(f"[green]📄 JSON报告已保存: {file_path}[/green]")
-            
-    except ImportError as e:
-        logger.warning(f"Reporter 模块缺失，输出占位报告: {e}")
-        placeholder = {
-            'buy_recommendations': [],
-            'sell_recommendations': []
-        }
-        console.print("[yellow]⚠️ Reporter 未就绪，显示占位报告。[/yellow]")
-        display_investment_recommendations(placeholder)
-        return
-    except Exception as e:
-        logger.error(f"报告生成失败: {e}")
-        console.print(f"[bold red]❌ 报告生成失败: {e}[/bold red]")
-        sys.exit(1)
-
-@cli.command()
-@click.option('--weekly', is_flag=True, help='启动每周定时分析')
-@click.option('--stop', is_flag=True, help='停止定时任务')
-def schedule(weekly: bool, stop: bool):
-    """⏰ 管理定时任务"""
-    
-    try:
-        from src.scheduler.task_manager import TaskManager
-        
-        task_manager = TaskManager()
-        
-        if stop:
-            console.print("[yellow]⏹️ 停止所有定时任务...[/yellow]")
-            task_manager.stop_all()
-            console.print("[green]✅ 定时任务已停止[/green]")
-            
-        elif weekly:
-            console.print("[blue]⏰ 启动每周定时分析...[/blue]")
-            task_manager.start_weekly_analysis()
-            console.print("[green]✅ 每周定时任务已启动（每周一 09:00）[/green]")
-            console.print("[yellow]💡 任务将在后台运行，使用 --stop 停止[/yellow]")
-            
-        else:
-            # 显示当前任务状态
-            status = task_manager.get_status()
-            display_schedule_status(status)
-            
-    except ImportError as e:
-        logger.warning(f"TaskManager 模块缺失，显示占位任务状态: {e}")
-        status = { 'tasks': [ { 'name': 'weekly_analysis', 'status': 'stopped', 'next_run': 'N/A' } ] }
-        display_schedule_status(status)
-        return
-    except Exception as e:
-        logger.error(f"任务管理失败: {e}")
-        console.print(f"[bold red]❌ 任务管理失败: {e}[/bold red]")
-        sys.exit(1)
-
-@cli.command()
-@click.option('--days', '-d', default=30, help='回测天数')
-@click.option('--strategy', '-s', default='default', help='回测策略')
-def backtest(days: int, strategy: str):
-    """🔄 历史数据回测"""
-    console.print(f"[bold magenta]🔄 启动{days}天历史回测（策略: {strategy}）...[/bold magenta]")
-    
-    try:
-        from src.core.backtester import ETFBacktester
-        
-        backtester = ETFBacktester()
-        results = backtester.run_backtest(days, strategy)
-        
-        if results:
-            display_backtest_results(results)
-        else:
-            console.print("[bold red]❌ 回测失败[/bold red]")
-            
-    except ImportError as e:
-        logger.warning(f"Backtester 模块缺失，输出占位回测结果: {e}")
-        placeholder = {
-            'total_return': 0.0,
-            'annual_return': 0.0,
-            'max_drawdown': 0.0,
-            'sharpe_ratio': 0.0,
-            'win_rate': 0.0
-        }
-        console.print("[yellow]⚠️ Backtester 未就绪，显示占位回测结果。[/yellow]")
-        display_backtest_results(placeholder)
-        return
-    except Exception as e:
-        logger.error(f"回测失败: {e}")
-        console.print(f"[bold red]❌ 回测失败: {e}[/bold red]")
-        sys.exit(1)
-
-@cli.command()
-def status():
-    """📊 显示系统状态"""
-    console.print("[bold blue]📊 系统状态检查...[/bold blue]")
-    
-    try:
-        from src.utils.health_checker import HealthChecker
-        
-        health_checker = HealthChecker()
-        status = health_checker.check_all()
-        
-        display_system_status(status)
-        
-    except ImportError as e:
-        logger.warning(f"HealthChecker 模块缺失，显示占位系统状态: {e}")
-        status = {
-            'environment': { 'healthy': True, 'status': 'OK', 'details': 'Placeholders active' },
-            'storage': { 'healthy': False, 'status': 'Not initialized', 'details': 'Storage module pending' }
-        }
-        display_system_status(status)
-        return
-    except Exception as e:
-        logger.error(f"状态检查失败: {e}")
-        console.print(f"[bold red]❌ 状态检查失败: {e}[/bold red]")
-
-def setup_logging():
-    """设置日志系统"""
-    # 移除默认处理器
-    logger.remove()
-    
-    # 创建日志目录
-    log_dir = Path("data/logs")
-    log_dir.mkdir(parents=True, exist_ok=True)
-    
-    # 添加控制台输出（简化格式）
-    logger.add(
-        sys.stderr,
-        level="INFO",
-        format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
-        colorize=True
-    )
-    
-    # 添加文件输出（详细格式）
-    logger.add(
-        "data/logs/sora.log",
-        level="DEBUG",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
-        rotation="10 MB",
-        retention="30 days",
-        compression="zip"
-    )
-
-def display_analysis_summary(results):
-    """显示分析摘要"""
-    table = Table(title="📊 ETF分析摘要")
-    
-    table.add_column("指标", style="cyan")
-    table.add_column("数值", style="magenta")
-    
-    table.add_row("分析ETF数量", str(results.get('total_etfs', 0)))
-    table.add_row("成功获取数据", str(results.get('successful_fetches', 0)))
-    table.add_row("生成买入信号", str(results.get('buy_signals', 0)))
-    table.add_row("生成卖出信号", str(results.get('sell_signals', 0)))
-    table.add_row("分析时间", results.get('analysis_time', 'N/A'))
-    
-    console.print(table)
-
-def display_investment_recommendations(report_data):
-    """显示投资建议"""
-    # 买入建议
-    if report_data.get('buy_recommendations'):
-        buy_table = Table(title="🟢 买入建议", show_header=True)
-        buy_table.add_column("ETF代码", style="cyan")
-        buy_table.add_column("名称", style="white")
-        buy_table.add_column("当前价格", style="green")
-        buy_table.add_column("信号强度", style="yellow")
-        buy_table.add_column("建议理由", style="dim")
-        
-        for rec in report_data['buy_recommendations']:
-            buy_table.add_row(
-                rec['code'],
-                rec['name'],
-                f"¥{rec['price']:.2f}",
-                rec['signal_strength'],
-                rec['reason']
+            series = orchestrator.provider.fetch_market_series(asset, lookback_days=2)
+            repository.set_asset_baseline(asset.code, series.current_value, series.as_of)
+            console.print(
+                f"[green]Recorded baseline:[/green] {asset.code} "
+                f"{series.current_value:.4f} @ {series.as_of.strftime('%Y-%m-%d %H:%M')}"
             )
-        
-        console.print(buy_table)
-    
-    # 卖出建议
-    if report_data.get('sell_recommendations'):
-        sell_table = Table(title="🔴 卖出建议", show_header=True)
-        sell_table.add_column("ETF代码", style="cyan")
-        sell_table.add_column("名称", style="white")
-        sell_table.add_column("当前价格", style="red")
-        sell_table.add_column("信号强度", style="yellow")
-        sell_table.add_column("建议理由", style="dim")
-        
-        for rec in report_data['sell_recommendations']:
-            sell_table.add_row(
-                rec['code'],
-                rec['name'],
-                f"¥{rec['price']:.2f}",
-                rec['signal_strength'],
-                rec['reason']
+        except Exception as exc:  # noqa: BLE001
+            console.print(
+                f"[yellow]Could not record baseline for {asset.code}:[/yellow] {exc}"
             )
-        
-        console.print(sell_table)
-
-def display_schedule_status(status):
-    """显示定时任务状态"""
-    table = Table(title="⏰ 定时任务状态")
-    
-    table.add_column("任务", style="cyan")
-    table.add_column("状态", style="magenta")
-    table.add_column("下次执行", style="yellow")
-    
-    for task in status.get('tasks', []):
-        table.add_row(
-            task['name'],
-            task['status'],
-            task['next_run']
+    if position_units is not None and position_cost_amount is not None:
+        repository.set_asset_position(asset.code, position_units, position_cost_amount)
+        console.print(
+            f"[green]Saved position:[/green] {asset.code} "
+            f"units={position_units:.2f} cost={position_cost_amount:.2f}"
         )
-    
-    console.print(table)
 
-def display_backtest_results(results):
-    """显示回测结果"""
-    table = Table(title="🔄 回测结果")
-    
-    table.add_column("指标", style="cyan")
-    table.add_column("数值", style="magenta")
-    
-    table.add_row("总收益率", f"{results.get('total_return', 0):.2%}")
-    table.add_row("年化收益率", f"{results.get('annual_return', 0):.2%}")
-    table.add_row("最大回撤", f"{results.get('max_drawdown', 0):.2%}")
-    table.add_row("夏普比率", f"{results.get('sharpe_ratio', 0):.2f}")
-    table.add_row("胜率", f"{results.get('win_rate', 0):.2%}")
-    
-    console.print(table)
 
-def display_system_status(status):
-    """显示系统状态"""
-    table = Table(title="📊 系统状态")
-    
-    table.add_column("组件", style="cyan")
-    table.add_column("状态", style="magenta")
-    table.add_column("详情", style="dim")
-    
-    for component, info in status.items():
-        status_icon = "✅" if info['healthy'] else "❌"
+@watchlist.command("list")
+@click.option("--all", "include_disabled", is_flag=True, help="Include disabled assets.")
+@click.pass_context
+def watchlist_list(ctx: click.Context, include_disabled: bool) -> None:
+    """List assets."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    assets = repository.list_assets(enabled_only=not include_disabled)
+    table = Table(title="Sora Watchlist")
+    table.add_column("Code")
+    table.add_column("Name")
+    table.add_column("Type")
+    table.add_column("Market")
+    table.add_column("Enabled")
+    table.add_column("Baseline")
+    table.add_column("Baseline At")
+    table.add_column("Units")
+    table.add_column("Cost")
+    for asset in assets:
         table.add_row(
-            component,
-            f"{status_icon} {info['status']}",
-            info.get('details', '')
+            asset.code,
+            asset.name,
+            asset.asset_type.value,
+            asset.market.value,
+            "yes" if asset.enabled else "no",
+            _format_baseline_value(asset),
+            _format_baseline_at(asset),
+            _format_position_units(asset),
+            _format_position_cost_amount(asset),
         )
-    
     console.print(table)
+
+
+@cli.group("providers")
+def providers() -> None:
+    """Inspect market data providers and support coverage."""
+
+
+@providers.command("list")
+@click.pass_context
+def providers_list(ctx: click.Context) -> None:
+    """List configured providers and their declared capabilities."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    registry = build_provider_registry(repository)
+    _render_provider_capabilities(registry.capabilities())
+
+
+@providers.command("check")
+@click.option("--code", required=True)
+@click.option("--name", default="")
+@click.option("--asset-type", "asset_type", type=click.Choice(["fund", "index"]), required=True)
+@click.option("--market", type=click.Choice(["cn", "global"]), default="cn", show_default=True)
+@click.pass_context
+def providers_check(
+    ctx: click.Context,
+    code: str,
+    name: str,
+    asset_type: str,
+    market: str,
+) -> None:
+    """Check whether current providers can serve one asset."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    registry = build_provider_registry(repository)
+    asset = Asset(
+        code=code.strip(),
+        name=name.strip() or code.strip(),
+        asset_type=AssetType(asset_type),
+        market=Market(market),
+    )
+    support = registry.check_support(asset)
+    console.print(f"Asset: {asset.code} ({asset.market.value}/{asset.asset_type.value})")
+    console.print(f"Supported: {'yes' if support.supported else 'no'}")
+    console.print(f"Provider: {support.provider_name}")
+    if support.normalized_code:
+        console.print(f"Normalized Code: {support.normalized_code}")
+    if support.reason:
+        console.print(f"Reason: {support.reason}")
+
+
+@cli.group("assets")
+def assets() -> None:
+    """Inspect asset monitoring results."""
+
+
+@assets.command("latest")
+@click.option("--code", required=True)
+@click.pass_context
+def assets_latest(ctx: click.Context, code: str) -> None:
+    """Show the latest snapshot and analysis for one asset."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    overview = repository.get_asset_overview(code.strip())
+    if overview is None:
+        raise click.ClickException(f"Asset not found: {code.strip()}")
+
+    _render_asset_overview(overview)
+    if overview.snapshot is None:
+        console.print()
+        console.print("[yellow]No monitoring data found for this asset yet.[/yellow]")
+
+
+@assets.command("history")
+@click.option("--code", required=True)
+@click.option("--limit", default=10, show_default=True, type=int)
+@click.pass_context
+def assets_history(ctx: click.Context, code: str, limit: int) -> None:
+    """List recent snapshot history for one asset."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    asset = repository.get_asset(code.strip())
+    if asset is None:
+        raise click.ClickException(f"Asset not found: {code.strip()}")
+
+    snapshots = repository.list_snapshots(asset_code=asset.code, limit=limit)
+    if not snapshots:
+        console.print("[yellow]No snapshots found for this asset.[/yellow]")
+        return
+
+    table = Table(title=f"Sora Snapshot History {asset.code}")
+    table.add_column("Run ID")
+    table.add_column("As Of")
+    table.add_column("Current")
+    table.add_column("Daily %")
+    table.add_column("7D %")
+    table.add_column("30D %")
+    table.add_column("Source")
+    for snapshot in snapshots:
+        table.add_row(
+            snapshot.run_id,
+            _format_run_datetime(snapshot.as_of),
+            _format_optional_number(snapshot.current_value),
+            _format_optional_pct(snapshot.daily_change_pct),
+            _format_optional_pct(snapshot.change_7d_pct),
+            _format_optional_pct(snapshot.change_30d_pct),
+            snapshot.source,
+        )
+    console.print(table)
+
+
+@cli.group("portfolio")
+def portfolio() -> None:
+    """Inspect positioned assets as one portfolio."""
+
+
+@portfolio.command("summary")
+@click.option("--all", "include_disabled", is_flag=True, help="Include disabled assets.")
+@click.pass_context
+def portfolio_summary(ctx: click.Context, include_disabled: bool) -> None:
+    """Show the portfolio-level summary for assets with positions."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    overview = repository.get_portfolio_overview(enabled_only=not include_disabled)
+    if not overview.positions:
+        console.print("[yellow]No positioned assets found.[/yellow]")
+        return
+    _render_portfolio_summary(overview)
+
+
+@portfolio.command("positions")
+@click.option("--all", "include_disabled", is_flag=True, help="Include disabled assets.")
+@click.pass_context
+def portfolio_positions(ctx: click.Context, include_disabled: bool) -> None:
+    """List positioned assets with latest market values and PnL."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    overview = repository.get_portfolio_overview(enabled_only=not include_disabled)
+    if not overview.positions:
+        console.print("[yellow]No positioned assets found.[/yellow]")
+        return
+    _render_portfolio_positions(overview)
+
+
+@cli.command("run-once")
+@click.option("--code", default=None, help="Run only for a specific asset code.")
+@click.pass_context
+def run_once(ctx: click.Context, code: Optional[str]) -> None:
+    """Fetch data, analyze, and persist one monitoring run."""
+    _, orchestrator = build_app(ctx.obj["config_path"])
+    summary = orchestrator.run_once(asset_code=code)
+
+    if summary.total_assets == 0:
+        console.print("[yellow]No enabled assets found for this run.[/yellow]")
+        return
+
+    table = Table(title=f"Sora Run {summary.run_id}")
+    table.add_column("Asset")
+    table.add_column("Trend")
+    table.add_column("Score")
+    table.add_column("Daily %")
+    table.add_column("Since Entry %")
+    table.add_column("Unrealized PnL")
+    table.add_column("PnL %")
+    table.add_column("Summary")
+    for item in summary.successes:
+        table.add_row(
+            item.asset.code,
+            item.trend,
+            f"{item.score:.1f}",
+            f"{item.snapshot.daily_change_pct:.2f}",
+            _format_since_entry_pct(item.asset, item.snapshot.current_value),
+            _format_unrealized_pnl_amount(item.asset, item.snapshot.current_value),
+            _format_unrealized_pnl_pct(item.asset, item.snapshot.current_value),
+            item.summary,
+        )
+    console.print(table)
+
+    if summary.failures:
+        console.print("[yellow]Failures:[/yellow]")
+        console.print_json(json.dumps(summary.failures, ensure_ascii=False))
+
+    console.print(
+        f"[bold green]Completed[/bold green] "
+        f"{summary.successful_assets}/{summary.processed_assets} assets succeeded"
+    )
+    if summary.alert_events:
+        console.print(f"[cyan]Triggered alerts:[/cyan] {len(summary.alert_events)}")
+    if summary.notification_events:
+        console.print(f"[cyan]Queued notifications:[/cyan] {len(summary.notification_events)}")
+
+
+@cli.group("runs")
+def runs() -> None:
+    """Inspect monitoring run status and history."""
+
+
+@runs.command("status")
+@click.pass_context
+def runs_status(ctx: click.Context) -> None:
+    """Show active run and latest completed run."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    running_run = repository.get_running_run()
+    latest_finished_run = repository.get_latest_finished_run()
+
+    if running_run is None and latest_finished_run is None:
+        console.print("[yellow]No monitoring runs found.[/yellow]")
+        return
+
+    if running_run is not None:
+        console.print("[bold cyan]Active Run[/bold cyan]")
+        _render_run_record(running_run)
+
+    if latest_finished_run is not None:
+        if running_run is not None:
+            console.print()
+        console.print("[bold cyan]Latest Finished Run[/bold cyan]")
+        _render_run_record(latest_finished_run)
+
+
+@runs.command("list")
+@click.option("--limit", default=10, show_default=True, type=int)
+@click.pass_context
+def runs_list(ctx: click.Context, limit: int) -> None:
+    """List recent monitoring runs."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    records = repository.list_runs(limit=limit)
+    if not records:
+        console.print("[yellow]No monitoring runs found.[/yellow]")
+        return
+
+    table = Table(title="Sora Runs")
+    table.add_column("Run ID")
+    table.add_column("Status")
+    table.add_column("Started At")
+    table.add_column("Duration")
+    table.add_column("Processed")
+    table.add_column("Success")
+    table.add_column("Failed")
+    for run in records:
+        table.add_row(
+            run.run_id,
+            run.status,
+            _format_run_datetime(run.started_at),
+            _format_run_duration(run),
+            str(run.processed_assets),
+            str(run.successful_assets),
+            str(run.failed_assets),
+        )
+    console.print(table)
+
+
+@cli.group("notifications")
+def notifications() -> None:
+    """Inspect and dispatch queued notifications."""
+
+
+@notifications.command("send-pending")
+@click.option("--limit", default=100, show_default=True, type=int)
+@click.pass_context
+def notifications_send_pending(ctx: click.Context, limit: int) -> None:
+    """Send pending notifications through configured notifiers."""
+    _, dispatcher = build_notification_dispatcher(ctx.obj["config_path"])
+    summary = dispatcher.dispatch_pending(limit=limit)
+    console.print(
+        "[bold green]Notification dispatch completed[/bold green] "
+        f"requested={summary.requested} sent={summary.sent} failed={summary.failed}"
+    )
+
+
+@notifications.command("list")
+@click.option("--code", default=None, help="Optional asset code filter.")
+@click.option(
+    "--status",
+    "statuses",
+    multiple=True,
+    type=click.Choice([status.value for status in NotificationStatus]),
+    help="Filter by notification status. Repeat for multiple values.",
+)
+@click.option("--limit", default=20, show_default=True, type=int)
+@click.pass_context
+def notifications_list(
+    ctx: click.Context,
+    code: str | None,
+    statuses: tuple[str, ...],
+    limit: int,
+) -> None:
+    """List notification history."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    resolved_statuses = (
+        tuple(NotificationStatus(status) for status in statuses)
+        if statuses
+        else tuple(NotificationStatus)
+    )
+    records = repository.list_notification_records(
+        asset_code=code.strip() if code else None,
+        statuses=resolved_statuses,
+        limit=limit,
+    )
+    if not records:
+        console.print("[yellow]No notification events found.[/yellow]")
+        return
+
+    table = Table(title="Sora Notifications")
+    table.add_column("ID")
+    table.add_column("Asset")
+    table.add_column("Channel")
+    table.add_column("Status")
+    table.add_column("Attempts")
+    table.add_column("Created At")
+    table.add_column("Sent At")
+    table.add_column("Error")
+    for record in records:
+        table.add_row(
+            str(record.notification_id),
+            record.asset_code or "-",
+            record.channel,
+            record.status.value,
+            str(record.attempt_count),
+            _format_run_datetime(record.created_at),
+            _format_run_datetime(record.sent_at),
+            record.error_message or "-",
+        )
+    console.print(table)
+
+
+@cli.group("alerts")
+def alerts() -> None:
+    """Inspect alert history."""
+
+
+@alerts.command("list")
+@click.option("--code", default=None, help="Optional asset code filter.")
+@click.option("--limit", default=20, show_default=True, type=int)
+@click.pass_context
+def alerts_list(ctx: click.Context, code: str | None, limit: int) -> None:
+    """List alert events."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    events = repository.list_alert_events(
+        asset_code=code.strip() if code else None,
+        limit=limit,
+    )
+    if not events:
+        console.print("[yellow]No alert events found.[/yellow]")
+        return
+
+    table = Table(title="Sora Alerts")
+    table.add_column("ID")
+    table.add_column("Created At")
+    table.add_column("Scope")
+    table.add_column("Asset")
+    table.add_column("Metric")
+    table.add_column("Direction")
+    table.add_column("Threshold")
+    table.add_column("Value")
+    table.add_column("Run ID")
+    for event in events:
+        table.add_row(
+            str(event.event_id or ""),
+            _format_run_datetime(event.created_at),
+            event.scope.value,
+            event.asset_code,
+            event.metric.value,
+            event.direction.value,
+            f"{event.threshold:.2f}",
+            f"{event.metric_value:.2f}",
+            event.run_id,
+        )
+    console.print(table)
+
+
+@cli.group("reports")
+def reports() -> None:
+    """Export simple asset reports."""
+
+
+@reports.command("asset")
+@click.option("--code", required=True)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["markdown", "json"]),
+    default="markdown",
+    show_default=True,
+)
+@click.option("--alerts-limit", default=5, show_default=True, type=int)
+@click.option("--notifications-limit", default=5, show_default=True, type=int)
+@click.pass_context
+def reports_asset(
+    ctx: click.Context,
+    code: str,
+    output_format: str,
+    alerts_limit: int,
+    notifications_limit: int,
+) -> None:
+    """Export a latest asset report in markdown or json."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    overview = repository.get_asset_overview(code.strip())
+    if overview is None:
+        raise click.ClickException(f"Asset not found: {code.strip()}")
+
+    alerts = repository.list_alert_events(asset_code=code.strip(), limit=alerts_limit)
+    notifications = repository.list_notification_records(
+        asset_code=code.strip(),
+        limit=notifications_limit,
+    )
+    if output_format == "json":
+        payload = _build_asset_report_payload(overview, alerts, notifications)
+        console.print_json(json.dumps(payload, ensure_ascii=False))
+        return
+
+    console.print(_build_asset_report_markdown(overview, alerts, notifications))
+
+
+@reports.command("portfolio")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["markdown", "json"]),
+    default="markdown",
+    show_default=True,
+)
+@click.option("--all", "include_disabled", is_flag=True, help="Include disabled assets.")
+@click.pass_context
+def reports_portfolio(
+    ctx: click.Context,
+    output_format: str,
+    include_disabled: bool,
+) -> None:
+    """Export a latest portfolio report in markdown or json."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    overview = repository.get_portfolio_overview(enabled_only=not include_disabled)
+    if not overview.positions:
+        raise click.ClickException("No positioned assets found.")
+
+    if output_format == "json":
+        payload = _build_portfolio_report_payload(overview)
+        console.print_json(json.dumps(payload, ensure_ascii=False))
+        return
+
+    console.print(_build_portfolio_report_markdown(overview))
+
+
+@cli.group("alert-rule")
+def alert_rule() -> None:
+    """Manage alert rules."""
+
+
+@alert_rule.command("add")
+@click.option(
+    "--scope",
+    "scope",
+    type=click.Choice([scope.value for scope in AlertScope]),
+    default=AlertScope.ASSET.value,
+    show_default=True,
+)
+@click.option("--asset-code", default=None, help="Optional asset code. Omit to apply to all assets.")
+@click.option(
+    "--metric",
+    type=click.Choice([metric.value for metric in AlertMetric]),
+    required=True,
+)
+@click.option(
+    "--direction",
+    type=click.Choice([direction.value for direction in AlertDirection]),
+    required=True,
+)
+@click.option("--threshold", type=float, required=True)
+@click.option("--channel", "channels", multiple=True, help="Notification channel. Repeat for multiple.")
+@click.option("--enabled/--disabled", default=True, show_default=True)
+@click.pass_context
+def alert_rule_add(
+    ctx: click.Context,
+    scope: str,
+    asset_code: Optional[str],
+    metric: str,
+    direction: str,
+    threshold: float,
+    channels: tuple[str, ...],
+    enabled: bool,
+) -> None:
+    """Add an alert rule."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    resolved_scope = AlertScope(scope)
+    resolved_asset_code = asset_code.strip() if asset_code else None
+    if resolved_scope == AlertScope.PORTFOLIO and resolved_asset_code is not None:
+        raise click.ClickException("portfolio alert rules must not specify --asset-code")
+    rule = repository.add_alert_rule(
+        AlertRule(
+            scope=resolved_scope,
+            asset_code=resolved_asset_code,
+            metric=AlertMetric(metric),
+            direction=AlertDirection(direction),
+            threshold=threshold,
+            channels=list(channels),
+            enabled=enabled,
+        )
+    )
+    target = rule.asset_code or ("portfolio" if rule.scope == AlertScope.PORTFOLIO else "*")
+    console.print(
+        f"[green]Saved alert rule:[/green] #{rule.rule_id} {rule.scope.value}:{target} "
+        f"{rule.metric.value} {rule.direction.value} {rule.threshold:.2f}"
+    )
+
+
+@alert_rule.command("list")
+@click.option("--all", "include_disabled", is_flag=True, help="Include disabled rules.")
+@click.pass_context
+def alert_rule_list(ctx: click.Context, include_disabled: bool) -> None:
+    """List alert rules."""
+    repository, _ = build_app(ctx.obj["config_path"])
+    rules = repository.list_alert_rules(enabled_only=not include_disabled)
+    table = Table(title="Sora Alert Rules")
+    table.add_column("ID")
+    table.add_column("Scope")
+    table.add_column("Asset")
+    table.add_column("Metric")
+    table.add_column("Direction")
+    table.add_column("Threshold")
+    table.add_column("Channels")
+    table.add_column("Enabled")
+    for rule in rules:
+        table.add_row(
+            str(rule.rule_id or ""),
+            rule.scope.value,
+            rule.asset_code or ("portfolio" if rule.scope == AlertScope.PORTFOLIO else "*"),
+            rule.metric.value,
+            rule.direction.value,
+            f"{rule.threshold:.2f}",
+            ", ".join(rule.channels) or "-",
+            "yes" if rule.enabled else "no",
+        )
+    console.print(table)
+
 
 if __name__ == "__main__":
-    try:
-        cli()
-    except KeyboardInterrupt:
-        console.print("\n[yellow]⚠️ 用户中断操作[/yellow]")
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f"程序异常退出: {e}")
-        console.print(f"[bold red]💥 程序异常退出: {e}[/bold red]")
-        sys.exit(1)
+    cli()
