@@ -5,6 +5,7 @@ from src.sora.domain import (
     AlertEvent,
     AlertMetric,
     AlertRule,
+    AlertScope,
     AnalysisResult,
     Asset,
     AssetType,
@@ -118,8 +119,32 @@ def test_repository_adds_and_lists_alert_rules(tmp_path):
 
     assert created.rule_id is not None
     assert len(rules) == 1
+    assert rules[0].scope == AlertScope.ASSET
     assert rules[0].asset_code == "510300"
     assert rules[0].channels == ["feishu", "telegram"]
+
+
+def test_repository_adds_and_lists_portfolio_alert_rules(tmp_path):
+    repository = SQLiteRepository(str(tmp_path / "sora.db"))
+    repository.initialize()
+
+    created = repository.add_alert_rule(
+        AlertRule(
+            scope=AlertScope.PORTFOLIO,
+            metric=AlertMetric.PORTFOLIO_UNREALIZED_PNL_PCT,
+            direction=AlertDirection.BELOW,
+            threshold=-3.0,
+            channels=["feishu"],
+        )
+    )
+
+    rules = repository.list_alert_rules()
+
+    assert created.rule_id is not None
+    assert len(rules) == 1
+    assert rules[0].scope == AlertScope.PORTFOLIO
+    assert rules[0].asset_code is None
+    assert rules[0].metric == AlertMetric.PORTFOLIO_UNREALIZED_PNL_PCT
 
 
 def test_repository_stores_asset_baseline(tmp_path):
@@ -292,49 +317,102 @@ def test_repository_builds_portfolio_overview_from_positioned_assets(tmp_path):
     repository.upsert_asset(first_asset)
     repository.upsert_asset(second_asset)
 
-    run_id = repository.start_run(total_assets=2)
-    first_result = AnalysisResult(
-        run_id=run_id,
-        asset=first_asset,
-        snapshot=Snapshot(
+    first_run_id = repository.start_run(total_assets=2)
+    repository.save_result(
+        AnalysisResult(
+            run_id=first_run_id,
             asset=first_asset,
-            as_of=datetime(2025, 1, 2),
-            current_value=1.2,
-            previous_close=1.1,
-            daily_change_pct=9.09,
-            change_7d_pct=12.5,
-            change_30d_pct=18.0,
-            source="test",
-        ),
-        trend="bullish",
-        risk_level="low",
-        score=82.0,
-        summary="trend ok",
-        metrics={},
+            snapshot=Snapshot(
+                asset=first_asset,
+                as_of=datetime(2025, 1, 1),
+                current_value=1.4,
+                previous_close=1.3,
+                daily_change_pct=7.69,
+                change_7d_pct=9.0,
+                change_30d_pct=13.0,
+                source="test",
+            ),
+            trend="bullish",
+            risk_level="low",
+            score=88.0,
+            summary="trend strong",
+            metrics={},
+        )
     )
-    second_result = AnalysisResult(
-        run_id=run_id,
-        asset=second_asset,
-        snapshot=Snapshot(
+    repository.save_result(
+        AnalysisResult(
+            run_id=first_run_id,
             asset=second_asset,
-            as_of=datetime(2025, 1, 2),
-            current_value=0.9,
-            previous_close=1.0,
-            daily_change_pct=-10.0,
-            change_7d_pct=-8.0,
-            change_30d_pct=-12.0,
-            source="test",
-        ),
-        trend="bearish",
-        risk_level="medium",
-        score=34.0,
-        summary="trend weak",
-        metrics={},
+            snapshot=Snapshot(
+                asset=second_asset,
+                as_of=datetime(2025, 1, 1),
+                current_value=1.0,
+                previous_close=0.95,
+                daily_change_pct=5.26,
+                change_7d_pct=6.0,
+                change_30d_pct=10.0,
+                source="test",
+            ),
+            trend="bullish",
+            risk_level="low",
+            score=76.0,
+            summary="trend ok",
+            metrics={},
+        )
     )
-    repository.save_result(first_result)
-    repository.save_result(second_result)
     repository.finish_run(
-        run_id=run_id,
+        run_id=first_run_id,
+        processed_assets=2,
+        successful_assets=2,
+        failed_assets=0,
+        status="completed",
+    )
+
+    latest_run_id = repository.start_run(total_assets=2)
+    repository.save_result(
+        AnalysisResult(
+            run_id=latest_run_id,
+            asset=first_asset,
+            snapshot=Snapshot(
+                asset=first_asset,
+                as_of=datetime(2025, 1, 2),
+                current_value=1.2,
+                previous_close=1.1,
+                daily_change_pct=9.09,
+                change_7d_pct=12.5,
+                change_30d_pct=18.0,
+                source="test",
+            ),
+            trend="bullish",
+            risk_level="low",
+            score=82.0,
+            summary="trend ok",
+            metrics={},
+        )
+    )
+    repository.save_result(
+        AnalysisResult(
+            run_id=latest_run_id,
+            asset=second_asset,
+            snapshot=Snapshot(
+                asset=second_asset,
+                as_of=datetime(2025, 1, 2),
+                current_value=0.9,
+                previous_close=1.0,
+                daily_change_pct=-10.0,
+                change_7d_pct=-8.0,
+                change_30d_pct=-12.0,
+                source="test",
+            ),
+            trend="bearish",
+            risk_level="medium",
+            score=34.0,
+            summary="trend weak",
+            metrics={},
+        )
+    )
+    repository.finish_run(
+        run_id=latest_run_id,
         processed_assets=2,
         successful_assets=2,
         failed_assets=0,
@@ -356,3 +434,10 @@ def test_repository_builds_portfolio_overview_from_positioned_assets(tmp_path):
     assert overview.total_entry_value_amount == 100.0
     assert overview.total_since_entry_pnl_amount == 20.0
     assert overview.total_since_entry_pnl_pct == 20.0
+    assert round(overview.peak_market_value or 0.0, 2) == 190.0
+    assert round(overview.drawdown_amount or 0.0, 2) == -25.0
+    assert round(overview.drawdown_pct or 0.0, 2) == -13.16
+    assert round(overview.largest_position_weight_pct or 0.0, 2) == 72.73
+    assert round(overview.top3_position_weight_pct or 0.0, 2) == 100.0
+    assert len(overview.history) == 2
+    assert [point.market_value for point in overview.history] == [190.0, 165.0]

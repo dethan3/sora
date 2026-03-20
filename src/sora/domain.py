@@ -23,6 +23,15 @@ class AlertMetric(str, Enum):
     CHANGE_7D_PCT = "change_7d_pct"
     CHANGE_30D_PCT = "change_30d_pct"
     SCORE = "score"
+    PORTFOLIO_UNREALIZED_PNL_AMOUNT = "portfolio_unrealized_pnl_amount"
+    PORTFOLIO_UNREALIZED_PNL_PCT = "portfolio_unrealized_pnl_pct"
+    PORTFOLIO_DAILY_PNL_AMOUNT = "portfolio_daily_pnl_amount"
+    PORTFOLIO_SINCE_ENTRY_PNL_PCT = "portfolio_since_entry_pnl_pct"
+
+
+class AlertScope(str, Enum):
+    ASSET = "asset"
+    PORTFOLIO = "portfolio"
 
 
 class AlertDirection(str, Enum):
@@ -34,6 +43,21 @@ class NotificationStatus(str, Enum):
     PENDING = "pending"
     SENT = "sent"
     FAILED = "failed"
+
+
+ASSET_ALERT_METRICS = {
+    AlertMetric.DAILY_CHANGE_PCT,
+    AlertMetric.CHANGE_7D_PCT,
+    AlertMetric.CHANGE_30D_PCT,
+    AlertMetric.SCORE,
+}
+
+PORTFOLIO_ALERT_METRICS = {
+    AlertMetric.PORTFOLIO_UNREALIZED_PNL_AMOUNT,
+    AlertMetric.PORTFOLIO_UNREALIZED_PNL_PCT,
+    AlertMetric.PORTFOLIO_DAILY_PNL_AMOUNT,
+    AlertMetric.PORTFOLIO_SINCE_ENTRY_PNL_PCT,
+}
 
 
 @dataclass(slots=True)
@@ -137,14 +161,26 @@ class AlertRule:
     direction: AlertDirection
     threshold: float
     channels: list[str] = field(default_factory=list)
+    scope: AlertScope = AlertScope.ASSET
     asset_code: str | None = None
     enabled: bool = True
     created_at: datetime = field(default_factory=datetime.utcnow)
     rule_id: int | None = None
 
     def __post_init__(self) -> None:
+        if self.scope == AlertScope.PORTFOLIO and self.asset_code is not None:
+            raise ValueError("portfolio alert rules must not specify asset_code")
         if self.asset_code is not None:
             self.asset_code = self.asset_code.strip() or None
+        allowed_metrics = (
+            ASSET_ALERT_METRICS
+            if self.scope == AlertScope.ASSET
+            else PORTFOLIO_ALERT_METRICS
+        )
+        if self.metric not in allowed_metrics:
+            raise ValueError(
+                f"metric {self.metric.value} is not supported for {self.scope.value} alert rules"
+            )
         normalized_channels: list[str] = []
         seen_channels: set[str] = set()
         for channel in self.channels:
@@ -167,6 +203,7 @@ class AlertEvent:
     threshold: float
     metric_value: float
     message: str
+    scope: AlertScope = AlertScope.ASSET
     correlation_key: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     event_id: int | None = None
@@ -320,6 +357,18 @@ class PortfolioPositionOverview:
             return None
         return (since_entry_pnl / entry_market_value) * 100
 
+    def weight_pct(self, portfolio_market_value: float) -> float | None:
+        market_value = self.market_value()
+        if market_value is None or portfolio_market_value <= 0:
+            return None
+        return (market_value / portfolio_market_value) * 100
+
+
+@dataclass(slots=True)
+class PortfolioHistoryPoint:
+    as_of: datetime
+    market_value: float
+
 
 @dataclass(slots=True)
 class PortfolioOverview:
@@ -335,3 +384,9 @@ class PortfolioOverview:
     total_entry_value_amount: float
     total_since_entry_pnl_amount: float
     total_since_entry_pnl_pct: float | None
+    peak_market_value: float | None = None
+    drawdown_amount: float | None = None
+    drawdown_pct: float | None = None
+    largest_position_weight_pct: float | None = None
+    top3_position_weight_pct: float | None = None
+    history: list[PortfolioHistoryPoint] = field(default_factory=list)

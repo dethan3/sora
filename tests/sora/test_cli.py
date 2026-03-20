@@ -11,6 +11,7 @@ from src.sora.domain import (
     AlertDirection,
     AlertEvent,
     AlertMetric,
+    AlertScope,
     AnalysisResult,
     Asset,
     AssetType,
@@ -129,10 +130,61 @@ def _seed_portfolio_history(repository: SQLiteRepository) -> str:
     repository.upsert_asset(first_asset)
     repository.upsert_asset(second_asset)
 
-    run_id = repository.start_run(total_assets=2)
+    first_run_id = repository.start_run(total_assets=2)
     repository.save_result(
         AnalysisResult(
-            run_id=run_id,
+            run_id=first_run_id,
+            asset=first_asset,
+            snapshot=Snapshot(
+                asset=first_asset,
+                as_of=datetime(2025, 1, 1),
+                current_value=1.4,
+                previous_close=1.3,
+                daily_change_pct=7.69,
+                change_7d_pct=9.0,
+                change_30d_pct=13.0,
+                source="test",
+            ),
+            trend="bullish",
+            risk_level="low",
+            score=88.0,
+            summary="trend strong",
+            metrics={},
+        )
+    )
+    repository.save_result(
+        AnalysisResult(
+            run_id=first_run_id,
+            asset=second_asset,
+            snapshot=Snapshot(
+                asset=second_asset,
+                as_of=datetime(2025, 1, 1),
+                current_value=1.0,
+                previous_close=0.95,
+                daily_change_pct=5.26,
+                change_7d_pct=6.0,
+                change_30d_pct=10.0,
+                source="test",
+            ),
+            trend="bullish",
+            risk_level="low",
+            score=76.0,
+            summary="trend ok",
+            metrics={},
+        )
+    )
+    repository.finish_run(
+        run_id=first_run_id,
+        processed_assets=2,
+        successful_assets=2,
+        failed_assets=0,
+        status="completed",
+    )
+
+    latest_run_id = repository.start_run(total_assets=2)
+    repository.save_result(
+        AnalysisResult(
+            run_id=latest_run_id,
             asset=first_asset,
             snapshot=Snapshot(
                 asset=first_asset,
@@ -153,7 +205,7 @@ def _seed_portfolio_history(repository: SQLiteRepository) -> str:
     )
     repository.save_result(
         AnalysisResult(
-            run_id=run_id,
+            run_id=latest_run_id,
             asset=second_asset,
             snapshot=Snapshot(
                 asset=second_asset,
@@ -173,13 +225,13 @@ def _seed_portfolio_history(repository: SQLiteRepository) -> str:
         )
     )
     repository.finish_run(
-        run_id=run_id,
+        run_id=latest_run_id,
         processed_assets=2,
         successful_assets=2,
         failed_assets=0,
         status="completed",
     )
-    return run_id
+    return latest_run_id
 
 
 def test_cli_init_db_creates_sqlite_file(tmp_path):
@@ -368,6 +420,46 @@ def test_cli_alert_rule_add_and_list(tmp_path):
     assert len(rules) == 1
     assert rules[0].metric.value == "daily_change_pct"
     assert rules[0].channels == ["feishu", "telegram"]
+
+
+def test_cli_alert_rule_add_and_list_supports_portfolio_scope(tmp_path):
+    config_path = tmp_path / "sora.yaml"
+    db_path = tmp_path / "cli.db"
+    _write_config(config_path, db_path)
+    runner = CliRunner()
+
+    add_result = runner.invoke(
+        cli,
+        [
+            "--config",
+            str(config_path),
+            "alert-rule",
+            "add",
+            "--scope",
+            "portfolio",
+            "--metric",
+            "portfolio_unrealized_pnl_pct",
+            "--direction",
+            "below",
+            "--threshold",
+            "-3",
+            "--channel",
+            "feishu",
+        ],
+    )
+    list_result = runner.invoke(cli, ["--config", str(config_path), "alert-rule", "list"])
+
+    assert add_result.exit_code == 0
+    assert "portfolio:portfolio" in add_result.output
+    assert list_result.exit_code == 0
+    assert "portfolio" in list_result.output
+    assert "portfolio_unrealized_pnl_pct" in list_result.output
+
+    repository = SQLiteRepository(str(db_path))
+    rules = repository.list_alert_rules()
+    assert len(rules) == 1
+    assert rules[0].scope == AlertScope.PORTFOLIO
+    assert rules[0].metric == AlertMetric.PORTFOLIO_UNREALIZED_PNL_PCT
 
 
 def test_cli_run_once_shows_since_entry_gain(monkeypatch):
@@ -642,6 +734,10 @@ def test_cli_portfolio_summary_positions_and_report_show_portfolio_view(tmp_path
     assert "Total Market Value: 165.00" in summary_result.output
     assert "Unrealized PnL: -5.00" in summary_result.output
     assert "Since Entry PnL: +20.00" in summary_result.output
+    assert "Peak Market Value: 190.00" in summary_result.output
+    assert "Drawdown: -25.00" in summary_result.output
+    assert "Largest Position %: +72.73" in summary_result.output
+    assert "Top 3 Concentration %: +100.00" in summary_result.output
 
     assert positions_result.exit_code == 0
     assert "Sora Portfolio Positions" in positions_result.output
@@ -649,10 +745,14 @@ def test_cli_portfolio_summary_positions_and_report_show_portfolio_view(tmp_path
     assert "159915" in positions_result.output
     assert "bullish" in positions_result.output
     assert "bearish" in positions_result.output
+    assert "Weight %" in positions_result.output
+    assert "+72.73" in positions_result.output
 
     assert report_result.exit_code == 0
     assert '"summary"' in report_result.output
     assert '"positions"' in report_result.output
+    assert '"history"' in report_result.output
+    assert '"peak_market_value": 190.0' in report_result.output
     assert '"510300"' in report_result.output
 
 

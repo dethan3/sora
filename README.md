@@ -16,8 +16,9 @@
 
 ## 当前状态
 
-- 阶段：Portfolio Monitoring Core Alpha
+- 阶段：Portfolio Monitoring Core Alpha Frozen
 - 分支：`dev`
+- 当前策略：冻结 core，进入真实使用验证期
 - 已有能力：
   - 初始化本地 SQLite 数据库
   - 管理监控标的
@@ -27,7 +28,7 @@
   - 基于 interval 的本地调度与运行锁
   - 查询当前运行状态和最近运行历史
   - 查询资产最新结果、历史快照、告警和通知
-  - 查询组合摘要和持仓列表
+  - 查询组合摘要、回撤、仓位分布和持仓列表
   - 导出资产简版报告（markdown / json）
   - 导出组合简版报告（markdown / json）
   - provider registry 与本地快照降级路径
@@ -36,9 +37,11 @@
   - 保存快照、分析结果、告警事件和待发送通知事件
 - 尚未包含：
   - 多数据源聚合
-  - 组合级规则与告警
+  - 组合级规则的抑制 / 节流 / 去重
   - 守护进程 / 服务化运行形态
   - skill / Bot / HTTP API / Web UI
+
+当前不再主动扩展新功能。接下来只根据真实运行反馈处理三类问题：运行 bug、阻碍使用的 CLI / 数据问题、以及阻断下一阶段的结构问题。
 
 ## 当前能力
 
@@ -122,11 +125,20 @@
 
 支持定义阈值规则：
 
+- scope：
+  - `asset`
+  - `portfolio`
 - 指标：
+  - `asset` scope:
   - `daily_change_pct`
   - `change_7d_pct`
   - `change_30d_pct`
   - `score`
+  - `portfolio` scope:
+  - `portfolio_unrealized_pnl_amount`
+  - `portfolio_unrealized_pnl_pct`
+  - `portfolio_daily_pnl_amount`
+  - `portfolio_since_entry_pnl_pct`
 - 方向：
   - `above`
   - `below`
@@ -137,6 +149,8 @@
 - 为每个 channel 生成一条 `notification_events`
 
 之后可通过 `notifications send-pending` 将事件发送到配置好的 webhook。当前已经具备通用 webhook adapter，但还没有 Telegram、企业微信等特定平台 adapter。
+
+其中组合级规则当前只在“全量 `run-once`”时评估；使用 `run-once --code ...` 进行局部运行时，会跳过组合规则，避免用局部刷新结果误判整个组合。
 
 ### 6. 数据源能力
 
@@ -183,12 +197,12 @@
 
 - 资产最新概览：最新快照、分析结果、最近一次运行
 - 资产快照历史
-- 组合摘要：总成本、总市值、浮盈亏、当日盈亏、入场以来盈亏
-- 持仓列表：逐资产查看当前值、趋势、分数、盈亏
+- 组合摘要：总成本、总市值、浮盈亏、当日盈亏、入场以来盈亏、峰值市值、当前回撤、最大仓位占比、前三仓位集中度
+- 持仓列表：逐资产查看当前值、趋势、分数、盈亏、权重占比
 - 告警历史
 - 通知历史
 - 资产简版报告导出
-- 组合简版报告导出
+- 组合简版报告导出（包含组合历史曲线）
 
 ## 项目结构
 
@@ -269,6 +283,7 @@ python main.py watchlist list
 
 ```bash
 python main.py alert-rule add --asset-code 510300 --metric daily_change_pct --direction above --threshold 1.5 --channel feishu
+python main.py alert-rule add --scope portfolio --metric portfolio_unrealized_pnl_pct --direction below --threshold -3 --channel feishu
 python main.py alert-rule list
 ```
 

@@ -58,7 +58,10 @@ class SoraOrchestrator:
                     for rule in rules
                     if rule.asset_code is None or rule.asset_code == asset.code
                 ]
-                result_alerts, result_notifications = self.alert_evaluator.evaluate(result, asset_rules)
+                result_alerts, result_notifications = self.alert_evaluator.evaluate_asset(
+                    result,
+                    asset_rules,
+                )
                 persisted_alerts, persisted_notifications = self.repository.save_run_artifacts(
                     result=result,
                     alert_events=result_alerts,
@@ -69,6 +72,22 @@ class SoraOrchestrator:
                 notification_events.extend(persisted_notifications)
             except Exception as exc:  # noqa: BLE001
                 failures.append({"code": asset.code, "error": str(exc)})
+
+        if asset_code is None and successes:
+            portfolio_overview = self.repository.get_portfolio_overview(enabled_only=True)
+            portfolio_alerts, portfolio_notifications = self.alert_evaluator.evaluate_portfolio(
+                run_id,
+                portfolio_overview,
+                rules,
+            )
+            persisted_portfolio_alerts, persisted_portfolio_notifications = (
+                self.repository.save_alert_artifacts(
+                    portfolio_alerts,
+                    portfolio_notifications,
+                )
+            )
+            alert_events.extend(persisted_portfolio_alerts)
+            notification_events.extend(persisted_portfolio_notifications)
 
         if failures and not successes:
             status = "failed"

@@ -19,6 +19,7 @@ from src.sora.domain import (
     AlertEvent,
     AlertMetric,
     AlertRule,
+    AlertScope,
     AnalysisRecord,
     Asset,
     AssetOverview,
@@ -27,6 +28,7 @@ from src.sora.domain import (
     NotificationRecord,
     NotificationStatus,
     PortfolioOverview,
+    PortfolioHistoryPoint,
     PortfolioPositionOverview,
     RunRecord,
     SnapshotRecord,
@@ -220,6 +222,12 @@ def _format_optional_signed_number(value: float | None, *, decimals: int = 2) ->
     return f"{value:+.{decimals}f}"
 
 
+def _normalize_float(value: float | None, *, decimals: int = 6) -> float | None:
+    if value is None:
+        return None
+    return round(value, decimals)
+
+
 def _serialize_asset(asset: Asset) -> dict[str, object]:
     return {
         "code": asset.code,
@@ -287,6 +295,7 @@ def _serialize_alert_event(event: AlertEvent) -> dict[str, object]:
     return {
         "event_id": event.event_id,
         "run_id": event.run_id,
+        "scope": event.scope.value,
         "asset_code": event.asset_code,
         "asset_name": event.asset_name,
         "rule_id": event.rule_id,
@@ -465,19 +474,30 @@ def _build_asset_report_markdown(
     return "\n".join(lines)
 
 
-def _serialize_portfolio_position(position: PortfolioPositionOverview) -> dict[str, object]:
+def _serialize_portfolio_position(
+    position: PortfolioPositionOverview,
+    portfolio_market_value: float,
+) -> dict[str, object]:
     return {
         "asset": _serialize_asset(position.asset),
         "latest_snapshot": _serialize_snapshot(position.snapshot),
         "latest_analysis": _serialize_analysis(position.analysis),
-        "current_value": position.current_value(),
-        "market_value": position.market_value(),
-        "unrealized_pnl_amount": position.unrealized_pnl_amount(),
-        "unrealized_pnl_pct": position.unrealized_pnl_pct(),
-        "daily_pnl_amount": position.daily_pnl_amount(),
-        "entry_value_amount": position.entry_market_value(),
-        "since_entry_pnl_amount": position.since_entry_pnl_amount(),
-        "since_entry_pnl_pct": position.since_entry_pnl_pct(),
+        "current_value": _normalize_float(position.current_value()),
+        "market_value": _normalize_float(position.market_value()),
+        "weight_pct": _normalize_float(position.weight_pct(portfolio_market_value)),
+        "unrealized_pnl_amount": _normalize_float(position.unrealized_pnl_amount()),
+        "unrealized_pnl_pct": _normalize_float(position.unrealized_pnl_pct()),
+        "daily_pnl_amount": _normalize_float(position.daily_pnl_amount()),
+        "entry_value_amount": _normalize_float(position.entry_market_value()),
+        "since_entry_pnl_amount": _normalize_float(position.since_entry_pnl_amount()),
+        "since_entry_pnl_pct": _normalize_float(position.since_entry_pnl_pct()),
+    }
+
+
+def _serialize_portfolio_history_point(point: PortfolioHistoryPoint) -> dict[str, object]:
+    return {
+        "as_of": point.as_of.isoformat(),
+        "market_value": _normalize_float(point.market_value),
     }
 
 
@@ -486,14 +506,19 @@ def _serialize_portfolio_overview(overview: PortfolioOverview) -> dict[str, obje
         "total_positioned_assets": overview.total_positioned_assets,
         "assets_with_market_data": overview.assets_with_market_data,
         "assets_with_entry_baseline": overview.assets_with_entry_baseline,
-        "total_cost_amount": overview.total_cost_amount,
-        "total_market_value": overview.total_market_value,
-        "total_unrealized_pnl_amount": overview.total_unrealized_pnl_amount,
-        "total_unrealized_pnl_pct": overview.total_unrealized_pnl_pct,
-        "total_daily_pnl_amount": overview.total_daily_pnl_amount,
-        "total_entry_value_amount": overview.total_entry_value_amount,
-        "total_since_entry_pnl_amount": overview.total_since_entry_pnl_amount,
-        "total_since_entry_pnl_pct": overview.total_since_entry_pnl_pct,
+        "total_cost_amount": _normalize_float(overview.total_cost_amount),
+        "total_market_value": _normalize_float(overview.total_market_value),
+        "total_unrealized_pnl_amount": _normalize_float(overview.total_unrealized_pnl_amount),
+        "total_unrealized_pnl_pct": _normalize_float(overview.total_unrealized_pnl_pct),
+        "total_daily_pnl_amount": _normalize_float(overview.total_daily_pnl_amount),
+        "total_entry_value_amount": _normalize_float(overview.total_entry_value_amount),
+        "total_since_entry_pnl_amount": _normalize_float(overview.total_since_entry_pnl_amount),
+        "total_since_entry_pnl_pct": _normalize_float(overview.total_since_entry_pnl_pct),
+        "peak_market_value": _normalize_float(overview.peak_market_value),
+        "drawdown_amount": _normalize_float(overview.drawdown_amount),
+        "drawdown_pct": _normalize_float(overview.drawdown_pct),
+        "largest_position_weight_pct": _normalize_float(overview.largest_position_weight_pct),
+        "top3_position_weight_pct": _normalize_float(overview.top3_position_weight_pct),
     }
 
 
@@ -515,9 +540,20 @@ def _render_portfolio_summary(overview: PortfolioOverview) -> None:
         f"Since Entry PnL: {_format_optional_signed_number(overview.total_since_entry_pnl_amount, decimals=2)}"
     )
     console.print(f"Since Entry %: {_format_optional_pct(overview.total_since_entry_pnl_pct)}")
+    console.print(f"Peak Market Value: {_format_optional_number(overview.peak_market_value, decimals=2)}")
+    console.print(
+        f"Drawdown: {_format_optional_signed_number(overview.drawdown_amount, decimals=2)}"
+    )
+    console.print(f"Drawdown %: {_format_optional_pct(overview.drawdown_pct)}")
+    console.print(
+        f"Largest Position %: {_format_optional_pct(overview.largest_position_weight_pct)}"
+    )
+    console.print(
+        f"Top 3 Concentration %: {_format_optional_pct(overview.top3_position_weight_pct)}"
+    )
 
 
-def _render_portfolio_positions(positions: list[PortfolioPositionOverview]) -> None:
+def _render_portfolio_positions(overview: PortfolioOverview) -> None:
     table = Table(title="Sora Portfolio Positions")
     table.add_column("Code")
     table.add_column("Name")
@@ -526,13 +562,14 @@ def _render_portfolio_positions(positions: list[PortfolioPositionOverview]) -> N
     table.add_column("Cost")
     table.add_column("Current")
     table.add_column("Market Value")
+    table.add_column("Weight %")
     table.add_column("PnL")
     table.add_column("PnL %")
     table.add_column("Daily PnL")
     table.add_column("Since Entry %")
     table.add_column("Trend")
     table.add_column("Score")
-    for position in positions:
+    for position in overview.positions:
         table.add_row(
             position.asset.code,
             position.asset.name,
@@ -541,6 +578,7 @@ def _render_portfolio_positions(positions: list[PortfolioPositionOverview]) -> N
             _format_position_cost_amount(position.asset),
             _format_optional_number(position.current_value(), decimals=4),
             _format_optional_number(position.market_value(), decimals=2),
+            _format_optional_pct(position.weight_pct(overview.total_market_value)),
             _format_optional_signed_number(position.unrealized_pnl_amount(), decimals=2),
             _format_optional_pct(position.unrealized_pnl_pct()),
             _format_optional_signed_number(position.daily_pnl_amount(), decimals=2),
@@ -559,8 +597,12 @@ def _build_portfolio_report_payload(overview: PortfolioOverview) -> dict[str, ob
     return {
         "summary": _serialize_portfolio_overview(overview),
         "positions": [
-            _serialize_portfolio_position(position)
+            _serialize_portfolio_position(position, overview.total_market_value)
             for position in overview.positions
+        ],
+        "history": [
+            _serialize_portfolio_history_point(point)
+            for point in overview.history
         ],
     }
 
@@ -581,6 +623,11 @@ def _build_portfolio_report_markdown(overview: PortfolioOverview) -> str:
         f"- Daily PnL: {_format_optional_signed_number(overview.total_daily_pnl_amount, decimals=2)}",
         f"- Since Entry PnL: {_format_optional_signed_number(overview.total_since_entry_pnl_amount, decimals=2)}",
         f"- Since Entry %: {_format_optional_pct(overview.total_since_entry_pnl_pct)}",
+        f"- Peak Market Value: {_format_optional_number(overview.peak_market_value, decimals=2)}",
+        f"- Drawdown: {_format_optional_signed_number(overview.drawdown_amount, decimals=2)}",
+        f"- Drawdown %: {_format_optional_pct(overview.drawdown_pct)}",
+        f"- Largest Position %: {_format_optional_pct(overview.largest_position_weight_pct)}",
+        f"- Top 3 Concentration %: {_format_optional_pct(overview.top3_position_weight_pct)}",
         "",
         "## Positions",
         "",
@@ -600,6 +647,7 @@ def _build_portfolio_report_markdown(overview: PortfolioOverview) -> str:
                 f"- Cost: {_format_position_cost_amount(position.asset)}",
                 f"- Current: {_format_optional_number(position.current_value(), decimals=4)}",
                 f"- Market Value: {_format_optional_number(position.market_value(), decimals=2)}",
+                f"- Weight %: {_format_optional_pct(position.weight_pct(overview.total_market_value))}",
                 f"- Unrealized PnL: {_format_optional_signed_number(position.unrealized_pnl_amount(), decimals=2)}",
                 f"- Unrealized PnL %: {_format_optional_pct(position.unrealized_pnl_pct())}",
                 f"- Daily PnL: {_format_optional_signed_number(position.daily_pnl_amount(), decimals=2)}",
@@ -613,6 +661,14 @@ def _build_portfolio_report_markdown(overview: PortfolioOverview) -> str:
                 "",
             ]
         )
+    lines.extend(["## History", ""])
+    if overview.history:
+        for point in overview.history[-10:]:
+            lines.append(
+                f"- {point.as_of.strftime('%Y-%m-%d %H:%M:%S')} value={point.market_value:.2f}"
+            )
+    else:
+        lines.append("- None")
     return "\n".join(lines)
 
 
@@ -888,11 +944,11 @@ def portfolio_summary(ctx: click.Context, include_disabled: bool) -> None:
 def portfolio_positions(ctx: click.Context, include_disabled: bool) -> None:
     """List positioned assets with latest market values and PnL."""
     repository, _ = build_app(ctx.obj["config_path"])
-    positions = repository.list_portfolio_positions(enabled_only=not include_disabled)
-    if not positions:
+    overview = repository.get_portfolio_overview(enabled_only=not include_disabled)
+    if not overview.positions:
         console.print("[yellow]No positioned assets found.[/yellow]")
         return
-    _render_portfolio_positions(positions)
+    _render_portfolio_positions(overview)
 
 
 @cli.command("run-once")
@@ -1100,6 +1156,7 @@ def alerts_list(ctx: click.Context, code: str | None, limit: int) -> None:
     table = Table(title="Sora Alerts")
     table.add_column("ID")
     table.add_column("Created At")
+    table.add_column("Scope")
     table.add_column("Asset")
     table.add_column("Metric")
     table.add_column("Direction")
@@ -1110,6 +1167,7 @@ def alerts_list(ctx: click.Context, code: str | None, limit: int) -> None:
         table.add_row(
             str(event.event_id or ""),
             _format_run_datetime(event.created_at),
+            event.scope.value,
             event.asset_code,
             event.metric.value,
             event.direction.value,
@@ -1198,6 +1256,13 @@ def alert_rule() -> None:
 
 
 @alert_rule.command("add")
+@click.option(
+    "--scope",
+    "scope",
+    type=click.Choice([scope.value for scope in AlertScope]),
+    default=AlertScope.ASSET.value,
+    show_default=True,
+)
 @click.option("--asset-code", default=None, help="Optional asset code. Omit to apply to all assets.")
 @click.option(
     "--metric",
@@ -1215,6 +1280,7 @@ def alert_rule() -> None:
 @click.pass_context
 def alert_rule_add(
     ctx: click.Context,
+    scope: str,
     asset_code: Optional[str],
     metric: str,
     direction: str,
@@ -1224,9 +1290,14 @@ def alert_rule_add(
 ) -> None:
     """Add an alert rule."""
     repository, _ = build_app(ctx.obj["config_path"])
+    resolved_scope = AlertScope(scope)
+    resolved_asset_code = asset_code.strip() if asset_code else None
+    if resolved_scope == AlertScope.PORTFOLIO and resolved_asset_code is not None:
+        raise click.ClickException("portfolio alert rules must not specify --asset-code")
     rule = repository.add_alert_rule(
         AlertRule(
-            asset_code=asset_code.strip() if asset_code else None,
+            scope=resolved_scope,
+            asset_code=resolved_asset_code,
             metric=AlertMetric(metric),
             direction=AlertDirection(direction),
             threshold=threshold,
@@ -1234,9 +1305,9 @@ def alert_rule_add(
             enabled=enabled,
         )
     )
-    target = rule.asset_code or "*"
+    target = rule.asset_code or ("portfolio" if rule.scope == AlertScope.PORTFOLIO else "*")
     console.print(
-        f"[green]Saved alert rule:[/green] #{rule.rule_id} {target} "
+        f"[green]Saved alert rule:[/green] #{rule.rule_id} {rule.scope.value}:{target} "
         f"{rule.metric.value} {rule.direction.value} {rule.threshold:.2f}"
     )
 
@@ -1250,6 +1321,7 @@ def alert_rule_list(ctx: click.Context, include_disabled: bool) -> None:
     rules = repository.list_alert_rules(enabled_only=not include_disabled)
     table = Table(title="Sora Alert Rules")
     table.add_column("ID")
+    table.add_column("Scope")
     table.add_column("Asset")
     table.add_column("Metric")
     table.add_column("Direction")
@@ -1259,7 +1331,8 @@ def alert_rule_list(ctx: click.Context, include_disabled: bool) -> None:
     for rule in rules:
         table.add_row(
             str(rule.rule_id or ""),
-            rule.asset_code or "*",
+            rule.scope.value,
+            rule.asset_code or ("portfolio" if rule.scope == AlertScope.PORTFOLIO else "*"),
             rule.metric.value,
             rule.direction.value,
             f"{rule.threshold:.2f}",

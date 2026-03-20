@@ -3,7 +3,7 @@
 from .analysis import AnalysisEngine
 from .alerts import AlertEvaluator
 from .config import NotificationsConfig
-from .domain import Asset, AssetType, Market, RunRecord
+from .domain import AlertScope, Asset, AssetType, Market, RunRecord
 from .notifications import NotificationDispatchSummary, NotificationDispatcher
 from .orchestrator import RunAlreadyInProgressError, SoraOrchestrator
 from .notifiers import WebhookNotifier
@@ -18,6 +18,7 @@ from .scheduler import IntervalScheduler, SchedulerState
 __all__ = [
     "AnalysisEngine",
     "AlertEvaluator",
+    "AlertScope",
     "Asset",
     "AssetType",
     "IntervalScheduler",

@@ -15,6 +15,7 @@ from src.sora.domain import (
     AlertEvent,
     AlertMetric,
     AlertRule,
+    AlertScope,
     AnalysisRecord,
     AnalysisResult,
     Asset,
@@ -24,6 +25,7 @@ from src.sora.domain import (
     NotificationEvent,
     NotificationRecord,
     NotificationStatus,
+    PortfolioHistoryPoint,
     PortfolioOverview,
     PortfolioPositionOverview,
     RunRecord,
@@ -105,6 +107,7 @@ class SQLiteRepository:
 
                 CREATE TABLE IF NOT EXISTS alert_rules (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    scope TEXT NOT NULL DEFAULT 'asset',
                     asset_code TEXT,
                     metric TEXT NOT NULL,
                     direction TEXT NOT NULL,
@@ -117,6 +120,7 @@ class SQLiteRepository:
                 CREATE TABLE IF NOT EXISTS alert_events (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     run_id TEXT NOT NULL,
+                    scope TEXT NOT NULL DEFAULT 'asset',
                     asset_code TEXT NOT NULL,
                     asset_name TEXT NOT NULL,
                     rule_id INTEGER,
@@ -149,6 +153,18 @@ class SQLiteRepository:
                 CREATE INDEX IF NOT EXISTS idx_alert_events_asset_code ON alert_events(asset_code);
                 CREATE INDEX IF NOT EXISTS idx_notification_events_alert_event_id ON notification_events(alert_event_id);
                 """
+            )
+            self._ensure_column(
+                conn,
+                table_name="alert_rules",
+                column_name="scope",
+                ddl="ALTER TABLE alert_rules ADD COLUMN scope TEXT NOT NULL DEFAULT 'asset'",
+            )
+            self._ensure_column(
+                conn,
+                table_name="alert_events",
+                column_name="scope",
+                ddl="ALTER TABLE alert_events ADD COLUMN scope TEXT NOT NULL DEFAULT 'asset'",
             )
             self._ensure_column(
                 conn,
@@ -343,11 +359,12 @@ class SQLiteRepository:
             cursor = conn.execute(
                 """
                 INSERT INTO alert_rules (
-                    asset_code, metric, direction, threshold, channels_json, enabled, created_at
+                    scope, asset_code, metric, direction, threshold, channels_json, enabled, created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
+                    rule.scope.value,
                     rule.asset_code,
                     rule.metric.value,
                     rule.direction.value,
@@ -359,6 +376,7 @@ class SQLiteRepository:
             )
             return AlertRule(
                 rule_id=int(cursor.lastrowid),
+                scope=rule.scope,
                 asset_code=rule.asset_code,
                 metric=rule.metric,
                 direction=rule.direction,
@@ -375,7 +393,7 @@ class SQLiteRepository:
         asset_code: str | None = None,
     ) -> list[AlertRule]:
         query = """
-            SELECT id, asset_code, metric, direction, threshold, channels_json, enabled, created_at
+            SELECT id, scope, asset_code, metric, direction, threshold, channels_json, enabled, created_at
             FROM alert_rules
         """
         conditions: list[str] = []
@@ -398,6 +416,7 @@ class SQLiteRepository:
             rules.append(
                 AlertRule(
                     rule_id=row["id"],
+                    scope=AlertScope(row["scope"]) if row["scope"] is not None else AlertScope.ASSET,
                     asset_code=row["asset_code"],
                     metric=AlertMetric(row["metric"]),
                     direction=AlertDirection(row["direction"]),
@@ -583,8 +602,13 @@ class SQLiteRepository:
         self,
         *,
         enabled_only: bool = True,
+        history_limit: int = 90,
     ) -> PortfolioOverview:
         positions = self.list_portfolio_positions(enabled_only=enabled_only)
+        history = self.list_portfolio_history(
+            enabled_only=enabled_only,
+            limit=history_limit,
+        )
         priced_positions = [
             position for position in positions if position.market_value() is not None
         ]
@@ -626,6 +650,27 @@ class SQLiteRepository:
             if total_entry_value_amount > 0
             else None
         )
+        weights = [
+            position.weight_pct(total_market_value)
+            for position in priced_positions
+            if position.weight_pct(total_market_value) is not None
+        ]
+        largest_position_weight_pct = max(weights) if weights else None
+        top3_position_weight_pct = (
+            sum(sorted(weights, reverse=True)[:3])
+            if weights
+            else None
+        )
+        peak_market_value = (
+            max(point.market_value for point in history)
+            if history
+            else None
+        )
+        drawdown_amount = None
+        drawdown_pct = None
+        if peak_market_value is not None and peak_market_value > 0:
+            drawdown_amount = total_market_value - peak_market_value
+            drawdown_pct = (drawdown_amount / peak_market_value) * 100
         return PortfolioOverview(
             positions=positions,
             total_positioned_assets=len(positions),
@@ -639,7 +684,82 @@ class SQLiteRepository:
             total_entry_value_amount=total_entry_value_amount,
             total_since_entry_pnl_amount=total_since_entry_pnl_amount,
             total_since_entry_pnl_pct=total_since_entry_pnl_pct,
+            peak_market_value=peak_market_value,
+            drawdown_amount=drawdown_amount,
+            drawdown_pct=drawdown_pct,
+            largest_position_weight_pct=largest_position_weight_pct,
+            top3_position_weight_pct=top3_position_weight_pct,
+            history=history,
         )
+
+    def list_portfolio_history(
+        self,
+        *,
+        enabled_only: bool = True,
+        limit: int = 30,
+    ) -> list[PortfolioHistoryPoint]:
+        if limit <= 0:
+            raise ValueError("limit must be greater than 0")
+        positions = self.list_portfolio_positions(enabled_only=enabled_only)
+        if not positions:
+            return []
+
+        snapshots_by_asset: dict[str, list[SnapshotRecord]] = {}
+        all_timestamps: set[datetime] = set()
+        for position in positions:
+            snapshots = list(
+                reversed(
+                    self.list_snapshots(
+                        asset_code=position.asset.code,
+                        limit=max(limit, 90),
+                    )
+                )
+            )
+            if not snapshots:
+                continue
+            snapshots_by_asset[position.asset.code] = snapshots
+            all_timestamps.update(snapshot.as_of for snapshot in snapshots)
+
+        if not snapshots_by_asset:
+            return []
+
+        ordered_timestamps = sorted(all_timestamps)
+        latest_values: dict[str, float] = {}
+        snapshot_index_by_asset = {code: 0 for code in snapshots_by_asset}
+        history: list[PortfolioHistoryPoint] = []
+
+        for timestamp in ordered_timestamps:
+            for code, snapshots in snapshots_by_asset.items():
+                pointer = snapshot_index_by_asset[code]
+                while pointer < len(snapshots) and snapshots[pointer].as_of <= timestamp:
+                    latest_values[code] = snapshots[pointer].current_value
+                    pointer += 1
+                snapshot_index_by_asset[code] = pointer
+
+            if len(latest_values) != len(snapshots_by_asset):
+                continue
+
+            total_market_value = 0.0
+            for position in positions:
+                current_value = latest_values.get(position.asset.code)
+                if current_value is None:
+                    total_market_value = 0.0
+                    break
+                market_value = position.asset.position_market_value(current_value)
+                if market_value is None:
+                    total_market_value = 0.0
+                    break
+                total_market_value += market_value
+            if total_market_value <= 0:
+                continue
+            history.append(
+                PortfolioHistoryPoint(
+                    as_of=timestamp,
+                    market_value=total_market_value,
+                )
+            )
+
+        return history[-limit:]
 
     def get_latest_snapshot(self, asset_code: str) -> SnapshotRecord | None:
         snapshots = self.list_snapshots(asset_code=asset_code, limit=1)
@@ -703,6 +823,7 @@ class SQLiteRepository:
         self,
         *,
         asset_code: str | None = None,
+        scope: AlertScope | None = None,
         limit: int = 20,
     ) -> list[AlertEvent]:
         if limit <= 0:
@@ -712,6 +833,7 @@ class SQLiteRepository:
             SELECT
                 id,
                 run_id,
+                scope,
                 asset_code,
                 asset_name,
                 rule_id,
@@ -724,9 +846,15 @@ class SQLiteRepository:
             FROM alert_events
         """
         params: list[object] = []
+        conditions: list[str] = []
         if asset_code:
-            query += " WHERE asset_code = ?"
+            conditions.append("asset_code = ?")
             params.append(asset_code)
+        if scope is not None:
+            conditions.append("scope = ?")
+            params.append(scope.value)
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
         query += " ORDER BY id DESC LIMIT ?"
         params.append(limit)
 
@@ -897,47 +1025,15 @@ class SQLiteRepository:
         with self.connect() as conn:
             self._insert_snapshot(conn, result.run_id, result.snapshot)
             self._insert_analysis(conn, result)
+            return self._persist_alert_artifacts(conn, alert_events, notification_events)
 
-            persisted_alert_events: list[AlertEvent] = []
-            for event in alert_events:
-                persisted_alert_events.append(self._insert_alert_event(conn, event))
-
-            alert_id_by_correlation_key = {
-                event.correlation_key: event.event_id
-                for event in persisted_alert_events
-                if event.correlation_key and event.event_id is not None
-            }
-            default_alert_id = (
-                persisted_alert_events[0].event_id
-                if len(persisted_alert_events) == 1
-                else None
-            )
-            persisted_notification_events: list[NotificationEvent] = []
-
-            for notification in notification_events:
-                resolved_alert_event_id = notification.alert_event_id
-                if resolved_alert_event_id is None and notification.correlation_key:
-                    resolved_alert_event_id = alert_id_by_correlation_key.get(
-                        notification.correlation_key
-                    )
-                if resolved_alert_event_id is None:
-                    resolved_alert_event_id = default_alert_id
-                persisted_notification_events.append(
-                    self._insert_notification_event(
-                        conn,
-                        NotificationEvent(
-                            channel=notification.channel,
-                            payload=dict(notification.payload),
-                            status=notification.status,
-                            alert_event_id=resolved_alert_event_id,
-                            correlation_key=notification.correlation_key,
-                            created_at=notification.created_at,
-                            notification_id=notification.notification_id,
-                        ),
-                    )
-                )
-
-            return persisted_alert_events, persisted_notification_events
+    def save_alert_artifacts(
+        self,
+        alert_events: list[AlertEvent],
+        notification_events: list[NotificationEvent],
+    ) -> tuple[list[AlertEvent], list[NotificationEvent]]:
+        with self.connect() as conn:
+            return self._persist_alert_artifacts(conn, alert_events, notification_events)
 
     def _insert_snapshot(self, conn: sqlite3.Connection, run_id: str, snapshot: Snapshot) -> None:
         conn.execute(
@@ -991,13 +1087,14 @@ class SQLiteRepository:
         cursor = conn.execute(
             """
             INSERT INTO alert_events (
-                run_id, asset_code, asset_name, rule_id, metric, direction,
+                run_id, scope, asset_code, asset_name, rule_id, metric, direction,
                 threshold, metric_value, message, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 event.run_id,
+                event.scope.value,
                 event.asset_code,
                 event.asset_name,
                 event.rule_id,
@@ -1012,6 +1109,7 @@ class SQLiteRepository:
         return AlertEvent(
             event_id=int(cursor.lastrowid),
             run_id=event.run_id,
+            scope=event.scope,
             asset_code=event.asset_code,
             asset_name=event.asset_name,
             rule_id=event.rule_id,
@@ -1059,6 +1157,52 @@ class SQLiteRepository:
             error_message=event.error_message,
             attempt_count=event.attempt_count,
         )
+
+    def _persist_alert_artifacts(
+        self,
+        conn: sqlite3.Connection,
+        alert_events: list[AlertEvent],
+        notification_events: list[NotificationEvent],
+    ) -> tuple[list[AlertEvent], list[NotificationEvent]]:
+        persisted_alert_events: list[AlertEvent] = []
+        for event in alert_events:
+            persisted_alert_events.append(self._insert_alert_event(conn, event))
+
+        alert_id_by_correlation_key = {
+            event.correlation_key: event.event_id
+            for event in persisted_alert_events
+            if event.correlation_key and event.event_id is not None
+        }
+        default_alert_id = (
+            persisted_alert_events[0].event_id
+            if len(persisted_alert_events) == 1
+            else None
+        )
+        persisted_notification_events: list[NotificationEvent] = []
+
+        for notification in notification_events:
+            resolved_alert_event_id = notification.alert_event_id
+            if resolved_alert_event_id is None and notification.correlation_key:
+                resolved_alert_event_id = alert_id_by_correlation_key.get(
+                    notification.correlation_key
+                )
+            if resolved_alert_event_id is None:
+                resolved_alert_event_id = default_alert_id
+            persisted_notification_events.append(
+                self._insert_notification_event(
+                    conn,
+                    NotificationEvent(
+                        channel=notification.channel,
+                        payload=dict(notification.payload),
+                        status=notification.status,
+                        alert_event_id=resolved_alert_event_id,
+                        correlation_key=notification.correlation_key,
+                        created_at=notification.created_at,
+                        notification_id=notification.notification_id,
+                    ),
+                )
+            )
+        return persisted_alert_events, persisted_notification_events
 
     def _ensure_column(
         self,
@@ -1155,6 +1299,7 @@ class SQLiteRepository:
         return AlertEvent(
             event_id=int(row["id"]),
             run_id=str(row["run_id"]),
+            scope=AlertScope(row["scope"]) if row["scope"] is not None else AlertScope.ASSET,
             asset_code=str(row["asset_code"]),
             asset_name=str(row["asset_name"]),
             rule_id=int(row["rule_id"]) if row["rule_id"] is not None else None,

@@ -3,7 +3,17 @@ from datetime import datetime, timedelta
 import pytest
 
 from src.sora.analysis import AnalysisEngine
-from src.sora.domain import AlertDirection, AlertMetric, AlertRule, Asset, AssetType, Market, MarketSeries, PricePoint
+from src.sora.domain import (
+    AlertDirection,
+    AlertMetric,
+    AlertRule,
+    AlertScope,
+    Asset,
+    AssetType,
+    Market,
+    MarketSeries,
+    PricePoint,
+)
 from src.sora.orchestrator import RunAlreadyInProgressError, SoraOrchestrator
 from src.sora.providers import ProviderRegistry
 from src.sora.repository import SQLiteRepository
@@ -239,3 +249,89 @@ def test_orchestrator_rejects_overlapping_running_run(tmp_path):
         orchestrator.run_once()
 
     assert active_run_id in str(exc_info.value)
+
+
+def test_orchestrator_persists_portfolio_alerts_for_full_runs(tmp_path):
+    repository = SQLiteRepository(str(tmp_path / "sora.db"))
+    repository.initialize()
+    repository.upsert_asset(
+        Asset(
+            code="510300",
+            name="沪深300ETF",
+            asset_type=AssetType.FUND,
+            market=Market.CN,
+            position_units=10.0,
+            position_cost_amount=150.0,
+        )
+    )
+    repository.add_alert_rule(
+        AlertRule(
+            scope=AlertScope.PORTFOLIO,
+            metric=AlertMetric.PORTFOLIO_DAILY_PNL_AMOUNT,
+            direction=AlertDirection.ABOVE,
+            threshold=0.5,
+            channels=["feishu"],
+        )
+    )
+
+    orchestrator = SoraOrchestrator(
+        repository=repository,
+        provider=StaticProvider(),
+        engine=AnalysisEngine(),
+        lookback_days=90,
+    )
+    summary = orchestrator.run_once()
+
+    portfolio_alerts = [event for event in summary.alert_events if event.scope == AlertScope.PORTFOLIO]
+    assert len(portfolio_alerts) == 1
+    assert portfolio_alerts[0].asset_code == "portfolio"
+    assert len(summary.notification_events) == 1
+
+    with repository.connect() as conn:
+        rows = conn.execute(
+            "SELECT scope, asset_code, metric FROM alert_events ORDER BY id ASC"
+        ).fetchall()
+
+    assert len(rows) == 1
+    assert rows[0]["scope"] == "portfolio"
+    assert rows[0]["asset_code"] == "portfolio"
+    assert rows[0]["metric"] == "portfolio_daily_pnl_amount"
+
+
+def test_orchestrator_skips_portfolio_alerts_for_filtered_runs(tmp_path):
+    repository = SQLiteRepository(str(tmp_path / "sora.db"))
+    repository.initialize()
+    repository.upsert_asset(
+        Asset(
+            code="510300",
+            name="沪深300ETF",
+            asset_type=AssetType.FUND,
+            market=Market.CN,
+            position_units=10.0,
+            position_cost_amount=150.0,
+        )
+    )
+    repository.add_alert_rule(
+        AlertRule(
+            scope=AlertScope.PORTFOLIO,
+            metric=AlertMetric.PORTFOLIO_DAILY_PNL_AMOUNT,
+            direction=AlertDirection.ABOVE,
+            threshold=0.5,
+            channels=["feishu"],
+        )
+    )
+
+    orchestrator = SoraOrchestrator(
+        repository=repository,
+        provider=StaticProvider(),
+        engine=AnalysisEngine(),
+        lookback_days=90,
+    )
+    summary = orchestrator.run_once(asset_code="510300")
+
+    assert not [event for event in summary.alert_events if event.scope == AlertScope.PORTFOLIO]
+    with repository.connect() as conn:
+        count = conn.execute(
+            "SELECT COUNT(*) FROM alert_events WHERE scope = 'portfolio'"
+        ).fetchone()[0]
+    assert count == 0
