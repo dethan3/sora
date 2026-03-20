@@ -8,6 +8,22 @@ from src.sora.domain import AnalysisResult, MarketSeries, Snapshot
 
 
 class AnalysisEngine:
+    TREND_SHORT_WINDOW = 5
+    TREND_LONG_WINDOW = 20
+    HIGH_RISK_VOLATILITY_THRESHOLD = 3.0
+    MEDIUM_RISK_VOLATILITY_THRESHOLD = 1.5
+    TREND_SCORE_BONUS = {
+        "bullish": 12.0,
+        "sideways": 0.0,
+        "bearish": -12.0,
+        "unknown": -4.0,
+    }
+    BASE_SCORE = 50.0
+    DAILY_CHANGE_SCORE_WEIGHT = 1.5
+    WEEKLY_CHANGE_SCORE_WEIGHT = 0.8
+    MIN_SCORE = 0.0
+    MAX_SCORE = 100.0
+
     def __init__(self, short_window: int = 7, long_window: int = 30) -> None:
         self.short_window = short_window
         self.long_window = long_window
@@ -28,8 +44,8 @@ class AnalysisEngine:
             source=series.source,
         )
 
-        sma5 = self._moving_average(values, 5)
-        sma20 = self._moving_average(values, 20)
+        sma5 = self._moving_average(values, self.TREND_SHORT_WINDOW)
+        sma20 = self._moving_average(values, self.TREND_LONG_WINDOW)
         trend = self._classify_trend(current, sma5, sma20)
         volatility = self._estimate_volatility(values)
         risk_level = self._classify_risk(volatility)
@@ -95,9 +111,9 @@ class AnalysisEngine:
 
     @staticmethod
     def _classify_risk(volatility: float) -> str:
-        if volatility >= 3:
+        if volatility >= AnalysisEngine.HIGH_RISK_VOLATILITY_THRESHOLD:
             return "high"
-        if volatility >= 1.5:
+        if volatility >= AnalysisEngine.MEDIUM_RISK_VOLATILITY_THRESHOLD:
             return "medium"
         return "low"
 
@@ -107,10 +123,15 @@ class AnalysisEngine:
         change_7d_pct: float | None,
         trend: str,
     ) -> float:
-        trend_bonus = {"bullish": 12, "sideways": 0, "bearish": -12, "unknown": -4}[trend]
+        trend_bonus = AnalysisEngine.TREND_SCORE_BONUS[trend]
         week_component = change_7d_pct or 0.0
-        score = 50 + daily_change_pct * 1.5 + week_component * 0.8 + trend_bonus
-        return max(0.0, min(100.0, score))
+        score = (
+            AnalysisEngine.BASE_SCORE
+            + daily_change_pct * AnalysisEngine.DAILY_CHANGE_SCORE_WEIGHT
+            + week_component * AnalysisEngine.WEEKLY_CHANGE_SCORE_WEIGHT
+            + trend_bonus
+        )
+        return max(AnalysisEngine.MIN_SCORE, min(AnalysisEngine.MAX_SCORE, score))
 
     @staticmethod
     def _build_summary(snapshot: Snapshot, trend: str, risk_level: str) -> str:
