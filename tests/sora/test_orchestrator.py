@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
 
+import pytest
+
 from src.sora.analysis import AnalysisEngine
 from src.sora.domain import AlertDirection, AlertMetric, AlertRule, Asset, AssetType, Market, MarketSeries, PricePoint
-from src.sora.orchestrator import SoraOrchestrator
+from src.sora.orchestrator import RunAlreadyInProgressError, SoraOrchestrator
+from src.sora.providers import ProviderRegistry
 from src.sora.repository import SQLiteRepository
 
 
@@ -114,6 +117,41 @@ def test_orchestrator_records_unsupported_assets_as_failures(tmp_path):
     assert run_row["status"] == "failed"
 
 
+class FlakyProvider:
+    name = "flaky"
+
+    def supports(self, asset: Asset) -> bool:
+        return True
+
+    def fetch_market_series(self, asset: Asset, lookback_days: int) -> MarketSeries:
+        raise RuntimeError("upstream timeout")
+
+
+def test_orchestrator_uses_fallback_provider_when_primary_fetch_fails(tmp_path):
+    repository = SQLiteRepository(str(tmp_path / "sora.db"))
+    repository.initialize()
+    repository.upsert_asset(
+        Asset(
+            code="510300",
+            name="沪深300ETF",
+            asset_type=AssetType.FUND,
+            market=Market.CN,
+        )
+    )
+
+    orchestrator = SoraOrchestrator(
+        repository=repository,
+        provider=ProviderRegistry([FlakyProvider(), StaticProvider()]),
+        engine=AnalysisEngine(),
+        lookback_days=90,
+    )
+    summary = orchestrator.run_once()
+
+    assert summary.successful_assets == 1
+    assert summary.failed_assets == 0
+    assert summary.successes[0].snapshot.source == "static"
+
+
 def test_orchestrator_persists_alerts_and_notifications(tmp_path):
     repository = SQLiteRepository(str(tmp_path / "sora.db"))
     repository.initialize()
@@ -175,3 +213,29 @@ def test_orchestrator_persists_alerts_and_notifications(tmp_path):
         ("daily_change_pct", "feishu"),
         ("change_7d_pct", "telegram"),
     }
+
+
+def test_orchestrator_rejects_overlapping_running_run(tmp_path):
+    repository = SQLiteRepository(str(tmp_path / "sora.db"))
+    repository.initialize()
+    repository.upsert_asset(
+        Asset(
+            code="510300",
+            name="沪深300ETF",
+            asset_type=AssetType.FUND,
+            market=Market.CN,
+        )
+    )
+    active_run_id = repository.start_run(total_assets=1)
+
+    orchestrator = SoraOrchestrator(
+        repository=repository,
+        provider=StaticProvider(),
+        engine=AnalysisEngine(),
+        lookback_days=90,
+    )
+
+    with pytest.raises(RunAlreadyInProgressError) as exc_info:
+        orchestrator.run_once()
+
+    assert active_run_id in str(exc_info.value)

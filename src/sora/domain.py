@@ -44,6 +44,10 @@ class Asset:
     market: Market
     enabled: bool = True
     created_at: datetime = field(default_factory=datetime.utcnow)
+    baseline_value: float | None = None
+    baseline_at: datetime | None = None
+    position_units: float | None = None
+    position_cost_amount: float | None = None
 
     def __post_init__(self) -> None:
         self.code = self.code.strip()
@@ -52,6 +56,38 @@ class Asset:
             raise ValueError("asset code must not be empty")
         if not self.name:
             raise ValueError("asset name must not be empty")
+        if (self.baseline_value is None) != (self.baseline_at is None):
+            raise ValueError("asset baseline_value and baseline_at must be set together")
+        if self.baseline_value is not None and self.baseline_value <= 0:
+            raise ValueError("asset baseline_value must be greater than 0")
+        if (self.position_units is None) != (self.position_cost_amount is None):
+            raise ValueError("asset position_units and position_cost_amount must be set together")
+        if self.position_units is not None and self.position_units <= 0:
+            raise ValueError("asset position_units must be greater than 0")
+        if self.position_cost_amount is not None and self.position_cost_amount <= 0:
+            raise ValueError("asset position_cost_amount must be greater than 0")
+
+    def change_since_baseline_pct(self, current_value: float) -> float | None:
+        if self.baseline_value is None:
+            return None
+        return ((current_value - self.baseline_value) / self.baseline_value) * 100
+
+    def position_market_value(self, current_value: float) -> float | None:
+        if self.position_units is None:
+            return None
+        return current_value * self.position_units
+
+    def unrealized_pnl_amount(self, current_value: float) -> float | None:
+        market_value = self.position_market_value(current_value)
+        if market_value is None or self.position_cost_amount is None:
+            return None
+        return market_value - self.position_cost_amount
+
+    def unrealized_pnl_pct(self, current_value: float) -> float | None:
+        pnl_amount = self.unrealized_pnl_amount(current_value)
+        if pnl_amount is None or self.position_cost_amount is None:
+            return None
+        return (pnl_amount / self.position_cost_amount) * 100
 
 
 @dataclass(slots=True)
@@ -144,6 +180,9 @@ class NotificationEvent:
     alert_event_id: int | None = None
     correlation_key: str | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
+    sent_at: datetime | None = None
+    error_message: str | None = None
+    attempt_count: int = 0
     notification_id: int | None = None
 
 
@@ -158,3 +197,141 @@ class RunSummary:
     failures: list[dict[str, str]]
     alert_events: list[AlertEvent] = field(default_factory=list)
     notification_events: list[NotificationEvent] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class RunRecord:
+    run_id: str
+    started_at: datetime
+    finished_at: datetime | None
+    total_assets: int
+    processed_assets: int
+    successful_assets: int
+    failed_assets: int
+    status: str
+    error_message: str | None = None
+
+    def duration_seconds(self) -> float | None:
+        if self.finished_at is None:
+            return None
+        return (self.finished_at - self.started_at).total_seconds()
+
+
+@dataclass(slots=True)
+class SnapshotRecord:
+    run_id: str
+    asset_code: str
+    as_of: datetime
+    current_value: float
+    previous_close: float
+    daily_change_pct: float
+    change_7d_pct: float | None
+    change_30d_pct: float | None
+    source: str
+    created_at: datetime
+
+
+@dataclass(slots=True)
+class AnalysisRecord:
+    run_id: str
+    asset_code: str
+    trend: str
+    risk_level: str
+    score: float
+    summary: str
+    metrics: dict[str, Any]
+    created_at: datetime
+
+
+@dataclass(slots=True)
+class NotificationRecord:
+    notification_id: int
+    alert_event_id: int | None
+    run_id: str | None
+    asset_code: str | None
+    asset_name: str | None
+    channel: str
+    status: NotificationStatus
+    payload: dict[str, Any]
+    created_at: datetime
+    sent_at: datetime | None = None
+    error_message: str | None = None
+    attempt_count: int = 0
+
+
+@dataclass(slots=True)
+class AssetOverview:
+    asset: Asset
+    latest_run: RunRecord | None = None
+    snapshot: SnapshotRecord | None = None
+    analysis: AnalysisRecord | None = None
+
+
+@dataclass(slots=True)
+class PortfolioPositionOverview:
+    asset: Asset
+    snapshot: SnapshotRecord | None = None
+    analysis: AnalysisRecord | None = None
+
+    def current_value(self) -> float | None:
+        if self.snapshot is None:
+            return None
+        return self.snapshot.current_value
+
+    def market_value(self) -> float | None:
+        current_value = self.current_value()
+        if current_value is None:
+            return None
+        return self.asset.position_market_value(current_value)
+
+    def unrealized_pnl_amount(self) -> float | None:
+        current_value = self.current_value()
+        if current_value is None:
+            return None
+        return self.asset.unrealized_pnl_amount(current_value)
+
+    def unrealized_pnl_pct(self) -> float | None:
+        current_value = self.current_value()
+        if current_value is None:
+            return None
+        return self.asset.unrealized_pnl_pct(current_value)
+
+    def daily_pnl_amount(self) -> float | None:
+        if self.snapshot is None or self.asset.position_units is None:
+            return None
+        return (self.snapshot.current_value - self.snapshot.previous_close) * self.asset.position_units
+
+    def entry_market_value(self) -> float | None:
+        if self.asset.baseline_value is None or self.asset.position_units is None:
+            return None
+        return self.asset.baseline_value * self.asset.position_units
+
+    def since_entry_pnl_amount(self) -> float | None:
+        market_value = self.market_value()
+        entry_market_value = self.entry_market_value()
+        if market_value is None or entry_market_value is None:
+            return None
+        return market_value - entry_market_value
+
+    def since_entry_pnl_pct(self) -> float | None:
+        since_entry_pnl = self.since_entry_pnl_amount()
+        entry_market_value = self.entry_market_value()
+        if since_entry_pnl is None or entry_market_value is None or entry_market_value <= 0:
+            return None
+        return (since_entry_pnl / entry_market_value) * 100
+
+
+@dataclass(slots=True)
+class PortfolioOverview:
+    positions: list[PortfolioPositionOverview]
+    total_positioned_assets: int
+    assets_with_market_data: int
+    assets_with_entry_baseline: int
+    total_cost_amount: float
+    total_market_value: float
+    total_unrealized_pnl_amount: float
+    total_unrealized_pnl_pct: float | None
+    total_daily_pnl_amount: float
+    total_entry_value_amount: float
+    total_since_entry_pnl_amount: float
+    total_since_entry_pnl_pct: float | None

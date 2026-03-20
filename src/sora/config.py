@@ -35,9 +35,28 @@ class AnalysisConfig:
 
 
 @dataclass(slots=True)
+class NotificationsConfig:
+    webhook_urls: dict[str, str] = field(default_factory=dict)
+    request_timeout_seconds: float = 10.0
+
+    def __post_init__(self) -> None:
+        if self.request_timeout_seconds <= 0:
+            raise ValueError("notifications.request_timeout_seconds must be greater than 0")
+        normalized: dict[str, str] = {}
+        for channel, url in self.webhook_urls.items():
+            normalized_channel = str(channel).strip()
+            normalized_url = str(url).strip()
+            if not normalized_channel or not normalized_url:
+                continue
+            normalized[normalized_channel] = normalized_url
+        self.webhook_urls = normalized
+
+
+@dataclass(slots=True)
 class AppConfig:
     database_path: str = field(default_factory=_default_database_path)
     analysis: AnalysisConfig = field(default_factory=AnalysisConfig)
+    notifications: NotificationsConfig = field(default_factory=NotificationsConfig)
 
 
 def _merge_analysis(data: dict[str, Any]) -> AnalysisConfig:
@@ -45,6 +64,13 @@ def _merge_analysis(data: dict[str, Any]) -> AnalysisConfig:
         lookback_days=int(data.get("lookback_days", 90)),
         short_window=int(data.get("short_window", 7)),
         long_window=int(data.get("long_window", 30)),
+    )
+
+
+def _merge_notifications(data: dict[str, Any]) -> NotificationsConfig:
+    return NotificationsConfig(
+        webhook_urls=dict(data.get("webhook_urls", {})),
+        request_timeout_seconds=float(data.get("request_timeout_seconds", 10.0)),
     )
 
 
@@ -79,4 +105,5 @@ def load_config(config_path: str | None = None) -> AppConfig:
     return AppConfig(
         database_path=_resolve_database_path(str(raw.get("database_path", "data/sora.db"))),
         analysis=_merge_analysis(raw.get("analysis", {})),
+        notifications=_merge_notifications(raw.get("notifications", {})),
     )

@@ -9,6 +9,10 @@ from src.sora.providers.base import MarketDataProvider
 from src.sora.repository import SQLiteRepository
 
 
+class RunAlreadyInProgressError(RuntimeError):
+    """Raised when a new monitoring run starts while another run is still active."""
+
+
 class SoraOrchestrator:
     def __init__(
         self,
@@ -25,6 +29,12 @@ class SoraOrchestrator:
         self.lookback_days = lookback_days
 
     def run_once(self, asset_code: str | None = None) -> RunSummary:
+        running_run_id = self.repository.get_running_run_id()
+        if running_run_id is not None:
+            raise RunAlreadyInProgressError(
+                f"Another monitoring run is already in progress: {running_run_id}"
+            )
+
         assets = self.repository.list_assets(enabled_only=True, code=asset_code)
         rules = self.repository.list_alert_rules(enabled_only=True)
         run_id = self.repository.start_run(total_assets=len(assets))

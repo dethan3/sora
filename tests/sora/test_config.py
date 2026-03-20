@@ -45,3 +45,29 @@ def test_load_config_rejects_invalid_analysis_values(tmp_path):
 
     with pytest.raises(ValueError):
         load_config(str(config_file))
+
+
+def test_load_config_parses_notifications(tmp_path):
+    config_file = tmp_path / "notifications.yaml"
+    config_file.write_text(
+        yaml.safe_dump(
+            {
+                "notifications": {
+                    "webhook_urls": {
+                        "feishu": "https://example.com/feishu",
+                        "telegram": "https://example.com/telegram",
+                    },
+                    "request_timeout_seconds": 5,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    config = load_config(str(config_file))
+
+    assert config.notifications.webhook_urls == {
+        "feishu": "https://example.com/feishu",
+        "telegram": "https://example.com/telegram",
+    }
+    assert config.notifications.request_timeout_seconds == 5.0

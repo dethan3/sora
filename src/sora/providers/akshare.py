@@ -7,28 +7,67 @@ import pandas as pd
 
 from src.sora.domain import Asset, AssetType, Market, MarketSeries, PricePoint
 
+from .base import ProviderCapability, ProviderSupport
+
 
 class AkshareMarketDataProvider:
     """Best-effort provider for CN funds and CN indices."""
 
+    name = "akshare"
     CN_INDEX_ALIAS = {
         "000001": "sh000001",
         "399001": "sz399001",
         "399006": "sz399006",
     }
 
-    def supports(self, asset: Asset) -> bool:
+    def capability(self) -> ProviderCapability:
+        return ProviderCapability(
+            provider_name=self.name,
+            markets=(Market.CN,),
+            asset_types=(AssetType.FUND, AssetType.INDEX),
+            notes="Supports CN public funds and selected CN indices via AkShare/Eastmoney.",
+        )
+
+    def check_support(self, asset: Asset) -> ProviderSupport:
         if asset.market != Market.CN:
-            return False
+            return ProviderSupport(
+                provider_name=self.name,
+                supported=False,
+                reason="only CN market is supported",
+            )
         if asset.asset_type == AssetType.FUND:
-            return asset.code.isdigit()
-        return self._can_normalize_index_symbol(asset.code)
+            if asset.code.isdigit():
+                return ProviderSupport(
+                    provider_name=self.name,
+                    supported=True,
+                    normalized_code=asset.code,
+                )
+            return ProviderSupport(
+                provider_name=self.name,
+                supported=False,
+                reason="fund code must be numeric",
+            )
+        if self._can_normalize_index_symbol(asset.code):
+            return ProviderSupport(
+                provider_name=self.name,
+                supported=True,
+                normalized_code=self._normalize_index_symbol(asset.code),
+            )
+        return ProviderSupport(
+            provider_name=self.name,
+            supported=False,
+            reason="CN index code must use sh/sz prefix or a built-in alias",
+        )
+
+    def supports(self, asset: Asset) -> bool:
+        return self.check_support(asset).supported
 
     def fetch_market_series(self, asset: Asset, lookback_days: int) -> MarketSeries:
-        if not self.supports(asset):
+        support = self.check_support(asset)
+        if not support.supported:
             raise ValueError(
                 f"Asset {asset.code} ({asset.market.value}/{asset.asset_type.value}) "
-                "is not supported by AkshareMarketDataProvider"
+                f"is not supported by AkshareMarketDataProvider: {support.reason}"
             )
 
         if asset.asset_type == AssetType.FUND:
