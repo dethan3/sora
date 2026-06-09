@@ -70,6 +70,26 @@ describe('YahooFinanceSource.getIndexQuote', () => {
     expect(result.volume).toBeNull()
     expect(result.high52w).toBeNull()
   })
+
+  it('wraps Yahoo request failures with offline fallback guidance', async () => {
+    vi.mocked(yahooFinance.quote).mockRejectedValue(new Error('getaddrinfo EAI_AGAIN'))
+
+    const source = new YahooFinanceSource({ cacheDir: TEST_CACHE_DIR })
+
+    await expect(source.getIndexQuote('^NDX')).rejects.toThrow(
+      'Yahoo Finance request failed; check network access or use USE_SEED_DATA=true for offline demos. ticker=^NDX.'
+    )
+  })
+
+  it('wraps Yahoo rate limits with retry guidance', async () => {
+    vi.mocked(yahooFinance.quote).mockRejectedValue(new Error('HTTP 429 Too Many Requests'))
+
+    const source = new YahooFinanceSource({ cacheDir: TEST_CACHE_DIR })
+
+    await expect(source.getIndexQuote('^NDX')).rejects.toThrow(
+      'Yahoo Finance rate limit may be active; retry later or use USE_SEED_DATA=true for offline demos. ticker=^NDX.'
+    )
+  })
 })
 
 describe('YahooFinanceSource.getIndexHistory', () => {

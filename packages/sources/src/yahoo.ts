@@ -7,8 +7,27 @@ interface Config {
   cacheTtlMs?: number
 }
 
+interface YahooHistoricalRow {
+  date: Date
+  open?: number | null
+  high?: number | null
+  low?: number | null
+  close?: number | null
+  volume?: number | null
+}
+
 function safeTicker(ticker: string): string {
   return ticker.replace(/[^a-zA-Z0-9_-]/g, '_')
+}
+
+function formatYahooError(ticker: string, error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error)
+  const isRateLimited = /\b429\b|rate.?limit|too many requests/i.test(message)
+  const hint = isRateLimited
+    ? 'Yahoo Finance rate limit may be active; retry later or use USE_SEED_DATA=true for offline demos.'
+    : 'Yahoo Finance request failed; check network access or use USE_SEED_DATA=true for offline demos.'
+
+  return new Error(`${hint} ticker=${ticker}. ${message}`)
 }
 
 export class YahooFinanceSource implements IMarketQuoteSource {
@@ -25,7 +44,13 @@ export class YahooFinanceSource implements IMarketQuoteSource {
       return cached.data
     }
 
-    const quote = await yahooFinance.quote(ticker)
+    let quote: Awaited<ReturnType<typeof yahooFinance.quote>>
+    try {
+      quote = await yahooFinance.quote(ticker)
+    } catch (error) {
+      throw formatYahooError(ticker, error)
+    }
+
     const result: IndexQuote = {
       ticker,
       price: quote.regularMarketPrice ?? 0,
@@ -48,11 +73,16 @@ export class YahooFinanceSource implements IMarketQuoteSource {
     }
 
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-    const history = await yahooFinance.historical(ticker, {
-      period1: startDate.toISOString().split('T')[0],
-    })
+    let history: Awaited<ReturnType<typeof yahooFinance.historical>>
+    try {
+      history = await yahooFinance.historical(ticker, {
+        period1: startDate.toISOString().split('T')[0],
+      })
+    } catch (error) {
+      throw formatYahooError(ticker, error)
+    }
 
-    const result: IndexHistoricalQuote[] = history.map((h) => ({
+    const result: IndexHistoricalQuote[] = (history as YahooHistoricalRow[]).map((h) => ({
       date: h.date.toISOString().split('T')[0],
       open: h.open ?? 0,
       high: h.high ?? 0,
