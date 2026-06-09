@@ -8,7 +8,13 @@
     "build": "tsc",
     "test": "vitest run --passWithNoTests"
   },
+  "dependencies": {
+    "@sora/core": "workspace:*",
+    "@sora/research": "workspace:*",
+    "@sora/storage": "workspace:*"
+  },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "tsx": "^4.11.0",
     "typescript": "*",
     "vitest": "^2.0.0"

@@ -22,7 +22,20 @@ importers:
         version: 8.60.1(eslint@9.39.4)(typescript@5.9.3)
 
   apps/api:
+    dependencies:
+      '@sora/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@sora/research':
+        specifier: workspace:*
+        version: link:../../packages/research
+      '@sora/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
     devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.41
       tsx:
         specifier: ^4.11.0
         version: 4.22.4

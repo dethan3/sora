@@ -10,6 +10,8 @@ import { makeFundsCommand } from './commands/funds.js'
 import { makeResearchCommand } from './commands/research.js'
 import { makeAlertsCommand } from './commands/alerts.js'
 import { makeNotificationsCommand } from './commands/notifications.js'
+import { makeThesisCommand } from './commands/thesis.js'
+import { makeEvidenceCommand } from './commands/evidence.js'
 
 // Ensure source factories (createMarketSource / createFundSource etc.) use
 // the resolved absolute paths regardless of the current working directory.
@@ -31,6 +33,8 @@ program.addCommand(makeFundsCommand())
 program.addCommand(makeResearchCommand())
 program.addCommand(makeAlertsCommand())
 program.addCommand(makeNotificationsCommand())
+program.addCommand(makeThesisCommand())
+program.addCommand(makeEvidenceCommand())
 
 // pnpm forwards a bare '--' as argv[2] when calling `pnpm sora -- <cmd>`.
 // Strip it so Commander can correctly parse subcommand options.

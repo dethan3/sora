@@ -48,7 +48,7 @@ const STRENGTH_RANK: Record<EvidenceStrength, number> = {
   strong: 3,
 }
 
-export type AddEvidenceInput = Omit<ThesisEvidence, 'confidenceDelta' | 'createdAt'> & {
+export type AddEvidenceInput = Omit<ThesisEvidence, 'id' | 'confidenceDelta' | 'createdAt'> & {
   id?: string
   createdAt?: string
 }
