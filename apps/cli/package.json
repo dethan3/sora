@@ -1,0 +1,30 @@
+{
+  "name": "@sora/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@sora/agent": "workspace:*",
+    "@sora/core": "workspace:*",
+    "@sora/fund": "workspace:*",
+    "@sora/market": "workspace:*",
+    "@sora/notifier": "workspace:*",
+    "@sora/research": "workspace:*",
+    "@sora/sources": "workspace:*",
+    "@sora/storage": "workspace:*",
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.11.0",
+    "typescript": "*",
+    "vitest": "^2.0.0"
+  }
+}

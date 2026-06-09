@@ -1,0 +1,13 @@
+{
+  "Data": {
+    "LSJZList": [
+      { "FSRQ": "2024-06-01", "DWJZ": "1.523", "JZZZL": "0.86" },
+      { "FSRQ": "2024-05-31", "DWJZ": "1.510", "JZZZL": "-0.52" },
+      { "FSRQ": "2024-05-30", "DWJZ": "1.518", "JZZZL": "0.40" }
+    ]
+  },
+  "ErrCode": 0,
+  "TotalCount": 1500,
+  "PageIndex": 1,
+  "PageSize": 3
+}

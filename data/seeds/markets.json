@@ -1,0 +1,38 @@
+[
+  {
+    "id": "us-tech",
+    "name": "美国科技",
+    "category": "us",
+    "description": "以 Nasdaq 100 为代表的美国科技成长市场，权重集中于 FAANG+ 等头部科技公司"
+  },
+  {
+    "id": "us-broad",
+    "name": "美国宽基",
+    "category": "us",
+    "description": "以标普 500 为代表的美国全市场宽基，覆盖美国前 500 大上市公司"
+  },
+  {
+    "id": "hk-tech",
+    "name": "香港科技",
+    "category": "hk",
+    "description": "恒生科技指数，追踪在香港上市的 30 家大型科技公司，含腾讯、阿里、美团等"
+  },
+  {
+    "id": "hk-broad",
+    "name": "香港宽基",
+    "category": "hk",
+    "description": "恒生指数，香港最具代表性的蓝筹股指数，覆盖港股市值最大的约 80 家公司"
+  },
+  {
+    "id": "cn-broad",
+    "name": "中国宽基",
+    "category": "cn",
+    "description": "沪深 300，覆盖 A 股市值最大的 300 家公司，是 A 股最重要的基准指数"
+  },
+  {
+    "id": "global",
+    "name": "全球宽基",
+    "category": "global",
+    "description": "MSCI World 指数，追踪全球 23 个发达市场约 1500 只股票，美股占比约 70%，是最广泛的全球股票基准"
+  }
+]

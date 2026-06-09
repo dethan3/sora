@@ -1,0 +1,31 @@
+{
+  "name": "@sora/research",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@sora/agent": "workspace:*",
+    "@sora/core": "workspace:*",
+    "@sora/fund": "workspace:*",
+    "@sora/market": "workspace:*",
+    "@sora/sources": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "*",
+    "vitest": "^2.0.0"
+  }
+}

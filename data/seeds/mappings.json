@@ -1,0 +1,9 @@
+[
+  { "id": "map-001", "fundId": "fund-159941", "indexId": "nasdaq-100", "isPrimary": true },
+  { "id": "map-002", "fundId": "fund-513100", "indexId": "nasdaq-100", "isPrimary": false },
+  { "id": "map-003", "fundId": "fund-007339", "indexId": "nasdaq-100", "isPrimary": false },
+  { "id": "map-004", "fundId": "fund-513500", "indexId": "sp500",       "isPrimary": true },
+  { "id": "map-005", "fundId": "fund-513180", "indexId": "hsi-tech",    "isPrimary": true },
+  { "id": "map-006", "fundId": "fund-159740", "indexId": "hsi-tech",    "isPrimary": false },
+  { "id": "map-007", "fundId": "fund-510300", "indexId": "csi300",      "isPrimary": true }
+]

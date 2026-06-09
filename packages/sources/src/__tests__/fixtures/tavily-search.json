@@ -1,0 +1,20 @@
+{
+  "query": "纳指100 国内ETF 申购限制",
+  "results": [
+    {
+      "title": "易方达纳指ETF限购公告",
+      "url": "https://example.com/news/1",
+      "content": "易方达基金公告称，159941 单日申购上限调整为 10 万元。",
+      "score": 0.92,
+      "publishedDate": "2024-06-01"
+    },
+    {
+      "title": "华夏纳指ETF最新动态",
+      "url": "https://example.com/news/2",
+      "content": "华夏基金513100当前申购状态正常，无限购。",
+      "score": 0.87,
+      "publishedDate": "2024-05-31"
+    }
+  ],
+  "responseTime": 1.23
+}

@@ -1,0 +1,1 @@
+jsonpgz({"fundcode":"159941","name":"易方达纳斯达克100ETF","jzrq":"2024-06-01","dwjz":"1.523","gsz":"1.536","gszzl":"0.86","gztime":"2024-06-01 15:00","fundtype":"ETF-场内"});

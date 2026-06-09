@@ -1,0 +1,44 @@
+[
+  {
+    "id": "nasdaq-100",
+    "name": "Nasdaq 100",
+    "marketId": "us-tech",
+    "ticker": "^NDX",
+    "description": "追踪在纳斯达克交易所上市的 100 家最大的非金融公司，科技权重超 60%"
+  },
+  {
+    "id": "sp500",
+    "name": "标普 500",
+    "marketId": "us-broad",
+    "ticker": "^GSPC",
+    "description": "覆盖美国上市公司市值最大的 500 家，是最广泛使用的美股基准指数"
+  },
+  {
+    "id": "hsi-tech",
+    "name": "恒生科技",
+    "marketId": "hk-tech",
+    "ticker": "^HSTECH",
+    "description": "追踪香港上市最大 30 家科技公司，2020 年 7 月推出，覆盖互联网、科技平台等"
+  },
+  {
+    "id": "hsi",
+    "name": "恒生指数",
+    "marketId": "hk-broad",
+    "ticker": "^HSI",
+    "description": "香港联交所综合指数，成立于 1969 年，覆盖港股最大约 80 家蓝筹股"
+  },
+  {
+    "id": "csi300",
+    "name": "沪深 300",
+    "marketId": "cn-broad",
+    "ticker": "000300.SS",
+    "description": "由沪深两市市值最大、流动性最好的 300 只股票组成，是 A 股最重要的基准指数"
+  },
+  {
+    "id": "msci-world",
+    "name": "MSCI World",
+    "marketId": "global",
+    "ticker": "URTH",
+    "description": "追踪 MSCI 全球指数，覆盖 23 个发达市场约 1500 只股票，美股占比约 70%"
+  }
+]
