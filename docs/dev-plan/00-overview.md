@@ -1,85 +1,34 @@
-# Sora Development Plan Overview
+# Sora Quick Launch Plan Overview
 
-## Product Direction
+## Launch Principle
 
-Sora is now a Thesis-first global index fund research system.
+Ship Sora first. Productize Thesis Engine later.
 
-It has two first-class interaction surfaces:
+For the fastest MVP, Thesis Engine is not required to be an independent code package. It can first exist as:
 
-```text
-CLI
-Web
-```
+- product method
+- workflow protocol
+- data model
+- compliance boundary
+- documented future engine contract
 
-Both surfaces use the same underlying domain services. Agent capability is decoupled from presentation.
-
-## Thesis Engine Foundation
-
-Thesis Engine is the reusable Agentic Finance primitive.
-
-Sora is the index-fund research application built on top of it:
+Sora MVP still implements Thesis-first behavior, but inside Sora application services. Once the workflow is validated with real use, the reusable Thesis Engine can be extracted as a long-term product.
 
 ```text
-Sora = Thesis Engine applied to global index fund research
+MVP:
+Sora implements Thesis-first workflows.
+
+Post-MVP:
+Extract stable patterns into Thesis Engine.
 ```
 
-This means `packages/thesis` should stay as platform-neutral as possible. Sora-specific concerns such as global market mapping, domestic fund exposure, QDII execution risk, and NotificationEvent exports should live in the application layer around the Thesis Engine.
+## Current Repo State
 
-## New Core Loop
+The repository already contains a half-built TypeScript rewrite:
 
-```text
-Thesis
-  -> Evidence
-  -> Confidence Update
-  -> Market / Index Mapping
-  -> Domestic Fund Exposure
-  -> Research Card
-  -> NotificationEvent
-```
-
-The old loop is still useful:
-
-```text
-Market -> Index -> Fund Mapping -> Fund Analysis -> Research Card -> NotificationEvent
-```
-
-But it is now a supporting layer under Thesis.
-
-## Architecture
-
-```text
-Presentation
-  apps/cli
-  apps/web
-  apps/api
-
-Sora Application Layer
-  packages/market
-  packages/fund
-  packages/research
-  packages/notifier
-
-Agentic Finance Primitive
-  packages/core
-  packages/thesis
-  packages/agent
-
-Infrastructure
-  packages/storage
-  packages/sources
-  packages/shared
-```
-
-`packages/thesis` owns reusable thesis lifecycle, evidence, confidence, contradiction, exposure, and review-loop logic.
-
-Sora-specific services compose Thesis Engine with market, fund, research, notifier, storage, and source adapters.
-
-`packages/agent` is called by services when summarization, evidence classification, causal-chain explanation, contradiction review, or question answering is needed.
-
-## Package Plan
-
-Existing packages remain:
-
+- `apps/cli`
+- `apps/api`
+- `apps/worker`
 - `packages/core`
 - `packages/market`
 - `packages/fund`
@@ -90,69 +39,100 @@ Existing packages remain:
 - `packages/notifier`
 - `packages/shared`
 
-New package:
+Useful existing work:
 
-- `packages/thesis`
+- seed-driven market / index / fund data
+- source adapters
+- fund execution quality scoring
+- deterministic research cards
+- notification export
+- SQLite storage
+- CLI command structure
 
-New app:
+The quickest path is to add Thesis workflow on top of this existing structure rather than pause to build a generic engine abstraction.
 
-- `apps/web`
+## MVP Architecture
 
-`apps/api` becomes the Web-facing API instead of only a placeholder.
+```text
+Presentation
+  apps/cli
+  apps/web
+  apps/api
+
+Sora Application Services
+  packages/market
+  packages/fund
+  packages/research
+  packages/notifier
+  packages/storage
+  packages/sources
+  packages/agent
+  packages/shared
+
+Shared Types
+  packages/core
+
+Documented Future Product
+  Thesis Engine
+```
+
+During MVP, Thesis workflow can live in Sora services such as `packages/research`, `packages/storage`, or a Sora-specific service module. A standalone `packages/thesis` is optional and should not block launch.
+
+## MVP Product Loop
+
+```text
+Thesis
+  -> Evidence
+  -> Confidence Update
+  -> Market / Index Mapping
+  -> Domestic Fund Exposure
+  -> Research Card
+  -> NotificationEvent
+  -> Web / CLI review
+```
 
 ## Phase Table
 
-| Phase | Name | Goal | Dependency |
-|------|------|------|------------|
-| 0 | Stabilize Existing Rewrite | Fix lint, DB seed idempotency, market refresh failure handling, README baseline | current repo |
-| 1 | Thesis Primitive Model | Add platform-neutral Thesis / Evidence / Update / Exposure schemas and seed data | P0 |
-| 2 | Thesis Engine Package | Implement reusable confidence, contradiction, review, and exposure primitives | P1 |
-| 3 | Storage Expansion | Add thesis tables and storage queries | P1 |
-| 4 | CLI Thesis MVP | Add thesis and evidence commands | P2 + P3 |
-| 5 | Research + Notifier Integration | Generate ResearchCard and NotificationEvent from Thesis context | P4 |
-| 6 | API Layer | Expose Thesis services to Web | P2 + P3 |
-| 7 | Web MVP | Build Thesis-first website | P6 |
-| 8 | Agent Decoupling | Standardize Agent services used by CLI and Web | P2 + P6 |
-| 9 | Testing + Docs | E2E tests and full docs | P4-P8 |
+| Phase | Plan | Goal | Launch Critical |
+|------|------|------|-----------------|
+| 0 | [Stabilize Current Rewrite](./01-phase0-stabilize.md) | Make the current TS base green | Yes |
+| 1 | [MVP Thesis Data + Storage](./02-phase1-thesis-model.md) | Add Thesis schemas, seed data, and storage tables | Yes |
+| 2 | [Sora Thesis Workflow](./03-phase2-sora-thesis-workflow.md) | Implement evidence add, confidence update, review, exposure queries | Yes |
+| 3 | [CLI + API](./04-phase3-cli-api.md) | Expose the workflow through CLI and API | Yes |
+| 4 | [Research + Notifier](./05-phase4-research-notifier.md) | Generate thesis research cards and events | Yes |
+| 5 | [Web MVP](./06-phase5-web-mvp.md) | Build the first usable Thesis-first website | Yes |
+| 6 | [Launch Hardening](./07-phase6-launch-hardening.md) | Test, document, and remove launch blockers | Yes |
+| 7 | [Post-MVP Thesis Engine](./08-post-mvp-thesis-engine.md) | Extract reusable engine after workflow stabilizes | No |
+| 8 | [Post-MVP Agent](./09-post-mvp-agent.md) | Deepen Agent-assisted workflows | No |
+| 9 | [Post-MVP Roadmap](./10-post-mvp-roadmap.md) | Longer-term product expansion | No |
 
-## Acceptance Criteria
+## MVP Acceptance
 
-Functional:
-
-- `pnpm sora thesis list` works.
-- `pnpm sora thesis show ai-infra` works.
-- `pnpm sora thesis review` works.
-- `pnpm sora thesis exposure ai-infra` works.
-- `pnpm sora evidence add` creates evidence and updates confidence.
-- `pnpm sora research create --thesis ai-infra` works.
-- `pnpm sora notifications export` includes Thesis-derived events.
-- Web app renders Thesis overview.
-- Web app renders Thesis detail, timeline, contradictions, and asset exposure.
-- API endpoints return schema-valid Thesis data.
-
-Architecture:
-
-- CLI and Web share services.
-- Agent is not coupled to CLI or Web.
-- `packages/thesis` remains platform-neutral where possible.
-- Sora-specific market / fund / notification logic stays outside the Thesis Engine primitive.
-- presentation layers do not duplicate confidence or exposure logic.
-- deterministic fallback works without Pi.
-
-Compliance:
-
-- no buy / sell recommendations.
-- no personalized allocation advice.
-- all outputs use information-analysis and risk-warning language.
-- every CLI command ends with disclaimer.
-- every Web research view includes non-advisory framing.
-
-Quality:
+Sora can launch when:
 
 - `pnpm install` succeeds.
 - `pnpm test` succeeds.
 - `pnpm build` succeeds.
 - `pnpm lint` succeeds.
-- seed data validates against schemas.
-- all confidence changes have evidence records.
-- data refresh commands do not report false success.
+- `pnpm sora db init` works.
+- `pnpm sora db seed` is idempotent or explicitly reset-based.
+- `pnpm sora thesis list` works.
+- `pnpm sora thesis show ai-infra` works.
+- `pnpm sora thesis review` works.
+- `pnpm sora thesis exposure ai-infra` works.
+- `pnpm sora evidence add` creates evidence and confidence update records.
+- `pnpm sora research create --thesis ai-infra` works with deterministic fallback.
+- `pnpm sora notifications export` includes Thesis-derived events.
+- API serves Thesis overview/detail/evidence/exposure data.
+- Web renders overview, thesis detail, evidence timeline, and exposure.
+- all user-facing output is non-advisory.
+
+Not required for launch:
+
+- standalone `packages/thesis`
+- generic Thesis Engine SDK
+- fully generalized multi-domain engine
+- advanced Agent automation
+- real-time streaming
+- brokerage integration
+

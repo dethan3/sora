@@ -437,7 +437,7 @@ type AssetExposure = {
 
 ## 11. 包架构
 
-目标 monorepo：
+MVP monorepo：
 
 ```text
 apps/
@@ -448,7 +448,6 @@ apps/
 
 packages/
   core/
-  thesis/
   market/
   fund/
   research/
@@ -462,7 +461,7 @@ packages/
 职责：
 
 - `packages/core`：共享 Zod schema 和 TypeScript 类型
-- `packages/thesis`：Thesis 生命周期、证据规则、信心更新、暴露映射
+- Sora Thesis workflow service：MVP 阶段实现证据规则、信心更新、review、contradiction、exposure queries。它可以先放在最务实的 Sora service 模块里，之后再抽取。
 - `packages/market`：市场和指数查询
 - `packages/fund`：基金映射和执行质量分析
 - `packages/research`：基于 Thesis 上下文生成研究卡片
@@ -474,6 +473,10 @@ packages/
 - `apps/api`：供 Web 和外部系统使用的 HTTP API
 - `apps/web`：可视化界面
 - `apps/worker`：定时采集和复盘任务
+
+未来 package：
+
+- `packages/thesis`：从 Sora MVP 中抽取出的可复用 Thesis Engine package，在 workflow 被验证后再创建。
 
 ## 12. 主要用户流程
 
@@ -544,7 +547,6 @@ USD Liquidity           exposure 76%
 当前实现之后的下一个 MVP 应包含：
 
 - `packages/core` 中的 Thesis schemas
-- `packages/thesis`
 - Thesis seed 数据
 - CLI Thesis 命令
 - thesis / evidence / updates / exposure 存储表
@@ -556,6 +558,8 @@ USD Liquidity           exposure 76%
 
 MVP 不需要：
 
+- 独立 `packages/thesis`
+- 通用 Thesis Engine SDK
 - 组合管理
 - 自动交易
 - 真实券商集成

@@ -437,7 +437,7 @@ type AssetExposure = {
 
 ## 11. Package Architecture
 
-Target monorepo:
+MVP monorepo:
 
 ```text
 apps/
@@ -448,7 +448,6 @@ apps/
 
 packages/
   core/
-  thesis/
   market/
   fund/
   research/
@@ -462,7 +461,7 @@ packages/
 Responsibilities:
 
 - `packages/core`: shared Zod schemas and TypeScript types
-- `packages/thesis`: thesis lifecycle, evidence rules, confidence updates, exposure mapping
+- Sora Thesis workflow service: MVP implementation of evidence rules, confidence updates, review, contradiction, and exposure queries. It can live in the most pragmatic Sora service module before extraction.
 - `packages/market`: market and index queries
 - `packages/fund`: fund mapping and execution quality analysis
 - `packages/research`: research card generation from Thesis context
@@ -474,6 +473,10 @@ Responsibilities:
 - `apps/api`: HTTP API for Web and external consumers
 - `apps/web`: visual interface
 - `apps/worker`: scheduled ingestion and review jobs
+
+Future package:
+
+- `packages/thesis`: extracted reusable Thesis Engine package, created after Sora MVP validates the workflow.
 
 ## 12. Main User Workflows
 
@@ -544,7 +547,6 @@ USD Liquidity           exposure 76%
 The next MVP after the current implementation should include:
 
 - Thesis schemas in `packages/core`
-- `packages/thesis`
 - seed thesis data
 - CLI thesis commands
 - storage tables for thesis / evidence / updates / exposure
@@ -556,6 +558,8 @@ The next MVP after the current implementation should include:
 
 MVP does not need:
 
+- standalone `packages/thesis`
+- generic Thesis Engine SDK
 - portfolio management
 - automatic trading
 - real brokerage integration
