@@ -21,15 +21,28 @@ export function makeDataCommand(): Command {
         const indexes = JSON.parse(
           readFileSync(join(SEEDS_DIR, 'indexes.json'), 'utf-8')
         ) as Index[]
+        let successCount = 0
+        let failureCount = 0
+
         for (const idx of indexes) {
           try {
             const q = await source.getIndexQuote(idx.ticker)
+            successCount += 1
             console.log(`  ✓ ${idx.name} (${idx.ticker}): ${q.price} (${q.changePercent >= 0 ? '+' : ''}${q.changePercent.toFixed(2)}%)`)
           } catch (e) {
+            failureCount += 1
             console.log(`  ✗ ${idx.name} (${idx.ticker}): ${(e as Error).message}`)
           }
         }
-        console.log('✅ 市场行情缓存已更新')
+
+        if (successCount === 0) {
+          console.error(`❌ 市场行情刷新失败：${failureCount}/${indexes.length} 个上游请求失败`)
+          process.exitCode = 1
+        } else if (failureCount > 0) {
+          console.warn(`⚠️ 市场行情部分刷新：${successCount}/${indexes.length} 成功，${failureCount} 失败`)
+        } else {
+          console.log(`✅ 市场行情缓存已更新：${successCount}/${indexes.length} 成功`)
+        }
       } else if (opts.type === 'fund') {
         if (!opts.code) {
           console.error('❌ --type fund 需要指定 --code <fundCode>')
@@ -43,6 +56,7 @@ export function makeDataCommand(): Command {
           console.log('✅ 基金数据缓存已更新')
         } catch (e) {
           console.error(`❌ 刷新失败: ${(e as Error).message}`)
+          process.exitCode = 1
         }
       } else {
         console.error('❌ 未知类型，支持：market | fund')

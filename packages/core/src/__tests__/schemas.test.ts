@@ -136,7 +136,8 @@ describe('FundSchema', () => {
   })
 
   it('rejects fund missing required boolean fields', () => {
-    const { isEtf: _, ...withoutIsEtf } = validFund
+    const withoutIsEtf = { ...validFund }
+    delete (withoutIsEtf as Partial<typeof validFund>).isEtf
     expect(() => FundSchema.parse(withoutIsEtf)).toThrow()
   })
 })
@@ -198,7 +199,8 @@ describe('FundMetricsSnapshotSchema', () => {
   })
 
   it('rejects metrics missing snapshotDate', () => {
-    const { snapshotDate: _, ...without } = validMetrics
+    const without = { ...validMetrics }
+    delete (without as Partial<typeof validMetrics>).snapshotDate
     expect(() => FundMetricsSnapshotSchema.parse(without)).toThrow()
   })
 })

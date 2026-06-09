@@ -22,6 +22,8 @@ export class SeedSource implements IMarketQuoteSource, IFundDataSource {
   async getIndexQuote(ticker: string): Promise<IndexQuote> {
     const indexes = readJson<Index>(this.seedsDir, 'indexes.json')
     const found = indexes.find((i) => i.ticker === ticker)
+    if (!found) throw new Error(`SeedSource: index ticker ${ticker} not found in seeds`)
+
     return {
       ticker,
       price: 0,
@@ -33,7 +35,10 @@ export class SeedSource implements IMarketQuoteSource, IFundDataSource {
     }
   }
 
-  async getIndexHistory(_ticker: string, _days: number): Promise<IndexHistoricalQuote[]> {
+  async getIndexHistory(ticker: string, days: number): Promise<IndexHistoricalQuote[]> {
+    void ticker
+    void days
+
     return []
   }
 
@@ -58,7 +63,10 @@ export class SeedSource implements IMarketQuoteSource, IFundDataSource {
     }
   }
 
-  async getFundNavHistory(_fundCode: string, _days: number): Promise<RawNavRecord[]> {
+  async getFundNavHistory(fundCode: string, days: number): Promise<RawNavRecord[]> {
+    void fundCode
+    void days
+
     return []
   }
 

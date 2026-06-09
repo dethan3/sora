@@ -18,6 +18,8 @@ afterEach(() => {
 })
 
 function mockFetch(responseText: string, asJson = false) {
+  void asJson
+
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({

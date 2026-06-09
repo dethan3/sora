@@ -65,6 +65,21 @@ describe('dbSeed', () => {
     expect(stats.mappings).toBeGreaterThanOrEqual(7)
     expect(stats.metrics).toBeGreaterThanOrEqual(7)
   })
+
+  it('can be run repeatedly without duplicating rows', () => {
+    dbSeed(db, SEEDS_DIR)
+    expect(() => dbSeed(db, SEEDS_DIR)).not.toThrow()
+
+    const marketCount = (
+      sqlite.prepare('SELECT COUNT(*) as c FROM markets').get() as { c: number }
+    ).c
+    const fundCount = (
+      sqlite.prepare('SELECT COUNT(*) as c FROM funds').get() as { c: number }
+    ).c
+
+    expect(marketCount).toBe(6)
+    expect(fundCount).toBeGreaterThanOrEqual(7)
+  })
 })
 
 describe('market queries', () => {

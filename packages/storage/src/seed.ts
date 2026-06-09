@@ -38,6 +38,13 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
       name: m.name,
       category: m.category,
       description: m.description ?? null,
+    }).onConflictDoUpdate({
+      target: markets.id,
+      set: {
+        name: m.name,
+        category: m.category,
+        description: m.description ?? null,
+      },
     }).run()
   }
 
@@ -48,6 +55,14 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
       marketId: i.marketId,
       ticker: i.ticker,
       description: i.description ?? null,
+    }).onConflictDoUpdate({
+      target: indexes.id,
+      set: {
+        name: i.name,
+        marketId: i.marketId,
+        ticker: i.ticker,
+        description: i.description ?? null,
+      },
     }).run()
   }
 
@@ -70,6 +85,26 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
       purchaseLimit: f.purchaseLimit ?? null,
       dataSource: f.dataSource,
       updatedAt: f.updatedAt,
+    }).onConflictDoUpdate({
+      target: funds.id,
+      set: {
+        fundCode: f.fundCode,
+        fundName: f.fundName,
+        fundType: f.fundType,
+        marketId: f.marketId,
+        trackingIndexId: f.trackingIndexId,
+        manager: f.manager ?? null,
+        fee: f.fee ?? null,
+        scale: f.scale ?? null,
+        inceptionDate: f.inceptionDate ?? null,
+        isEtf: f.isEtf,
+        isEtfFeeder: f.isEtfFeeder,
+        isQdii: f.isQdii,
+        purchaseStatus: f.purchaseStatus,
+        purchaseLimit: f.purchaseLimit ?? null,
+        dataSource: f.dataSource,
+        updatedAt: f.updatedAt,
+      },
     }).run()
   }
 
@@ -79,6 +114,13 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
       fundId: map.fundId,
       indexId: map.indexId,
       isPrimary: map.isPrimary,
+    }).onConflictDoUpdate({
+      target: fundIndexMappings.id,
+      set: {
+        fundId: map.fundId,
+        indexId: map.indexId,
+        isPrimary: map.isPrimary,
+      },
     }).run()
   }
 
@@ -102,6 +144,27 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
       return3y: m.return3y ?? null,
       snapshotDate: m.snapshotDate,
       dataSource: m.dataSource,
+    }).onConflictDoUpdate({
+      target: fundMetricsSnapshots.id,
+      set: {
+        fundId: m.fundId,
+        nav: m.nav ?? null,
+        price: m.price ?? null,
+        premiumRate: m.premiumRate ?? null,
+        volume: m.volume ?? null,
+        turnover: m.turnover ?? null,
+        sharpeRatio: m.sharpeRatio ?? null,
+        maxDrawdown: m.maxDrawdown ?? null,
+        volatility: m.volatility ?? null,
+        trackingError: m.trackingError ?? null,
+        return1m: m.return1m ?? null,
+        return3m: m.return3m ?? null,
+        return6m: m.return6m ?? null,
+        return1y: m.return1y ?? null,
+        return3y: m.return3y ?? null,
+        snapshotDate: m.snapshotDate,
+        dataSource: m.dataSource,
+      },
     }).run()
   }
 
