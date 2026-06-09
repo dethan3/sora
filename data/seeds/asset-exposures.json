@@ -1,0 +1,110 @@
+[
+  {
+    "id": "exposure-ai-infra-us-tech",
+    "thesisId": "ai-infra",
+    "assetType": "market",
+    "assetId": "us-tech",
+    "exposureScore": 90,
+    "rationale": "US technology markets contain major cloud, semiconductor, and platform companies tied to AI infrastructure.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-ai-infra-nasdaq-100",
+    "thesisId": "ai-infra",
+    "assetType": "index",
+    "assetId": "nasdaq-100",
+    "exposureScore": 85,
+    "rationale": "Nasdaq 100 has high exposure to platform and semiconductor companies linked to AI infrastructure.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-ai-infra-fund-159941",
+    "thesisId": "ai-infra",
+    "assetType": "fund",
+    "assetId": "fund-159941",
+    "exposureScore": 80,
+    "rationale": "The fund tracks Nasdaq 100 exposure through a domestic ETF vehicle.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-china-recovery-hk-tech",
+    "thesisId": "china-recovery",
+    "assetType": "market",
+    "assetId": "hk-tech",
+    "exposureScore": 78,
+    "rationale": "Hong Kong technology assets are sensitive to China valuation recovery and risk appetite.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-china-recovery-hsi-tech",
+    "thesisId": "china-recovery",
+    "assetType": "index",
+    "assetId": "hsi-tech",
+    "exposureScore": 82,
+    "rationale": "Hang Seng Tech is a direct expression of China technology valuation recovery.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-china-recovery-fund-513180",
+    "thesisId": "china-recovery",
+    "assetType": "fund",
+    "assetId": "fund-513180",
+    "exposureScore": 76,
+    "rationale": "The fund provides domestic access to Hang Seng Tech exposure.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-gold-allocation-global",
+    "thesisId": "gold-allocation",
+    "assetType": "market",
+    "assetId": "global",
+    "exposureScore": 42,
+    "rationale": "Gold allocation affects global portfolio construction but is not directly represented by current fund seeds.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-us-tech-valuation-nasdaq-100",
+    "thesisId": "us-tech-valuation",
+    "assetType": "index",
+    "assetId": "nasdaq-100",
+    "exposureScore": 88,
+    "rationale": "Nasdaq 100 is highly sensitive to large-cap technology valuation risk.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-us-tech-valuation-fund-513100",
+    "thesisId": "us-tech-valuation",
+    "assetType": "fund",
+    "assetId": "fund-513100",
+    "exposureScore": 80,
+    "rationale": "The fund tracks Nasdaq 100 and carries valuation-risk exposure through that index.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-usd-liquidity-global",
+    "thesisId": "usd-liquidity",
+    "assetType": "market",
+    "assetId": "global",
+    "exposureScore": 76,
+    "rationale": "Global risk assets are sensitive to dollar liquidity and rate expectations.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-usd-liquidity-msci-world",
+    "thesisId": "usd-liquidity",
+    "assetType": "index",
+    "assetId": "msci-world",
+    "exposureScore": 72,
+    "rationale": "MSCI World reflects broad global equity sensitivity to USD liquidity.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "exposure-usd-liquidity-fund-159941",
+    "thesisId": "usd-liquidity",
+    "assetType": "fund",
+    "assetId": "fund-159941",
+    "exposureScore": 68,
+    "rationale": "Domestic Nasdaq exposure can be affected by USD liquidity and QDII execution conditions.",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  }
+]

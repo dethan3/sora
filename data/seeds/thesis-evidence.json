@@ -1,0 +1,80 @@
+[
+  {
+    "id": "evidence-ai-infra-001",
+    "thesisId": "ai-infra",
+    "source": "seed",
+    "title": "Cloud providers continue AI infrastructure spending",
+    "summary": "Large cloud and platform companies continue to describe AI infrastructure as a priority area for capital expenditure.",
+    "direction": "support",
+    "strength": "medium",
+    "confidenceDelta": 4,
+    "rationale": "Sustained capex supports the thesis causal chain from AI demand to infrastructure-linked earnings.",
+    "observedAt": "2024-06-01T10:00:00Z",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "evidence-ai-infra-002",
+    "thesisId": "ai-infra",
+    "source": "seed",
+    "title": "AI monetization remains uneven",
+    "summary": "Some AI products still have uncertain monetization, which may challenge the durability of infrastructure spending.",
+    "direction": "against",
+    "strength": "weak",
+    "confidenceDelta": -2,
+    "rationale": "Weak monetization evidence challenges the assumption that capex remains fundable over several years.",
+    "observedAt": "2024-06-01T10:00:00Z",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "evidence-china-recovery-001",
+    "thesisId": "china-recovery",
+    "source": "seed",
+    "title": "Policy support improves sentiment but earnings remain mixed",
+    "summary": "Policy support has improved risk appetite, while earnings revisions have not yet turned broadly positive.",
+    "direction": "neutral",
+    "strength": "medium",
+    "confidenceDelta": 0,
+    "rationale": "The evidence supports sentiment but is not enough to confirm the earnings leg of the thesis.",
+    "observedAt": "2024-06-01T10:00:00Z",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "evidence-gold-allocation-001",
+    "thesisId": "gold-allocation",
+    "source": "seed",
+    "title": "Reserve diversification remains relevant",
+    "summary": "Central-bank reserve diversification remains a recurring support factor for gold allocation discussions.",
+    "direction": "support",
+    "strength": "medium",
+    "confidenceDelta": 4,
+    "rationale": "Reserve diversification supports the long-term allocation case.",
+    "observedAt": "2024-06-01T10:00:00Z",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "evidence-us-tech-valuation-001",
+    "thesisId": "us-tech-valuation",
+    "source": "seed",
+    "title": "Large-cap technology valuations remain elevated",
+    "summary": "Technology-heavy indexes continue to trade with elevated expectations relative to broad global equity benchmarks.",
+    "direction": "support",
+    "strength": "medium",
+    "confidenceDelta": 4,
+    "rationale": "Elevated valuation supports monitoring valuation compression risk.",
+    "observedAt": "2024-06-01T10:00:00Z",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "evidence-usd-liquidity-001",
+    "thesisId": "usd-liquidity",
+    "source": "seed",
+    "title": "Rate expectations remain volatile",
+    "summary": "Changing rate expectations continue to affect equity duration risk and dollar-sensitive assets.",
+    "direction": "support",
+    "strength": "weak",
+    "confidenceDelta": 2,
+    "rationale": "Rate volatility supports keeping USD liquidity as an active review thesis.",
+    "observedAt": "2024-06-01T10:00:00Z",
+    "createdAt": "2024-06-01T10:00:00Z"
+  }
+]

@@ -110,6 +110,58 @@ CREATE TABLE IF NOT EXISTS notification_events (
   payload TEXT,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS theses (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  time_horizon TEXT NOT NULL,
+  status TEXT NOT NULL,
+  confidence REAL NOT NULL,
+  causal_chain TEXT NOT NULL DEFAULT '[]',
+  key_assumptions TEXT NOT NULL DEFAULT '[]',
+  affected_market_ids TEXT NOT NULL DEFAULT '[]',
+  affected_index_ids TEXT NOT NULL DEFAULT '[]',
+  affected_fund_ids TEXT NOT NULL DEFAULT '[]',
+  invalidation_conditions TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS thesis_evidence (
+  id TEXT PRIMARY KEY,
+  thesis_id TEXT NOT NULL,
+  source TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  url TEXT,
+  direction TEXT NOT NULL,
+  strength TEXT NOT NULL,
+  confidence_delta REAL NOT NULL,
+  rationale TEXT NOT NULL,
+  observed_at TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS thesis_updates (
+  id TEXT PRIMARY KEY,
+  thesis_id TEXT NOT NULL,
+  previous_confidence REAL NOT NULL,
+  new_confidence REAL NOT NULL,
+  evidence_ids TEXT NOT NULL DEFAULT '[]',
+  rationale TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS asset_exposures (
+  id TEXT PRIMARY KEY,
+  thesis_id TEXT NOT NULL,
+  asset_type TEXT NOT NULL,
+  asset_id TEXT NOT NULL,
+  exposure_score REAL NOT NULL,
+  rationale TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 `
 
 export function dbInit(dbPath: string): { sqlite: Database.Database; db: SoraDb } {

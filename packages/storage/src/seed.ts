@@ -1,6 +1,14 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Fund, FundMapping, FundMetricsSnapshot } from '@sora/core'
+import type {
+  AssetExposure,
+  Fund,
+  FundMapping,
+  FundMetricsSnapshot,
+  Thesis,
+  ThesisEvidence,
+  ThesisUpdate,
+} from '@sora/core'
 import type { Market } from '@sora/core'
 import type { Index } from '@sora/core'
 import type { SoraDb } from './db.js'
@@ -10,6 +18,10 @@ import {
   funds,
   fundIndexMappings,
   fundMetricsSnapshots,
+  assetExposures,
+  theses,
+  thesisEvidence,
+  thesisUpdates,
 } from './schema.js'
 
 export interface SeedStats {
@@ -18,6 +30,10 @@ export interface SeedStats {
   funds: number
   mappings: number
   metrics: number
+  theses: number
+  thesisEvidence: number
+  thesisUpdates: number
+  assetExposures: number
 }
 
 function readJson<T>(seedsDir: string, filename: string): T[] {
@@ -31,6 +47,10 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
   const fundsData = readJson<Fund>(seedsDir, 'funds.json')
   const mappingsData = readJson<FundMapping>(seedsDir, 'mappings.json')
   const metricsData = readJson<FundMetricsSnapshot>(seedsDir, 'fund-metrics.json')
+  const thesesData = readJson<Thesis>(seedsDir, 'theses.json')
+  const thesisEvidenceData = readJson<ThesisEvidence>(seedsDir, 'thesis-evidence.json')
+  const thesisUpdatesData = readJson<ThesisUpdate>(seedsDir, 'thesis-updates.json')
+  const assetExposuresData = readJson<AssetExposure>(seedsDir, 'asset-exposures.json')
 
   for (const m of marketsData) {
     db.insert(markets).values({
@@ -168,11 +188,127 @@ export function dbSeed(db: SoraDb, seedsDir: string): SeedStats {
     }).run()
   }
 
+  for (const t of thesesData) {
+    db.insert(theses).values({
+      id: t.id,
+      title: t.title,
+      summary: t.summary,
+      timeHorizon: t.timeHorizon,
+      status: t.status,
+      confidence: t.confidence,
+      causalChain: JSON.stringify(t.causalChain),
+      keyAssumptions: JSON.stringify(t.keyAssumptions),
+      affectedMarketIds: JSON.stringify(t.affectedMarketIds),
+      affectedIndexIds: JSON.stringify(t.affectedIndexIds),
+      affectedFundIds: JSON.stringify(t.affectedFundIds),
+      invalidationConditions: JSON.stringify(t.invalidationConditions),
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+    }).onConflictDoUpdate({
+      target: theses.id,
+      set: {
+        title: t.title,
+        summary: t.summary,
+        timeHorizon: t.timeHorizon,
+        status: t.status,
+        confidence: t.confidence,
+        causalChain: JSON.stringify(t.causalChain),
+        keyAssumptions: JSON.stringify(t.keyAssumptions),
+        affectedMarketIds: JSON.stringify(t.affectedMarketIds),
+        affectedIndexIds: JSON.stringify(t.affectedIndexIds),
+        affectedFundIds: JSON.stringify(t.affectedFundIds),
+        invalidationConditions: JSON.stringify(t.invalidationConditions),
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt,
+      },
+    }).run()
+  }
+
+  for (const evidence of thesisEvidenceData) {
+    db.insert(thesisEvidence).values({
+      id: evidence.id,
+      thesisId: evidence.thesisId,
+      source: evidence.source,
+      title: evidence.title,
+      summary: evidence.summary,
+      url: evidence.url ?? null,
+      direction: evidence.direction,
+      strength: evidence.strength,
+      confidenceDelta: evidence.confidenceDelta,
+      rationale: evidence.rationale,
+      observedAt: evidence.observedAt,
+      createdAt: evidence.createdAt,
+    }).onConflictDoUpdate({
+      target: thesisEvidence.id,
+      set: {
+        thesisId: evidence.thesisId,
+        source: evidence.source,
+        title: evidence.title,
+        summary: evidence.summary,
+        url: evidence.url ?? null,
+        direction: evidence.direction,
+        strength: evidence.strength,
+        confidenceDelta: evidence.confidenceDelta,
+        rationale: evidence.rationale,
+        observedAt: evidence.observedAt,
+        createdAt: evidence.createdAt,
+      },
+    }).run()
+  }
+
+  for (const update of thesisUpdatesData) {
+    db.insert(thesisUpdates).values({
+      id: update.id,
+      thesisId: update.thesisId,
+      previousConfidence: update.previousConfidence,
+      newConfidence: update.newConfidence,
+      evidenceIds: JSON.stringify(update.evidenceIds),
+      rationale: update.rationale,
+      createdAt: update.createdAt,
+    }).onConflictDoUpdate({
+      target: thesisUpdates.id,
+      set: {
+        thesisId: update.thesisId,
+        previousConfidence: update.previousConfidence,
+        newConfidence: update.newConfidence,
+        evidenceIds: JSON.stringify(update.evidenceIds),
+        rationale: update.rationale,
+        createdAt: update.createdAt,
+      },
+    }).run()
+  }
+
+  for (const exposure of assetExposuresData) {
+    db.insert(assetExposures).values({
+      id: exposure.id,
+      thesisId: exposure.thesisId,
+      assetType: exposure.assetType,
+      assetId: exposure.assetId,
+      exposureScore: exposure.exposureScore,
+      rationale: exposure.rationale,
+      updatedAt: exposure.updatedAt,
+    }).onConflictDoUpdate({
+      target: assetExposures.id,
+      set: {
+        thesisId: exposure.thesisId,
+        assetType: exposure.assetType,
+        assetId: exposure.assetId,
+        exposureScore: exposure.exposureScore,
+        rationale: exposure.rationale,
+        updatedAt: exposure.updatedAt,
+      },
+    }).run()
+  }
+
   return {
     markets: marketsData.length,
     indexes: indexesData.length,
     funds: fundsData.length,
     mappings: mappingsData.length,
     metrics: metricsData.length,
+    theses: thesesData.length,
+    thesisEvidence: thesisEvidenceData.length,
+    thesisUpdates: thesisUpdatesData.length,
+    assetExposures: assetExposuresData.length,
   }
 }

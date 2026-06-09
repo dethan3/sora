@@ -1,0 +1,47 @@
+[
+  {
+    "id": "update-ai-infra-001",
+    "thesisId": "ai-infra",
+    "previousConfidence": 68,
+    "newConfidence": 72,
+    "evidenceIds": ["evidence-ai-infra-001"],
+    "rationale": "Medium support evidence increased confidence in the AI infrastructure capex chain.",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "update-china-recovery-001",
+    "thesisId": "china-recovery",
+    "previousConfidence": 58,
+    "newConfidence": 58,
+    "evidenceIds": ["evidence-china-recovery-001"],
+    "rationale": "Mixed evidence kept confidence unchanged while preserving the thesis on watch.",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "update-gold-allocation-001",
+    "thesisId": "gold-allocation",
+    "previousConfidence": 61,
+    "newConfidence": 65,
+    "evidenceIds": ["evidence-gold-allocation-001"],
+    "rationale": "Reserve diversification evidence increased confidence in the long-term allocation thesis.",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "update-us-tech-valuation-001",
+    "thesisId": "us-tech-valuation",
+    "previousConfidence": 57,
+    "newConfidence": 61,
+    "evidenceIds": ["evidence-us-tech-valuation-001"],
+    "rationale": "Elevated valuation evidence increased confidence in the valuation-risk thesis.",
+    "createdAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "update-usd-liquidity-001",
+    "thesisId": "usd-liquidity",
+    "previousConfidence": 53,
+    "newConfidence": 55,
+    "evidenceIds": ["evidence-usd-liquidity-001"],
+    "rationale": "Weak support evidence increased confidence modestly.",
+    "createdAt": "2024-06-01T10:00:00Z"
+  }
+]

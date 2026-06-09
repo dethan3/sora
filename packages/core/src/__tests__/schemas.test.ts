@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { MarketCategorySchema, MarketSchema } from '../market.js'
 import { IndexSchema } from '../index-schema.js'
 import {
@@ -12,6 +14,23 @@ import { FundWarningSchema, FundAnalysisSchema } from '../fund-analysis.js'
 import { ResearchSignalSchema, ResearchCardStatusSchema, ResearchCardSchema } from '../research.js'
 import { AlertLevelSchema, AlertSchema } from '../alert.js'
 import { NotificationLevelSchema, NotificationEventSchema } from '../notification.js'
+import {
+  AssetExposureSchema,
+  EvidenceDirectionSchema,
+  EvidenceStrengthSchema,
+  ExposureAssetTypeSchema,
+  ThesisEvidenceSchema,
+  ThesisSchema,
+  ThesisStatusSchema,
+  ThesisUpdateSchema,
+  TimeHorizonSchema,
+} from '../thesis.js'
+
+const SEEDS_DIR = join(import.meta.dirname, '../../../../data/seeds')
+
+function readSeed<T>(filename: string): T[] {
+  return JSON.parse(readFileSync(join(SEEDS_DIR, filename), 'utf-8')) as T[]
+}
 
 describe('MarketCategorySchema', () => {
   it('parses valid category', () => {
@@ -397,5 +416,133 @@ describe('NotificationEventSchema', () => {
     expect(() =>
       NotificationEventSchema.parse({ ...validEvent, level: 'debug' })
     ).toThrow()
+  })
+})
+
+describe('Thesis enums', () => {
+  it('parses valid thesis enum values', () => {
+    expect(TimeHorizonSchema.parse('3y')).toBe('3y')
+    expect(ThesisStatusSchema.parse('active')).toBe('active')
+    expect(EvidenceDirectionSchema.parse('against')).toBe('against')
+    expect(EvidenceStrengthSchema.parse('medium')).toBe('medium')
+    expect(ExposureAssetTypeSchema.parse('fund')).toBe('fund')
+  })
+
+  it('rejects invalid thesis enum values', () => {
+    expect(() => TimeHorizonSchema.parse('10y')).toThrow()
+    expect(() => ThesisStatusSchema.parse('confirmed')).toThrow()
+    expect(() => EvidenceDirectionSchema.parse('bullish')).toThrow()
+    expect(() => EvidenceStrengthSchema.parse('extreme')).toThrow()
+    expect(() => ExposureAssetTypeSchema.parse('stock')).toThrow()
+  })
+})
+
+describe('ThesisSchema', () => {
+  const validThesis = {
+    id: 'ai-infra',
+    title: 'AI Infrastructure Supercycle',
+    summary: 'AI infrastructure spending may remain elevated over a multi-year horizon.',
+    timeHorizon: '3y',
+    status: 'active',
+    confidence: 72,
+    causalChain: ['AI demand grows', 'Cloud capex rises', 'Semiconductor and data center indexes benefit'],
+    keyAssumptions: ['AI workloads keep expanding', 'Capex remains fundable'],
+    affectedMarketIds: ['us-tech'],
+    affectedIndexIds: ['nasdaq-100'],
+    affectedFundIds: ['fund-159941'],
+    invalidationConditions: ['AI capex is cut sharply for multiple quarters'],
+    createdAt: '2024-06-01T10:00:00Z',
+    updatedAt: '2024-06-01T10:00:00Z',
+  }
+
+  it('parses valid thesis', () => {
+    const result = ThesisSchema.parse(validThesis)
+    expect(result.id).toBe('ai-infra')
+    expect(result.confidence).toBe(72)
+  })
+
+  it('rejects confidence outside 0..100', () => {
+    expect(() => ThesisSchema.parse({ ...validThesis, confidence: 101 })).toThrow()
+    expect(() => ThesisSchema.parse({ ...validThesis, confidence: -1 })).toThrow()
+  })
+})
+
+describe('ThesisEvidenceSchema', () => {
+  const validEvidence = {
+    id: 'evidence-ai-infra-001',
+    thesisId: 'ai-infra',
+    source: 'seed',
+    title: 'Cloud providers continue AI capex',
+    summary: 'Large cloud providers continue to report elevated AI infrastructure spending.',
+    direction: 'support',
+    strength: 'medium',
+    confidenceDelta: 4,
+    rationale: 'Capex supports the thesis causal chain.',
+    observedAt: '2024-06-01T10:00:00Z',
+    createdAt: '2024-06-01T10:00:00Z',
+  }
+
+  it('parses valid evidence', () => {
+    const result = ThesisEvidenceSchema.parse(validEvidence)
+    expect(result.direction).toBe('support')
+    expect(result.confidenceDelta).toBe(4)
+  })
+
+  it('rejects invalid evidence direction', () => {
+    expect(() => ThesisEvidenceSchema.parse({ ...validEvidence, direction: 'positive' })).toThrow()
+  })
+})
+
+describe('ThesisUpdateSchema', () => {
+  const validUpdate = {
+    id: 'update-ai-infra-001',
+    thesisId: 'ai-infra',
+    previousConfidence: 68,
+    newConfidence: 72,
+    evidenceIds: ['evidence-ai-infra-001'],
+    rationale: 'Medium support evidence increased confidence.',
+    createdAt: '2024-06-01T10:00:00Z',
+  }
+
+  it('parses valid update', () => {
+    const result = ThesisUpdateSchema.parse(validUpdate)
+    expect(result.newConfidence).toBe(72)
+  })
+
+  it('requires at least one evidence id', () => {
+    expect(() => ThesisUpdateSchema.parse({ ...validUpdate, evidenceIds: [] })).toThrow()
+  })
+})
+
+describe('AssetExposureSchema', () => {
+  const validExposure = {
+    id: 'exposure-ai-infra-nasdaq-100',
+    thesisId: 'ai-infra',
+    assetType: 'index',
+    assetId: 'nasdaq-100',
+    exposureScore: 85,
+    rationale: 'Nasdaq 100 has large AI infrastructure constituents.',
+    updatedAt: '2024-06-01T10:00:00Z',
+  }
+
+  it('parses valid asset exposure', () => {
+    const result = AssetExposureSchema.parse(validExposure)
+    expect(result.assetType).toBe('index')
+    expect(result.exposureScore).toBe(85)
+  })
+
+  it('rejects exposure score outside 0..100', () => {
+    expect(() => AssetExposureSchema.parse({ ...validExposure, exposureScore: 120 })).toThrow()
+  })
+})
+
+describe('Thesis seed data', () => {
+  it('validates all Thesis MVP seed files', () => {
+    expect(readSeed('theses.json').map((item) => ThesisSchema.parse(item))).toHaveLength(5)
+    expect(readSeed('thesis-evidence.json').map((item) => ThesisEvidenceSchema.parse(item)).length)
+      .toBeGreaterThanOrEqual(6)
+    expect(readSeed('thesis-updates.json').map((item) => ThesisUpdateSchema.parse(item))).toHaveLength(5)
+    expect(readSeed('asset-exposures.json').map((item) => AssetExposureSchema.parse(item)).length)
+      .toBeGreaterThanOrEqual(10)
   })
 })

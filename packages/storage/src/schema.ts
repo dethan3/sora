@@ -109,6 +109,58 @@ export const notificationEvents = sqliteTable('notification_events', {
   createdAt: text('created_at').notNull(),
 })
 
+export const theses = sqliteTable('theses', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  summary: text('summary').notNull(),
+  timeHorizon: text('time_horizon').notNull(),
+  status: text('status').notNull(),
+  confidence: real('confidence').notNull(),
+  causalChain: text('causal_chain').notNull().default('[]'),
+  keyAssumptions: text('key_assumptions').notNull().default('[]'),
+  affectedMarketIds: text('affected_market_ids').notNull().default('[]'),
+  affectedIndexIds: text('affected_index_ids').notNull().default('[]'),
+  affectedFundIds: text('affected_fund_ids').notNull().default('[]'),
+  invalidationConditions: text('invalidation_conditions').notNull().default('[]'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
+
+export const thesisEvidence = sqliteTable('thesis_evidence', {
+  id: text('id').primaryKey(),
+  thesisId: text('thesis_id').notNull(),
+  source: text('source').notNull(),
+  title: text('title').notNull(),
+  summary: text('summary').notNull(),
+  url: text('url'),
+  direction: text('direction').notNull(),
+  strength: text('strength').notNull(),
+  confidenceDelta: real('confidence_delta').notNull(),
+  rationale: text('rationale').notNull(),
+  observedAt: text('observed_at').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+
+export const thesisUpdates = sqliteTable('thesis_updates', {
+  id: text('id').primaryKey(),
+  thesisId: text('thesis_id').notNull(),
+  previousConfidence: real('previous_confidence').notNull(),
+  newConfidence: real('new_confidence').notNull(),
+  evidenceIds: text('evidence_ids').notNull().default('[]'),
+  rationale: text('rationale').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+
+export const assetExposures = sqliteTable('asset_exposures', {
+  id: text('id').primaryKey(),
+  thesisId: text('thesis_id').notNull(),
+  assetType: text('asset_type').notNull(),
+  assetId: text('asset_id').notNull(),
+  exposureScore: real('exposure_score').notNull(),
+  rationale: text('rationale').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
+
 export const schema = {
   markets,
   indexes,
@@ -118,4 +170,8 @@ export const schema = {
   researchCards,
   alerts,
   notificationEvents,
+  theses,
+  thesisEvidence,
+  thesisUpdates,
+  assetExposures,
 }

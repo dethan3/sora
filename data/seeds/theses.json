@@ -1,0 +1,147 @@
+[
+  {
+    "id": "ai-infra",
+    "title": "AI Infrastructure Supercycle",
+    "summary": "AI infrastructure capital expenditure may remain elevated over the next several years, supporting indexes and domestic funds with large exposure to semiconductors, cloud platforms, and data center assets.",
+    "timeHorizon": "3y",
+    "status": "active",
+    "confidence": 72,
+    "causalChain": [
+      "AI workload demand grows",
+      "Cloud and platform companies maintain elevated infrastructure capex",
+      "Semiconductor, cloud, and data center assets receive earnings support",
+      "Indexes with high technology exposure reflect the theme"
+    ],
+    "keyAssumptions": [
+      "AI workloads continue to scale beyond initial training demand",
+      "Large platform companies can fund capex without severe margin damage",
+      "Supply constraints do not fully block deployment"
+    ],
+    "affectedMarketIds": ["us-tech", "global"],
+    "affectedIndexIds": ["nasdaq-100", "sp500", "msci-world"],
+    "affectedFundIds": ["fund-159941", "fund-513100", "fund-007339", "fund-513500"],
+    "invalidationConditions": [
+      "Major cloud providers cut AI capex for multiple quarters",
+      "AI monetization fails to support continued infrastructure spending",
+      "Semiconductor supply or regulation sharply constrains deployment"
+    ],
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "china-recovery",
+    "title": "China Asset Valuation Recovery",
+    "summary": "Chinese and Hong Kong assets may recover from depressed valuation levels if policy support, earnings stabilization, and risk appetite improve together.",
+    "timeHorizon": "1y",
+    "status": "watch",
+    "confidence": 58,
+    "causalChain": [
+      "Policy support improves market expectations",
+      "Earnings revisions stabilize",
+      "Risk appetite recovers from depressed levels",
+      "China and Hong Kong broad and technology indexes re-rate"
+    ],
+    "keyAssumptions": [
+      "Policy follow-through is strong enough to change earnings expectations",
+      "Property and consumption drag do not worsen materially",
+      "Foreign and domestic flows stop deteriorating"
+    ],
+    "affectedMarketIds": ["hk-tech", "hk-broad", "cn-broad"],
+    "affectedIndexIds": ["hsi-tech", "hsi", "csi300"],
+    "affectedFundIds": ["fund-513180", "fund-159740", "fund-510300"],
+    "invalidationConditions": [
+      "Earnings revisions continue to deteriorate",
+      "Policy support fails to improve credit or consumption data",
+      "Capital outflows accelerate"
+    ],
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "gold-allocation",
+    "title": "Gold Long-term Allocation Value",
+    "summary": "Gold may retain long-term allocation value if real-rate uncertainty, geopolitical risk, and reserve diversification remain persistent.",
+    "timeHorizon": "3y",
+    "status": "active",
+    "confidence": 65,
+    "causalChain": [
+      "Real-rate and currency uncertainty remains elevated",
+      "Central-bank reserve diversification continues",
+      "Portfolio hedging demand supports gold allocation",
+      "Commodity and global allocation views reflect the hedge value"
+    ],
+    "keyAssumptions": [
+      "Real yields do not rise enough to erase gold demand",
+      "Central-bank buying remains structurally relevant",
+      "Geopolitical risk premium does not fully normalize"
+    ],
+    "affectedMarketIds": ["commodity", "global"],
+    "affectedIndexIds": ["msci-world"],
+    "affectedFundIds": [],
+    "invalidationConditions": [
+      "Real yields rise sharply and remain elevated",
+      "Central-bank buying weakens for a sustained period",
+      "Risk appetite normalizes and hedge demand falls materially"
+    ],
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "us-tech-valuation",
+    "title": "US Tech Valuation Risk",
+    "summary": "US technology indexes may face valuation compression risk if earnings growth fails to keep pace with elevated expectations or if discount rates stay restrictive.",
+    "timeHorizon": "1y",
+    "status": "challenged",
+    "confidence": 61,
+    "causalChain": [
+      "US technology valuations remain elevated",
+      "Earnings expectations are high",
+      "Restrictive rates or slower earnings growth pressure multiples",
+      "Technology-heavy indexes become more sensitive to downside surprises"
+    ],
+    "keyAssumptions": [
+      "Valuation dispersion remains high",
+      "Earnings growth expectations are vulnerable to disappointment",
+      "Rates do not fall fast enough to offset valuation risk"
+    ],
+    "affectedMarketIds": ["us-tech", "us-broad", "global"],
+    "affectedIndexIds": ["nasdaq-100", "sp500", "msci-world"],
+    "affectedFundIds": ["fund-159941", "fund-513100", "fund-513500"],
+    "invalidationConditions": [
+      "Earnings growth broadens and beats expectations sustainably",
+      "Rates decline while growth remains resilient",
+      "Valuation risk is absorbed through earnings rather than price declines"
+    ],
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": "usd-liquidity",
+    "title": "USD Liquidity Cycle",
+    "summary": "Global risk assets may remain sensitive to changes in USD liquidity, rate expectations, and dollar strength.",
+    "timeHorizon": "6m",
+    "status": "watch",
+    "confidence": 55,
+    "causalChain": [
+      "USD liquidity conditions shape global risk appetite",
+      "Dollar strength affects non-US assets and QDII execution",
+      "Rate expectations influence equity duration risk",
+      "Global and emerging-market exposure reacts to liquidity changes"
+    ],
+    "keyAssumptions": [
+      "Dollar liquidity remains a major driver of cross-asset risk appetite",
+      "Rate expectations stay volatile",
+      "Currency pressure affects domestic access to global funds"
+    ],
+    "affectedMarketIds": ["global", "us-tech", "hk-tech"],
+    "affectedIndexIds": ["msci-world", "nasdaq-100", "hsi-tech"],
+    "affectedFundIds": ["fund-159941", "fund-513100", "fund-513180", "fund-159740"],
+    "invalidationConditions": [
+      "Dollar volatility falls and liquidity becomes stable",
+      "Rate expectations stop driving equity factor rotation",
+      "Global risk appetite decouples from USD liquidity indicators"
+    ],
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  }
+]

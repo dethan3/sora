@@ -8,3 +8,15 @@ export { findMarketById, listAllMarkets } from './queries/markets.js'
 export { listAllIndexes, listIndexesByMarket, findIndexById } from './queries/indexes.js'
 export { findFundsByIndex, findFundsByMarket, getLatestFundMetrics } from './queries/funds.js'
 export { saveResearchCard, saveNotificationEvents } from './queries/research.js'
+export {
+  getThesisById,
+  insertThesisEvidence,
+  insertThesisUpdate,
+  listAssetExposuresByThesis,
+  listChallengedTheses,
+  listTheses,
+  listThesisEvidence,
+  listThesisEvidenceByDirection,
+  listThesisUpdates,
+  updateThesisConfidence,
+} from './queries/theses.js'

@@ -25,6 +25,10 @@ export function makeDbCommand(): Command {
       console.log(`   funds:    ${stats.funds}`)
       console.log(`   mappings: ${stats.mappings}`)
       console.log(`   metrics:  ${stats.metrics}`)
+      console.log(`   theses:   ${stats.theses}`)
+      console.log(`   evidence: ${stats.thesisEvidence}`)
+      console.log(`   updates:  ${stats.thesisUpdates}`)
+      console.log(`   exposure: ${stats.assetExposures}`)
     })
 
   return db

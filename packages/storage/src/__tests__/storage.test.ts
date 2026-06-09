@@ -15,6 +15,16 @@ import {
   getLatestFundMetrics,
   saveResearchCard,
   saveNotificationEvents,
+  getThesisById,
+  insertThesisEvidence,
+  insertThesisUpdate,
+  listAssetExposuresByThesis,
+  listChallengedTheses,
+  listTheses,
+  listThesisEvidence,
+  listThesisEvidenceByDirection,
+  listThesisUpdates,
+  updateThesisConfidence,
 } from '../index.js'
 import type { SoraDb } from '../db.js'
 
@@ -34,11 +44,12 @@ afterEach(() => {
 })
 
 describe('dbInit', () => {
-  it('creates all 8 tables', () => {
+  it('creates all 12 tables', () => {
     const tables = sqlite
       .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
       .all() as Array<{ name: string }>
     const names = tables.map((t) => t.name)
+    expect(names).toContain('asset_exposures')
     expect(names).toContain('markets')
     expect(names).toContain('indexes')
     expect(names).toContain('funds')
@@ -47,7 +58,10 @@ describe('dbInit', () => {
     expect(names).toContain('research_cards')
     expect(names).toContain('alerts')
     expect(names).toContain('notification_events')
-    expect(names).toHaveLength(8)
+    expect(names).toContain('theses')
+    expect(names).toContain('thesis_evidence')
+    expect(names).toContain('thesis_updates')
+    expect(names).toHaveLength(12)
   })
 
   it('is idempotent — calling twice does not throw', () => {
@@ -64,6 +78,10 @@ describe('dbSeed', () => {
     expect(stats.funds).toBeGreaterThanOrEqual(7)
     expect(stats.mappings).toBeGreaterThanOrEqual(7)
     expect(stats.metrics).toBeGreaterThanOrEqual(7)
+    expect(stats.theses).toBe(5)
+    expect(stats.thesisEvidence).toBeGreaterThanOrEqual(6)
+    expect(stats.thesisUpdates).toBe(5)
+    expect(stats.assetExposures).toBeGreaterThanOrEqual(10)
   })
 
   it('can be run repeatedly without duplicating rows', () => {
@@ -76,9 +94,84 @@ describe('dbSeed', () => {
     const fundCount = (
       sqlite.prepare('SELECT COUNT(*) as c FROM funds').get() as { c: number }
     ).c
+    const thesisCount = (
+      sqlite.prepare('SELECT COUNT(*) as c FROM theses').get() as { c: number }
+    ).c
 
     expect(marketCount).toBe(6)
     expect(fundCount).toBeGreaterThanOrEqual(7)
+    expect(thesisCount).toBe(5)
+  })
+})
+
+describe('thesis queries', () => {
+  beforeEach(() => dbSeed(db, SEEDS_DIR))
+
+  it('lists and gets seeded theses', () => {
+    const all = listTheses(db)
+    expect(all).toHaveLength(5)
+
+    const thesis = getThesisById(db, 'ai-infra')
+    expect(thesis).not.toBeNull()
+    expect(thesis!.confidence).toBe(72)
+    expect(thesis!.affectedIndexIds).toContain('nasdaq-100')
+  })
+
+  it('lists evidence and filters by direction', () => {
+    const timeline = listThesisEvidence(db, 'ai-infra')
+    expect(timeline.length).toBeGreaterThanOrEqual(2)
+
+    const support = listThesisEvidenceByDirection(db, 'ai-infra', 'support')
+    const against = listThesisEvidenceByDirection(db, 'ai-infra', 'against')
+
+    expect(support.every((e) => e.direction === 'support')).toBe(true)
+    expect(against.every((e) => e.direction === 'against')).toBe(true)
+  })
+
+  it('inserts evidence and update, then updates thesis confidence', () => {
+    insertThesisEvidence(db, {
+      id: 'evidence-ai-infra-test',
+      thesisId: 'ai-infra',
+      source: 'test',
+      title: 'Test evidence',
+      summary: 'Test summary',
+      direction: 'support',
+      strength: 'weak',
+      confidenceDelta: 2,
+      rationale: 'Test rationale',
+      observedAt: '2024-06-02T10:00:00Z',
+      createdAt: '2024-06-02T10:00:00Z',
+    })
+
+    insertThesisUpdate(db, {
+      id: 'update-ai-infra-test',
+      thesisId: 'ai-infra',
+      previousConfidence: 72,
+      newConfidence: 74,
+      evidenceIds: ['evidence-ai-infra-test'],
+      rationale: 'Weak support evidence increased confidence.',
+      createdAt: '2024-06-02T10:00:00Z',
+    })
+
+    updateThesisConfidence(db, 'ai-infra', 74, '2024-06-02T10:00:00Z')
+
+    const thesis = getThesisById(db, 'ai-infra')
+    const updates = listThesisUpdates(db, 'ai-infra')
+
+    expect(thesis!.confidence).toBe(74)
+    expect(updates[0].id).toBe('update-ai-infra-test')
+    expect(updates[0].evidenceIds).toEqual(['evidence-ai-infra-test'])
+  })
+
+  it('lists asset exposures sorted by score', () => {
+    const exposures = listAssetExposuresByThesis(db, 'ai-infra')
+    expect(exposures.length).toBeGreaterThanOrEqual(3)
+    expect(exposures[0].exposureScore).toBeGreaterThanOrEqual(exposures[1].exposureScore)
+  })
+
+  it('lists challenged theses', () => {
+    const challenged = listChallengedTheses(db)
+    expect(challenged.map((t) => t.id)).toContain('us-tech-valuation')
   })
 })
 
