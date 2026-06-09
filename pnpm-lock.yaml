@@ -200,6 +200,9 @@ importers:
       '@sora/sources':
         specifier: workspace:*
         version: link:../sources
+      '@sora/storage':
+        specifier: workspace:*
+        version: link:../storage
     devDependencies:
       '@types/node':
         specifier: ^20.0.0

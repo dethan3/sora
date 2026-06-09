@@ -21,6 +21,7 @@
     "@sora/core": "workspace:*",
     "@sora/fund": "workspace:*",
     "@sora/market": "workspace:*",
+    "@sora/storage": "workspace:*",
     "@sora/sources": "workspace:*"
   },
   "devDependencies": {
