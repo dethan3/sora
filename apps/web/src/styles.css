@@ -1,0 +1,397 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+:root {
+  font-family: var(--font-sans);
+  color: #243c35;
+  background: #f6f7f4;
+  font-synthesis: none;
+}
+body {
+  margin: 0;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #326b57;
+  outline-offset: 5px;
+}
+.app-shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100vh;
+}
+.sidebar {
+  padding: 43px 26px 26px;
+  border-right: 1px solid #dde3dc;
+  display: flex;
+  flex-direction: column;
+  background: #eff2ec;
+}
+.brand {
+  font-size: 38px;
+  letter-spacing: -2px;
+  font-weight: 650;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.brand span {
+  font-size: 23px;
+  color: #788c63;
+}
+.brand-caption {
+  color: #64766b;
+  font-size: 12px;
+  margin: 6px 0 56px;
+}
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+nav a {
+  padding: 13px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #63726b;
+}
+nav a.active {
+  background: #dfe8dc;
+  color: #233f33;
+  font-weight: 600;
+}
+nav a:hover {
+  background: #e5ebe1;
+}
+.nav-index {
+  margin-right: 17px;
+  font-size: 10px;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+.sidebar-foot {
+  margin-top: auto;
+  padding-top: 80px;
+  color: #617367;
+  font-size: 11px;
+}
+.sidebar-foot p {
+  margin-top: 12px;
+}
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #6b8855;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.workspace {
+  padding: 0 5%;
+  min-width: 0;
+}
+.topbar {
+  height: 88px;
+  border-bottom: 1px solid #dde3dc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6d7b71;
+}
+.demo-badge {
+  padding: 5px 10px;
+  border: 1px solid #d6ddd2;
+  border-radius: 30px;
+  font-size: 11px;
+}
+main {
+  padding: 48px 0 80px;
+  min-height: calc(100vh - 165px);
+  outline: none;
+}
+.page-header {
+  margin-bottom: 40px;
+  max-width: 720px;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #6a7e66;
+  margin: 0 0 20px;
+}
+h1 {
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 500;
+  letter-spacing: -1.3px;
+  line-height: 1.4;
+  margin: 0 0 16px;
+}
+h2 {
+  font-size: 16px;
+  font-weight: 550;
+  margin: 0 0 24px;
+}
+.muted {
+  color: #6d7b71;
+  line-height: 1.9;
+  font-size: 14px;
+}
+.welcome-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 30px;
+}
+.welcome-story {
+  background: #e4eadf;
+  border-radius: 8px;
+  padding: 36px;
+}
+.index-label {
+  color: #697e61;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.welcome-story h2 {
+  font-size: 31px;
+  line-height: 1.65;
+  font-weight: 450;
+  margin: 40px 0 22px;
+  letter-spacing: -1px;
+}
+.welcome-story p {
+  max-width: 340px;
+}
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 36px;
+  margin-top: 24px;
+  padding: 12px 18px;
+  background: #294e3e;
+  color: white;
+  border: 0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.action:hover {
+  background: #38664f;
+}
+.panel {
+  border: 1px solid #dde3dc;
+  border-radius: 8px;
+  background: #fcfdf9;
+  padding: 28px;
+  min-width: 0;
+}
+.steps {
+  padding-left: 22px;
+  margin: 32px 0;
+}
+.steps li {
+  padding-left: 10px;
+  margin-bottom: 27px;
+  color: #78876b;
+  font-size: 13px;
+}
+.steps strong {
+  color: #354e40;
+  font-weight: 500;
+}
+.steps p {
+  color: #758176;
+  line-height: 1.7;
+  margin: 9px 0 0;
+  font-size: 12px;
+}
+.market-grid,
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.market-note {
+  line-height: 1.9;
+  margin: 35px 0;
+  font-size: 18px;
+}
+.positive {
+  color: #9b4a37;
+  font-variant-numeric: tabular-nums;
+}
+.negative {
+  color: #367357;
+  font-variant-numeric: tabular-nums;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+  white-space: nowrap;
+}
+th,
+td {
+  padding: 23px 16px;
+  border-bottom: 1px solid #e8ebe4;
+  font-weight: 400;
+}
+thead th {
+  font-size: 11px;
+  color: #7c877c;
+}
+tbody th {
+  padding-left: 0;
+}
+small {
+  display: block;
+  font-size: 10px;
+  color: #7c877c;
+  margin-top: 7px;
+}
+.numeric {
+  text-align: right;
+}
+.fund-name {
+  font-weight: 500;
+}
+.search-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 10px;
+  color: #6d7b71;
+}
+input {
+  width: min(100%, 350px);
+  border: 1px solid #d6dfd1;
+  background: white;
+  border-radius: 4px;
+  padding: 11px 14px;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+.data-date {
+  font-size: 10px;
+  color: #7d887a;
+  margin: -24px 0 30px;
+}
+.metric {
+  font-size: clamp(20px, 2vw, 30px);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.summary-grid {
+  margin-bottom: 26px;
+}
+.position {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 22px 0;
+  border-top: 1px solid #e4e8df;
+  font-size: 14px;
+}
+.position strong {
+  margin-left: auto;
+  font-weight: 450;
+}
+.empty {
+  padding: 48px 0;
+}
+footer {
+  min-height: 70px;
+  border-top: 1px solid #dde3dc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #7c877a;
+}
+.skip-link {
+  position: fixed;
+  top: -100px;
+  background: white;
+  padding: 12px;
+  z-index: 10;
+}
+.skip-link:focus {
+  top: 10px;
+}
+@media (max-width: 1000px) {
+  .market-grid {
+    grid-template-columns: 1fr;
+  }
+  .welcome-grid {
+    grid-template-columns: 1fr;
+  }
+  .app-shell {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    padding: 18px 20px;
+    border-right: 0;
+    border-bottom: 1px solid #dde3dc;
+  }
+  .brand {
+    font-size: 28px;
+  }
+  .brand-caption,
+  .sidebar-foot,
+  .nav-index {
+    display: none;
+  }
+  nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 15px;
+  }
+  nav a {
+    font-size: 12px;
+    padding: 9px;
+  }
+  .topbar {
+    height: 58px;
+  }
+  main {
+    padding-top: 42px;
+  }
+  .panel,
+  .welcome-story {
+    padding: 22px;
+  }
+  .position {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  footer span {
+    max-width: 180px;
+    text-align: right;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "sora-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @sora/web dev",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "check": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
+    "format:check": "prettier --check apps/web/src apps/web/index.html apps/web/vite.config.ts apps/web/tsconfig.json apps/web/package.json apps/web/public/data apps/web/wrangler.jsonc docs/PRODUCT.md docs/ARCHITECTURE.md docs/ROADMAP.md .github/workflows package.json pnpm-workspace.yaml .prettierrc.json",
+    "preview": "pnpm --filter @sora/web preview"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}
