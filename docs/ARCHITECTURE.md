@@ -75,7 +75,7 @@ pnpm --filter @sora/web cf:check
    CI 的 `cf:check` 是离线打包校验，不能代表线上部署已成功。
 
 CI 对 feature 分支 push 和 main 的 PR 执行 frozen install、check、Wrangler dry-run，
-上传 dist。部署流程仅允许 foundation 和 m1 两条 feature 分支手动执行，不处理外部 PR secrets。
+上传 dist。部署流程仅允许 foundation、m1、m2 三条 feature 分支手动执行，不处理外部 PR secrets。
 未配置凭据不影响普通检查；M0 不要求或自动修改 Cloudflare 账号设置。
 
 参考：
@@ -134,3 +134,20 @@ CNY / USD 精度 2，KRW 精度 0；分币种汇总，不隐含汇率口径。
 SVG 时间坐标使用 UTC 日期间距，纵轴按样本范围缩放，提供说明和可展开明细表。
 
 参考：[localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)、[storage 事件](https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event)。
+
+## M2 布局与可访问性
+
+从 M1 的 `eb3c58f` 创建 `feat/sora-v2-m2`，保留旧分支与 Python 原文件。
+无需新依赖，继续使用 CSS 断点与原生 HTML 交互。
+
+responsive-table 保持唯一的 table / rowgroup / row / rowheader / cell 结构，通过 CSS Grid 将窄屏行排为卡片。
+显式角色保留表格关系，thead 仅视觉隐藏；卡片的可见字段标签设 aria-hidden，避免与列标题重复朗读。
+900px 为表格 / 卡片分界，640px 为双列 / 单列卡片分界；导航、表单、指标、备份按钮分别调整，不强制缩小整个页面。
+图表曲线按容器宽度绘制，日期与单位移到 HTML，避免 SVG 文字等比例缩小；线条使用 non-scaling-stroke。
+
+PositionForm 对各字段提供 aria-invalid、说明与错误关联，校验失败聚焦首个错误字段。
+目录筛选结果数量使用 polite live region；输入时不把焦点从搜索框移走。
+原生 dialog 提供模态语义、描述关联、明确初始焦点与边界 Tab 循环；关闭后释放滚动锁并恢复触发元素焦点。
+StrictMode 重复挂载纳入测试；弹窗最大高度使用 dvh，窄屏内部可滚动，操作区保持可达。
+
+参考：[dialog](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog)、[aria-invalid](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-invalid)。
