@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { loadDemo, type DemoData } from './data/demo';
 import { Welcome } from './pages/Welcome';
 import { DataPages } from './pages/DataPages';
 import { EmptyState } from './components/ui';
-
-const navigation = [
-  ['/discover', '发现'],
-  ['/funds', '基金'],
-  ['/watchlist', '关注'],
-  ['/portfolio', '我的组合'],
-] as const;
+import { navigation, SiteHeader } from './components/SiteHeader';
 
 export function App() {
   const location = useLocation();
@@ -56,34 +50,7 @@ export function App() {
       <div
         className={`app-shell ${location.pathname === '/' ? 'is-home' : ''}`}
       >
-        <header className="site-header">
-          <div className="header-inner">
-            <Link
-              to="/"
-              className="brand"
-              aria-label="Sora 首页"
-              aria-current={location.pathname === '/' ? 'page' : undefined}
-            >
-              <span className="brand-mark" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
-              sora
-            </Link>
-            <nav aria-label="主导航">
-              {navigation.map(([path, label]) => (
-                <NavLink end={path !== '/funds'} to={path} key={path}>
-                  {label}
-                </NavLink>
-              ))}
-            </nav>
-            <span className="demo-badge">
-              <span className="status-dot" />
-              示例预览
-            </span>
-          </div>
-        </header>
+        <SiteHeader />
         <div className="workspace">
           <main id="main-content" tabIndex={-1}>
             {location.pathname === '/' ? (

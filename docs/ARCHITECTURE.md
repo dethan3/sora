@@ -143,6 +143,7 @@ SVG 时间坐标使用 UTC 日期间距，纵轴按样本范围缩放，提供�
 responsive-table 保持唯一的 table / rowgroup / row / rowheader / cell 结构，通过 CSS Grid 将窄屏行排为卡片。
 显式角色保留表格关系，thead 仅视觉隐藏；卡片的可见字段标签设 aria-hidden，避免与列标题重复朗读。
 900px 为表格 / 卡片分界，640px 为双列 / 单列卡片分界；导航、表单、指标、备份按钮分别调整，不强制缩小整个页面。
+SiteHeader 在 768px 以下采用折叠导航，关闭时通过 display:none 同时退出布局与键盘顺序，桌面仍使用同一份链接。按钮提供 aria-expanded / aria-controls；菜单覆盖内容而不撑高顶栏，支持路由、外部点击、焦点离开、Escape 和跨断点关闭。
 图表曲线按容器宽度绘制，日期与单位移到 HTML，避免 SVG 文字等比例缩小；线条使用 non-scaling-stroke。
 
 PositionForm 对各字段提供 aria-invalid、说明与错误关联，校验失败聚焦首个错误字段。
