@@ -19,6 +19,7 @@ apps/web/
   public/data/demo.json      # 可独立替换的虚构静态数据
   src/data/                 # Zod schema、HTTP 读取、组合计算
   src/components/           # 页面基础组件与基金表格
+  src/features/             # M1 领域页面、计算与本地状态
   src/pages/                # Welcome 与数据页面模块
   src/App.tsx               # Shell、导航和边界状态
   src/main.tsx              # 浏览器入口
@@ -33,7 +34,7 @@ src/sora/, tests/, config/  # 冻结的 Python 内核
 App 负责一次读取与缓存，AbortController 避免卸载或 StrictMode 时的过期写入。
 JSON 必须通过版本、字段、金额、唯一代码和跨列表引用校验后进入组件。
 读取失败显示重试；未知路由和 Welcome 不依赖数据成功。
-成本为零时收益率显示零，M1 再定义更完整的业务语义。
+M1 个人组合零成本时收益率显示“—”；旧 portfolioSummary 仅用于首页独立演示。
 
 ## 工具链
 
@@ -74,7 +75,7 @@ pnpm --filter @sora/web cf:check
    CI 的 `cf:check` 是离线打包校验，不能代表线上部署已成功。
 
 CI 对 feature 分支 push 和 main 的 PR 执行 frozen install、check、Wrangler dry-run，
-上传 dist。部署流程仅允许指定 feature 分支手动执行，不处理外部 PR secrets。
+上传 dist。部署流程仅允许 foundation 和 m1 两条 feature 分支手动执行，不处理外部 PR secrets。
 未配置凭据不影响普通检查；M0 不要求或自动修改 Cloudflare 账号设置。
 
 参考：
@@ -89,3 +90,47 @@ CI 对 feature 分支 push 和 main 的 PR 执行 frozen install、check、Wrang
 D1 仅在跨设备同步、账户隔离或服务端写入出现明确需求时评估，不直接迁移 Python SQLite。
 Agent 作为外部 adapter 消费明确的数据契约，核心页面不依赖 Agent 或 MCP 可用性。
 PWA 在主要页面和响应式稳定后增加，单独设计缓存版本与陈旧数据提示。
+
+## M1 领域与数据契约
+
+从设计确认版 `0bcc320` 创建 `feat/sora-v2-m1`，不修改 main 或 M0 分支。
+
+```text
+src/features/
+  discover/     # JSON 地区 / 主题模块
+  funds/        # URL 筛选、详情、样本趋势和关注按钮
+  watchlist/    # 本地关注列表
+  portfolio/    # 份额 / 成本表单、估值与币种汇总
+  local/        # schema、存储适配、Context、备份与恢复
+```
+
+`loadDemo(signal)` 是唯一目录读取入口，返回通过 Zod 校验的 DemoData，页面不自行 fetch。
+目录包含币种、净值字符串、递增历史日期、地区 / 主题模块和基金引用。
+净值与历史末点须匹配快照，代码唯一性和引用关系在读取边界校验。
+筛选参数 `q` / `module` 位于 URL，详情支持深链与未知代码空态。
+
+## M1 本地状态
+
+键名 `sora.personal.v1`，版本 1，结构 `{ schemaVersion, watchlist, positions }`。
+Position 为 `{ code, units, costMinor, currency }`，不保存派生估值，不上传账户信息。
+M0 未创建个人存储，首次 M1 为空，无需迁移旧示例。未来版本必须新增迁移策略；当前未知版本保留原文并提示恢复。
+
+PersonalProvider 读取一次快照，通过显式 commit 写入，不使用会覆盖初始数据的持久化 effect。
+修改先校验，再比较存储原文、写入，成功后才更新界面。权限或配额失败不伪装成功。
+storage 事件同步其他页面；编辑保存时比较原记录，避免覆盖已同步的修改。
+原文比较是轻量冲突检查，不提供跨标签事务保证；本阶段无协作同步或数据库。
+
+导入在客户端校验，限制 1 MB、各 200 条、唯一代码、份额精度和金额范围。
+校验后须确认替换，不静默合并；导出生成 JSON Blob 并释放临时 URL。
+损坏原文可单独下载；只有明确恢复操作才覆盖。
+
+## M1 数值与趋势
+
+份额上限 1,000,000、4 位小数；净值上限 10,000、6 位小数。
+成本最小单位整数上限 1,000,000,000,000；最多 200 笔汇总保持在安全整数范围。
+份额、净值以十进制字符串和 BigInt 定点乘法计算，四舍五入至最小货币单位后转为安全整数。
+CNY / USD 精度 2，KRW 精度 0；分币种汇总，不隐含汇率口径。
+缺失返回 null，不等于零；不完整汇总暂停总收益和权重。
+SVG 时间坐标使用 UTC 日期间距，纵轴按样本范围缩放，提供说明和可展开明细表。
+
+参考：[localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)、[storage 事件](https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event)。
