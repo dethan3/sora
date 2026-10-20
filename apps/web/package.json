@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/check-pwa.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "cf:check": "wrangler deploy --dry-run",
     "cf:preview": "wrangler versions upload"
@@ -31,6 +31,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
+    "vite-plugin-pwa": "2.0.0",
     "vitest": "^5.0.5",
     "wrangler": "^4.151.1"
   }

@@ -5,6 +5,7 @@ import { Welcome } from './pages/Welcome';
 import { DataPages } from './pages/DataPages';
 import { EmptyState } from './components/ui';
 import { navigation, SiteHeader } from './components/SiteHeader';
+import { PwaActions, PwaNotice } from './pwa/PwaUi';
 
 export function App() {
   const location = useLocation();
@@ -52,6 +53,7 @@ export function App() {
       >
         <SiteHeader />
         <div className="workspace">
+          <PwaNotice />
           <main id="main-content" tabIndex={-1}>
             {location.pathname === '/' ? (
               <Welcome data={data} />
@@ -88,6 +90,7 @@ export function App() {
               sora<span>投资，清晰可见。</span>
             </span>
             <span>示例数据仅供演示 · 非投资建议</span>
+            <PwaActions />
           </footer>
         </div>
       </div>

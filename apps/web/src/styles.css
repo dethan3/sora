@@ -1850,7 +1850,7 @@ main,
     font-size: 14px;
   }
   .footer-brand > span,
-  footer > span:last-child {
+  footer > span:nth-child(2) {
     font-size: 12px;
   }
 }
@@ -2257,5 +2257,63 @@ main,
     scroll-behavior: auto !important;
     transition: none !important;
     animation: none !important;
+  }
+}
+
+.pwa-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: 1px solid #dce3ef;
+  border-radius: 10px;
+  background: #edf2fa;
+  color: #344864;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.pwa-dot {
+  flex: 0 0 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #72829b;
+}
+.pwa-update {
+  justify-content: space-between;
+  background: #f0eeff;
+  border-color: #e3defc;
+}
+.pwa-update .button-quiet {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.pwa-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.pwa-readiness {
+  max-width: 240px;
+}
+footer {
+  flex-wrap: wrap;
+}
+@media (max-width: 767px) {
+  .pwa-notice {
+    margin-top: 16px;
+    padding: 12px;
+  }
+  .pwa-update {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .pwa-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px 12px;
   }
 }

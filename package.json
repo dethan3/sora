@@ -11,7 +11,7 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "check": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
-    "format:check": "prettier --check apps/web/src apps/web/index.html apps/web/vite.config.ts apps/web/tsconfig.json apps/web/package.json apps/web/public/data apps/web/wrangler.jsonc docs/PRODUCT.md docs/ARCHITECTURE.md docs/ROADMAP.md .github/workflows package.json pnpm-workspace.yaml .prettierrc.json",
+    "format:check": "prettier --check apps/web/src apps/web/scripts apps/web/index.html apps/web/vite.config.ts apps/web/tsconfig.json apps/web/package.json apps/web/public/data apps/web/public/icons/*.svg apps/web/wrangler.jsonc docs/PRODUCT.md docs/ARCHITECTURE.md docs/ROADMAP.md .github/workflows package.json pnpm-workspace.yaml .prettierrc.json",
     "preview": "pnpm --filter @sora/web preview"
   },
   "devDependencies": {

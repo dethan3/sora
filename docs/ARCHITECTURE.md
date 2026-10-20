@@ -91,6 +91,42 @@ D1 仅在跨设备同步、账户隔离或服务端写入出现明确需求时�
 Agent 作为外部 adapter 消费明确的数据契约，核心页面不依赖 Agent 或 MCP 可用性。
 PWA 在主要页面和响应式稳定后增加，单独设计缓存版本与陈旧数据提示。
 
+## M3 PWA 架构
+
+在现有 `feat/sora-v2-m2` 上继续提交 M3，不再按里程碑新建分支，保留 main 与 Python 原文件。
+
+- `vite-plugin-pwa` 2.x 与 Vite 8 配合，通过 generateSW / Workbox 生成生产 service worker 和 manifest；开发模式不注册。
+- `src/pwa/runtime.ts` 负责原生 service worker 生命周期、安装事件、联网状态和更新检查；`PwaUi.tsx` 提供页脚安装入口、提示条和复用确认弹窗。
+- `public/icons/` 保存与既有品牌一致的 SVG 源与 PNG 图标；192 / 512px 普通图标、512px maskable 图标和 180px Apple 图标具有白色实底，图形位于安全区内。
+- `scripts/check-pwa.mjs` 在每次生产构建后检查 manifest、PNG 实际尺寸、HTML 引用、核心预缓存资产、更新消息和部署响应头，CI 自动执行。
+
+### 缓存边界
+
+预缓存只包含本次构建的 HTML / JS / CSS / 图标 / manifest / `data/demo.json`，按内容 revision 更新。
+JSON 与页面作为同一发布版本使用，现阶段不增加通用网络请求缓存，也不缓存账户或外部接口。
+导航回退指向 `/index.html`，排除 data / assets / icons / api / sw.js，避免把资源或接口错误返回为页面。
+新版本安装未完成时保留当前已激活版本；新版本激活后 Workbox 清理过期预缓存条目和旧格式缓存，避免永久占用旧资源。
+个人 localStorage 独立于 Cache Storage，缓存清理代码不访问个人数据。
+离线提示依据浏览器 online / offline 事件；该信号不保证互联网或服务端可达，始终展示的快照日期才是数据时效口径。
+
+### 更新与安装
+
+采用 prompt 更新，不自动 skipWaiting，不启用 clientsClaim。只有用户确认才发送 SKIP_WAITING，并在 controllerchange 后刷新当前页面。
+其他页面发生 controllerchange 时只显示更新提示，不自动刷新，避免打断表单；新页面导航到已激活版本后正常读取现有个人存储。
+打开应用、回到前台和每小时检查新版；前台检查有一分钟节流，离线跳过，失败可重试。激活等待超时 20 秒后恢复操作，不无限等待。
+beforeinstallprompt 触发时才显示原生安装按钮，一次事件仅调用一次 prompt；appinstalled 或独立窗口模式隐藏安装入口，其他平台展示操作说明。
+本次不调用操作系统安装，浏览器是否提供安装入口由平台决定。
+
+### 部署与验收环境
+
+`public/_headers` 随静态包上传：默认重新验证 HTTP 内容，sw.js 禁止 HTTP 持久缓存，注册使用 updateViaCache:none。
+生产环境需要 HTTPS；localhost / 127.0.0.1 用于本地安全上下文验证。
+验证升级必须使用同一个站点地址。Cloudflare Version URL 每版地址不同，不能证明原站点升级或跨版本数据保留；应在专用 `sora-v2-preview` 的固定 HTTPS 地址上做发布验收。
+退回旧构建也按版本更新流程处理；不通过清除浏览器全部存储恢复，避免删除个人关注和持仓。
+实际 Cloudflare 发布仍须配置原有 preview environment 的凭据，不宣称已经上线。
+
+参考：[Vite PWA 预缓存](https://vite-pwa-org.netlify.app/guide/service-worker-precache)、[提示更新](https://vite-pwa-org.netlify.app/guide/prompt-for-update)、[安装事件](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event)、[Cloudflare 静态响应头](https://developers.cloudflare.com/workers/static-assets/headers/)。
+
 ## M1 领域与数据契约
 
 从设计确认版 `0bcc320` 创建 `feat/sora-v2-m1`，不修改 main 或 M0 分支。

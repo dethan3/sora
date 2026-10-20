@@ -1,0 +1,6 @@
+/*
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-store, must-revalidate
+  Service-Worker-Allowed: /
