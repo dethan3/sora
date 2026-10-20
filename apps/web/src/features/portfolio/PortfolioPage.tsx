@@ -41,7 +41,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
   function closeEditor() {
     setEditor(null);
     setError('');
-    document.getElementById('add-position')?.focus({ preventScroll: true });
+    document.getElementById('add-position')?.focus();
     if (params.has('add')) {
       const next = new URLSearchParams(params);
       next.delete('add');
@@ -103,9 +103,10 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           defaultCode={editor.code}
           onSave={save}
           onCancel={closeEditor}
+          submitError={error}
         />
       )}
-      {error && (
+      {error && !editor && (
         <p className="form-error" role="alert">
           {error}
         </p>
@@ -158,27 +159,29 @@ export function PortfolioPage({ data }: { data: DemoData }) {
       ))}
       <Panel title={`我的持仓 · ${local.state.positions.length}`}>
         {local.state.positions.length ? (
-          <div className="table-scroll">
-            <table>
+          <div className="table-scroll responsive-list">
+            <table className="responsive-table holding-table" role="table">
               <caption className="sr-only">本地持仓列表</caption>
-              <thead>
-                <tr>
-                  <th scope="col">基金 / 份额</th>
-                  <th scope="col" className="numeric">
+              <thead role="rowgroup">
+                <tr role="row">
+                  <th role="columnheader" scope="col">
+                    基金 / 份额
+                  </th>
+                  <th role="columnheader" scope="col" className="numeric">
                     总成本
                   </th>
-                  <th scope="col" className="numeric">
+                  <th role="columnheader" scope="col" className="numeric">
                     样本估值
                   </th>
-                  <th scope="col" className="numeric">
+                  <th role="columnheader" scope="col" className="numeric">
                     同币种占比
                   </th>
-                  <th scope="col" className="numeric">
+                  <th role="columnheader" scope="col" className="numeric">
                     操作
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody role="rowgroup">
                 {local.state.positions.map((position) => {
                   const fund = data.funds.find((f) => f.code === position.code);
                   const value = valuePosition(position, fund);
@@ -190,8 +193,8 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                       ? (value / group.value) * 100
                       : null;
                   return (
-                    <tr key={position.code}>
-                      <th scope="row">
+                    <tr role="row" key={position.code}>
+                      <th role="rowheader" scope="row">
                         {fund ? (
                           <Link
                             className="fund-name"
@@ -209,17 +212,26 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                             : ''}
                         </small>
                       </th>
-                      <td className="numeric">
+                      <td role="cell" className="numeric">
+                        <span className="mobile-field-label" aria-hidden="true">
+                          总成本
+                        </span>
                         {money(position.costMinor, position.currency)}
                       </td>
-                      <td className="numeric">
+                      <td role="cell" className="numeric">
+                        <span className="mobile-field-label" aria-hidden="true">
+                          样本估值
+                        </span>
                         {value === null ? (
                           <span className="valuation-missing">待估值</span>
                         ) : (
                           money(value, position.currency)
                         )}
                       </td>
-                      <td className="numeric">
+                      <td role="cell" className="numeric holding-weight">
+                        <span className="mobile-field-label" aria-hidden="true">
+                          同币种占比
+                        </span>
                         {weight === null ? (
                           '—'
                         ) : (
@@ -234,7 +246,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                           </div>
                         )}
                       </td>
-                      <td className="numeric">
+                      <td role="cell" className="numeric card-actions">
                         <div className="row-actions">
                           <button
                             className="button-quiet"

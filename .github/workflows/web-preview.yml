@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preview:
-    if: github.ref == 'refs/heads/feat/sora-v2-foundation' || github.ref == 'refs/heads/feat/sora-v2-m1'
+    if: github.ref == 'refs/heads/feat/sora-v2-foundation' || github.ref == 'refs/heads/feat/sora-v2-m1' || github.ref == 'refs/heads/feat/sora-v2-m2'
     runs-on: ubuntu-latest
     environment: cloudflare-preview
     steps:

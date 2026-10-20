@@ -62,7 +62,14 @@ export function FundsPage({ data }: { data: DemoData }) {
               ))}
             </select>
           </div>
-          <span className="result-count">{funds.length} 只基金</span>
+          <span
+            className="result-count"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {funds.length} 只基金
+          </span>
         </div>
         <FundTable funds={funds} />
       </Panel>

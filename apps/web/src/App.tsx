@@ -31,9 +31,17 @@ export function App() {
   }, [attempt]);
   useEffect(() => {
     document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
-    document.getElementById('main-content')?.focus({ preventScroll: true });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    const editorInput = document.querySelector<HTMLElement>(
+      '[data-position-autofocus]',
+    );
+    if (editorInput) {
+      editorInput.focus();
+      editorInput.scrollIntoView({ block: 'center' });
+    } else {
+      document.getElementById('main-content')?.focus({ preventScroll: true });
+    }
   }, [location.pathname, data]);
   const knownDataRoute = navigation.some(
     ([path]) =>
@@ -99,8 +107,8 @@ export function App() {
             ) : data ? (
               <>
                 <p className="data-date">
-                  <span className="snapshot-label">DEMO SNAPSHOT</span>{' '}
-                  {data.asOf} · 虚构示例，非真实行情
+                  <span className="snapshot-label">示例快照</span> {data.asOf} ·
+                  虚构示例，非真实行情
                 </p>
                 <DataPages data={data} />
               </>

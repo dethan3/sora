@@ -78,34 +78,39 @@ export function FundDetailPage({ data }: { data: DemoData }) {
           </div>
           {history.length > 1 ? (
             <>
-              <svg
-                className="history-chart"
-                viewBox="0 0 800 210"
-                role="img"
-                aria-label={`${fund.name}净值样本趋势，${first.date}至${last!.date}`}
-              >
-                <path
-                  d="M40 40H760 M40 105H760 M40 170H760"
-                  className="chart-grid"
-                />
-                <polyline
-                  points={points}
-                  fill="none"
-                  stroke="#635bff"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                />
-                <text x="40" y="200">
-                  {first.date}
-                </text>
-                <text x="760" y="200" textAnchor="end">
-                  {last!.date}
-                </text>
-                <text x="40" y="25">
-                  {minimum.toFixed(4)} — {maximum.toFixed(4)} {fund.currency} /
-                  份
-                </text>
-              </svg>
+              <figure className="history-figure">
+                <div className="chart-scale">
+                  <span>区间净值范围</span>
+                  <span>
+                    {minimum.toFixed(4)} — {maximum.toFixed(4)} {fund.currency}{' '}
+                    / 份
+                  </span>
+                </div>
+                <svg
+                  className="history-chart"
+                  viewBox="0 0 800 200"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label={`${fund.name}净值样本趋势，${first.date}至${last!.date}`}
+                >
+                  <path
+                    d="M40 40H760 M40 105H760 M40 170H760"
+                    className="chart-grid"
+                  />
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke="#635bff"
+                    strokeWidth="3"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+                <figcaption className="chart-dates">
+                  <time dateTime={first.date}>{first.date}</time>
+                  <time dateTime={last!.date}>{last!.date}</time>
+                </figcaption>
+              </figure>
               <p className="trend-explanation">
                 样本区间{change! > 0 ? '上行' : change! < 0 ? '下行' : '持平'}{' '}
                 <Change value={change!} />
@@ -124,7 +129,7 @@ export function FundDetailPage({ data }: { data: DemoData }) {
                   <tbody>
                     {history.map((point) => (
                       <tr key={point.date}>
-                        <td>{point.date}</td>
+                        <th scope="row">{point.date}</th>
                         <td>{point.value.toFixed(6)}</td>
                       </tr>
                     ))}
