@@ -1,5 +1,7 @@
 import type { Fund } from '../data/demo';
 import { Change, EmptyState } from './ui';
+import { Link } from 'react-router';
+import { WatchButton } from '../features/funds/WatchButton';
 
 export function FundTable({ funds }: { funds: Fund[] }) {
   if (!funds.length)
@@ -18,19 +20,34 @@ export function FundTable({ funds }: { funds: Fund[] }) {
             <th scope="col" className="numeric">
               示例日变化
             </th>
+            <th scope="col" className="numeric">
+              关注
+            </th>
           </tr>
         </thead>
         <tbody>
           {funds.map((fund) => (
             <tr key={fund.code}>
               <th scope="row">
-                <span className="fund-name">{fund.name}</span>
+                <Link className="fund-name" to={`/funds/${fund.code}`}>
+                  {fund.name}
+                </Link>
                 <small>{fund.code}</small>
               </th>
               <td>{fund.market}</td>
-              <td>{fund.category}</td>
+              <td>
+                {fund.category}
+                <small>{fund.currency} 计价</small>
+              </td>
               <td className="numeric">
-                <Change value={fund.changePct} />
+                {fund.nav === null ? (
+                  <span className="muted">暂无净值</span>
+                ) : (
+                  <Change value={fund.changePct} />
+                )}
+              </td>
+              <td className="numeric">
+                <WatchButton fund={fund} />
               </td>
             </tr>
           ))}

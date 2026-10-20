@@ -3,7 +3,13 @@ import { portfolioSummary, type DemoData } from '../data/demo';
 import { ActionLink, Change } from '../components/ui';
 
 export function Welcome({ data }: { data?: DemoData }) {
-  const summary = data ? portfolioSummary(data.positions) : undefined;
+  const previewPositions =
+    data?.positions.filter(
+      (position) =>
+        data?.funds.find((fund) => fund.code === position.code)?.currency ===
+        'CNY',
+    ) ?? [];
+  const summary = data ? portfolioSummary(previewPositions) : undefined;
   return (
     <>
       <section className="hero">
@@ -99,12 +105,12 @@ export function Welcome({ data }: { data?: DemoData }) {
                 <span>持仓分布</span>
                 <span>市值 / 占比</span>
               </div>
-              {data?.positions.map((position, i) => (
+              {previewPositions.map((position, i) => (
                 <div className="preview-position" key={position.code}>
                   <span className={'asset-dot asset-' + i} />
                   <span>
                     {
-                      data.funds.find((fund) => fund.code === position.code)
+                      data?.funds.find((fund) => fund.code === position.code)
                         ?.name
                     }
                   </span>
@@ -174,7 +180,7 @@ export function Welcome({ data }: { data?: DemoData }) {
           ))}
         </div>
         <p className="journey-disclaimer">
-          当前提供只读示例，关注与持仓尚不支持编辑。
+          市场数据为虚构样本；关注与持仓可在此浏览器保存和备份。
         </p>
       </section>
     </>

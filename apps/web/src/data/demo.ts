@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { currencySchema } from '../features/portfolio/model';
 
 const amount = z.number().finite().nonnegative();
 export const demoSchema = z
@@ -14,9 +15,37 @@ export const demoSchema = z
         category: z.string(),
         changePct: z.number().finite(),
         note: z.string(),
+        currency: currencySchema,
+        nav: z
+          .string()
+          .refine(
+            (value) =>
+              /^\d{1,5}(\.\d{1,6})?$/.test(value) &&
+              Number(value) > 0 &&
+              Number(value) <= 10000,
+          )
+          .nullable(),
+        history: z
+          .array(
+            z.object({
+              date: z.iso.date(),
+              value: z.number().positive().max(10000),
+            }),
+          )
+          .max(1000),
       }),
     ),
     watchlist: z.array(z.string()),
+    modules: z.array(
+      z.object({
+        id: z.string().regex(/^[a-z0-9-]+$/),
+        title: z.string(),
+        kind: z.enum(['region', 'theme']),
+        symbol: z.string().max(4),
+        description: z.string(),
+        fundCodes: z.array(z.string()),
+      }),
+    ),
     positions: z.array(
       z.object({ code: z.string(), cost: amount, value: amount }),
     ),
@@ -26,11 +55,39 @@ export const demoSchema = z
     if (codes.size !== data.funds.length)
       ctx.addIssue({ code: 'custom', message: '基金代码重复' });
     if (
-      [...data.watchlist, ...data.positions.map((p) => p.code)].some(
-        (code) => !codes.has(code),
-      )
+      [
+        ...data.watchlist,
+        ...data.positions.map((p) => p.code),
+        ...data.modules.flatMap((module) => module.fundCodes),
+      ].some((code) => !codes.has(code))
     ) {
       ctx.addIssue({ code: 'custom', message: '示例引用不存在的基金' });
+    }
+    if (
+      new Set(data.modules.map((module) => module.id)).size !==
+      data.modules.length
+    )
+      ctx.addIssue({ code: 'custom', message: '模块代码重复' });
+    for (const fund of data.funds) {
+      if (
+        fund.history.some(
+          (point, index) =>
+            point.date > data.asOf ||
+            (index > 0 && point.date <= fund.history[index - 1].date),
+        )
+      )
+        ctx.addIssue({
+          code: 'custom',
+          message: '历史日期必须递增且不晚于快照',
+        });
+      const last = fund.history.at(-1);
+      if (
+        fund.nav !== null &&
+        last &&
+        (last.date !== data.asOf ||
+          Math.abs(last.value - Number(fund.nav)) > 0.0000001)
+      )
+        ctx.addIssue({ code: 'custom', message: '净值与历史末点不一致' });
     }
   });
 export type DemoData = z.infer<typeof demoSchema>;

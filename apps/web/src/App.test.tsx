@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,6 +6,7 @@ import fixture from '../public/data/demo.json';
 import { App } from './App';
 
 beforeEach(() => {
+  localStorage.clear();
   vi.spyOn(globalThis, 'fetch').mockImplementation(
     async () => new Response(JSON.stringify(fixture)),
   );
@@ -60,12 +61,28 @@ describe('M0 routes', () => {
     ).toBeInTheDocument();
   });
   it('shows only watched funds and calculates portfolio totals', async () => {
+    localStorage.setItem(
+      'sora.personal.v1',
+      JSON.stringify({
+        schemaVersion: 1,
+        watchlist: ['DEMO-CN', 'DEMO-US'],
+        positions: [
+          {
+            code: 'DEMO-CN',
+            units: '10000',
+            costMinor: 1000000,
+            currency: 'CNY',
+          },
+        ],
+      }),
+    );
     open('/watchlist');
     expect(await screen.findByText('宽基观察示例')).toBeInTheDocument();
     expect(screen.queryByText('韩国市场示例')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: '我的组合' }));
-    expect(await screen.findByText('¥15,240.00')).toBeInTheDocument();
-    expect(screen.getByText('+1.60%')).toBeInTheDocument();
+    const summary = await screen.findByRole('region', { name: 'CNY 组合汇总' });
+    expect(within(summary).getByText('¥10,420.00')).toBeInTheDocument();
+    expect(within(summary).getByText('+4.20%')).toBeInTheDocument();
   });
   it('shows loading, recovers from errors and supports retry', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(new Response('', { status: 500 }));

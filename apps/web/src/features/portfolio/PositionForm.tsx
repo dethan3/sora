@@ -1,0 +1,142 @@
+import { useId, useState, type FormEvent } from 'react';
+import type { Fund } from '../../data/demo';
+import {
+  costInput,
+  parseCost,
+  parseUnits,
+  valuePosition,
+  money,
+  type Position,
+} from './model';
+
+export function PositionForm({
+  funds,
+  position,
+  defaultCode,
+  onSave,
+  onCancel,
+}: {
+  funds: Fund[];
+  position?: Position;
+  defaultCode?: string;
+  onSave: (position: Position) => boolean;
+  onCancel: () => void;
+}) {
+  const id = useId();
+  const [code, setCode] = useState(
+    position?.code ?? defaultCode ?? funds[0]?.code ?? '',
+  );
+  const [units, setUnits] = useState(position?.units ?? '');
+  const [cost, setCost] = useState(position ? costInput(position) : '');
+  const [error, setError] = useState('');
+  const fund = funds.find((item) => item.code === code);
+  const currency = position?.currency ?? fund?.currency ?? 'CNY';
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    setError('');
+    try {
+      if (!fund && !position) throw new Error('请选择目录中的基金');
+      onSave({
+        code,
+        units: parseUnits(units),
+        costMinor: parseCost(cost, currency),
+        currency,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '请检查输入');
+    }
+  }
+  let estimate: number | null = null;
+  try {
+    estimate = valuePosition(
+      { code, units: parseUnits(units), costMinor: 0, currency },
+      fund,
+    );
+  } catch {
+    /* incomplete input */
+  }
+  return (
+    <section
+      className="panel position-editor"
+      aria-label={position ? '编辑持仓' : '录入持仓'}
+    >
+      <div className="section-heading">
+        <h2>{position ? '编辑持仓' : '录入持仓'}</h2>
+        <button className="button-quiet" onClick={onCancel}>
+          取消编辑
+        </button>
+      </div>
+      <form onSubmit={submit} noValidate>
+        <div className="form-grid">
+          <div>
+            <label htmlFor={`${id}-code`}>基金</label>
+            <select
+              id={`${id}-code`}
+              value={code}
+              disabled={!!position}
+              onChange={(event) => {
+                setCode(event.target.value);
+                setCost('');
+              }}
+            >
+              <option value="" disabled>
+                请选择基金
+              </option>
+              {position && !fund && (
+                <option value={position.code}>
+                  {position.code}（已离开目录）
+                </option>
+              )}
+              {funds.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.name} · {item.currency}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor={`${id}-units`}>持有份额</label>
+            <input
+              id={`${id}-units`}
+              inputMode="decimal"
+              value={units}
+              onChange={(event) => setUnits(event.target.value)}
+              placeholder="例如 1000.0000"
+              aria-describedby={`${id}-help`}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label htmlFor={`${id}-cost`}>总投入成本（{currency}）</label>
+            <input
+              id={`${id}-cost`}
+              inputMode="decimal"
+              value={cost}
+              onChange={(event) => setCost(event.target.value)}
+              placeholder="包含你希望计入的费用"
+            />
+          </div>
+        </div>
+        <p id={`${id}-help`} className="field-help">
+          份额最多 4 位小数；成本可为 0。零成本时收益率显示“—”。
+          {estimate === null
+            ? '缺少有效净值时暂不估值。'
+            : `按当前样本净值估算：${money(estimate, currency)}。`}
+        </p>
+        {error && (
+          <p role="alert" className="form-error">
+            {error}
+          </p>
+        )}
+        <div className="button-row">
+          <button className="action" type="submit">
+            保存持仓
+          </button>
+          <span className="field-help">
+            只保存到此浏览器，使用虚构样本估值。
+          </span>
+        </div>
+      </form>
+    </section>
+  );
+}

@@ -1,7 +1,7 @@
 name: Sora V2 Web CI
 on:
   push:
-    branches: [main, feat/sora-v2-foundation]
+    branches: [main, 'feat/sora-v2-*']
   pull_request:
     branches: [main]
 permissions:

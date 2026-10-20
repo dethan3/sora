@@ -30,13 +30,15 @@ export function App() {
     return () => controller.abort();
   }, [attempt]);
   useEffect(() => {
-    document.title = `${location.pathname === '/' ? '看清每一份投资' : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
+    document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
     document.getElementById('main-content')?.focus({ preventScroll: true });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [location.pathname]);
+  }, [location.pathname, data]);
   const knownDataRoute = navigation.some(
-    ([path]) => path === location.pathname,
+    ([path]) =>
+      path === location.pathname ||
+      (path === '/funds' && /^\/funds\/[^/]+\/?$/.test(location.pathname)),
   );
   return (
     <>
@@ -63,7 +65,7 @@ export function App() {
             </Link>
             <nav aria-label="主导航">
               {navigation.map(([path, label]) => (
-                <NavLink end to={path} key={path}>
+                <NavLink end={path !== '/funds'} to={path} key={path}>
                   {label}
                 </NavLink>
               ))}

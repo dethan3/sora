@@ -9,7 +9,39 @@
       "market": "中国市场",
       "category": "宽基指数",
       "changePct": 0.42,
-      "note": "从更广的市场开始理解波动"
+      "note": "从更广的市场开始理解波动",
+      "currency": "CNY",
+      "nav": "1.042",
+      "history": [
+        {
+          "date": "2026-10-01",
+          "value": 1.0
+        },
+        {
+          "date": "2026-10-04",
+          "value": 1.009
+        },
+        {
+          "date": "2026-10-07",
+          "value": 1.004
+        },
+        {
+          "date": "2026-10-10",
+          "value": 1.021
+        },
+        {
+          "date": "2026-10-13",
+          "value": 1.018
+        },
+        {
+          "date": "2026-10-16",
+          "value": 1.03764
+        },
+        {
+          "date": "2026-10-19",
+          "value": 1.042
+        }
+      ]
     },
     {
       "code": "DEMO-US",
@@ -17,7 +49,39 @@
       "market": "美国市场",
       "category": "科技主题",
       "changePct": -0.68,
-      "note": "关注行业集中带来的起伏"
+      "note": "关注行业集中带来的起伏",
+      "currency": "USD",
+      "nav": "0.964",
+      "history": [
+        {
+          "date": "2026-10-01",
+          "value": 1.0
+        },
+        {
+          "date": "2026-10-04",
+          "value": 1.015
+        },
+        {
+          "date": "2026-10-07",
+          "value": 1.006
+        },
+        {
+          "date": "2026-10-10",
+          "value": 0.991
+        },
+        {
+          "date": "2026-10-13",
+          "value": 0.978
+        },
+        {
+          "date": "2026-10-16",
+          "value": 0.9706
+        },
+        {
+          "date": "2026-10-19",
+          "value": 0.964
+        }
+      ]
     },
     {
       "code": "DEMO-KR",
@@ -25,12 +89,97 @@
       "market": "韩国市场",
       "category": "区域市场",
       "changePct": 0.15,
-      "note": "认识不同地区的市场节奏"
+      "note": "认识不同地区的市场节奏",
+      "currency": "KRW",
+      "nav": "1.0015",
+      "history": [
+        {
+          "date": "2026-10-01",
+          "value": 1.0
+        },
+        {
+          "date": "2026-10-04",
+          "value": 1.003
+        },
+        {
+          "date": "2026-10-07",
+          "value": 0.997
+        },
+        {
+          "date": "2026-10-10",
+          "value": 1.007
+        },
+        {
+          "date": "2026-10-13",
+          "value": 1.002
+        },
+        {
+          "date": "2026-10-16",
+          "value": 1.0
+        },
+        {
+          "date": "2026-10-19",
+          "value": 1.0015
+        }
+      ]
+    },
+    {
+      "code": "DEMO-BOND",
+      "name": "稳健债券示例",
+      "market": "中国市场",
+      "category": "债券主题",
+      "changePct": 0,
+      "note": "观察低波动资产的配置角色",
+      "currency": "CNY",
+      "nav": null,
+      "history": []
     }
   ],
   "watchlist": ["DEMO-CN", "DEMO-US"],
   "positions": [
-    { "code": "DEMO-CN", "cost": 10000, "value": 10420 },
-    { "code": "DEMO-US", "cost": 5000, "value": 4820 }
+    {
+      "code": "DEMO-CN",
+      "cost": 10000,
+      "value": 10420
+    },
+    {
+      "code": "DEMO-US",
+      "cost": 5000,
+      "value": 4820
+    }
+  ],
+  "modules": [
+    {
+      "description": "从宽基与债券，认识不同资产的配置角色。",
+      "title": "中国市场",
+      "symbol": "CN",
+      "kind": "region",
+      "id": "china",
+      "fundCodes": ["DEMO-CN", "DEMO-BOND"]
+    },
+    {
+      "description": "从科技主题开始，观察全球市场的变化。",
+      "title": "美国市场",
+      "symbol": "US",
+      "kind": "region",
+      "id": "us",
+      "fundCodes": ["DEMO-US"]
+    },
+    {
+      "description": "认识不同地区的市场节奏。",
+      "title": "韩国市场",
+      "symbol": "KR",
+      "kind": "region",
+      "id": "korea",
+      "fundCodes": ["DEMO-KR"]
+    },
+    {
+      "description": "关注行业集中度，理解成长与波动。",
+      "title": "科技主题",
+      "symbol": "TECH",
+      "kind": "theme",
+      "id": "technology",
+      "fundCodes": ["DEMO-US"]
+    }
   ]
 }
