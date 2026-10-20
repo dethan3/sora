@@ -19,12 +19,12 @@ function open(path: string) {
 }
 
 describe('M0 routes', () => {
-  it.each([
-    ['/', '看清每一份投资。'],
-    ['/discover', '从市场开始，打开视野。'],
-    ['/funds', '基金，清楚地放在一起。'],
-    ['/watchlist', '让关注，有一个安静的位置。'],
-    ['/portfolio', '从整体，看见每一份变化。'],
+  it.each<[string, string | RegExp]>([
+    ['/', /让每一份投资/],
+    ['/discover', '发现市场'],
+    ['/funds', '基金'],
+    ['/watchlist', '我的关注'],
+    ['/portfolio', '我的组合'],
   ])('opens %s directly', async (path, title) => {
     open(path);
     expect(
@@ -40,7 +40,7 @@ describe('M0 routes', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: '从市场开始，打开视野。',
+        name: '发现市场',
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveFocus();
@@ -84,9 +84,9 @@ describe('M0 routes', () => {
     expect(
       screen.getByRole('heading', { name: '没有找到这个页面' }),
     ).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('link', { name: '返回 Welcome' }));
+    await userEvent.click(screen.getByRole('link', { name: '返回首页' }));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      '看清每一份投资。',
+      '让每一份投资，清晰可见。',
     );
   });
   it('shows a recoverable state when the network is offline', async () => {
@@ -102,7 +102,7 @@ describe('M0 routes', () => {
 function navigationLabel(path: string) {
   return (
     {
-      '/': 'Welcome',
+      '/': 'Sora 首页',
       '/discover': '发现',
       '/funds': '基金',
       '/watchlist': '关注',
