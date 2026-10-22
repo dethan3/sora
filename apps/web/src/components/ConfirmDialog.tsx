@@ -10,7 +10,7 @@ export function ConfirmDialog({
 }: PropsWithChildren<{
   title: string;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm?: () => void;
   confirmLabel?: string;
   cancelLabel?: string;
 }>) {
@@ -76,9 +76,11 @@ export function ConfirmDialog({
         >
           {cancelLabel}
         </button>
-        <button className="action" onClick={onConfirm}>
-          {confirmLabel}
-        </button>
+        {onConfirm && (
+          <button className="action" onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        )}
       </div>
     </dialog>
   );
