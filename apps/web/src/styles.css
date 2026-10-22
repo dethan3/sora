@@ -789,68 +789,6 @@ footer {
   color: #bcc8df;
   margin: 5px 0 0;
 }
-.journey {
-  position: relative;
-  padding: 52px 0 40px;
-  border-top: 1px solid var(--line);
-}
-.journey-intro h2 {
-  font-size: 28px;
-  letter-spacing: -0.8px;
-  font-weight: 550;
-  margin: 0 0 13px;
-}
-.journey-intro > p:last-child {
-  color: #738099;
-  font-size: 13px;
-}
-.journey-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 40px;
-}
-.journey-item {
-  display: block;
-  padding: 0 30px;
-  border-left: 1px solid var(--line);
-}
-.journey-item:first-child {
-  padding-left: 0;
-  border-left: 0;
-}
-.journey-number {
-  font-size: 10px;
-  color: #8a84c9;
-  font-variant-numeric: tabular-nums;
-}
-.journey-item h3 {
-  font-size: 17px;
-  font-weight: 550;
-  margin: 17px 0 12px;
-}
-.journey-item p {
-  color: #738099;
-  font-size: 12px;
-  line-height: 1.9;
-  max-width: 280px;
-}
-.journey-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 20px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 550;
-  margin-top: 22px;
-}
-.journey-item:hover h3 {
-  color: var(--accent);
-}
-.journey-disclaimer {
-  font-size: 10px;
-  color: #8994a6;
-  margin: 40px 0 0;
-}
 @media (min-width: 1450px) {
   .hero {
     padding-top: 102px;
@@ -950,25 +888,6 @@ footer {
   .market-grid,
   .summary-grid {
     grid-template-columns: 1fr;
-  }
-  .journey-grid {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-  .journey-item,
-  .journey-item:first-child {
-    padding: 0 0 28px;
-    border: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .journey-item p {
-    max-width: none;
-  }
-  .journey-link {
-    margin-top: 12px;
-  }
-  .journey-disclaimer {
-    margin-top: 28px;
   }
   .allocation-track {
     width: 80px;
@@ -1532,8 +1451,7 @@ summary,
 main,
 .panel,
 .detail-grid > *,
-.hero-copy,
-.journey-item {
+.hero-copy {
   min-width: 0;
 }
 .mobile-field-label {
@@ -1836,8 +1754,7 @@ main,
     min-height: 44px;
   }
   .preview-caption,
-  .hero-caption,
-  .journey-disclaimer {
+  .hero-caption {
     font-size: 12px;
   }
   .preview-position {
@@ -1860,10 +1777,6 @@ main,
   }
   .hero-copy .hero-description {
     font-size: 15px;
-  }
-  .journey-item p,
-  .journey-link {
-    font-size: 14px;
   }
   .footer-brand > span,
   footer > span:nth-child(2) {
@@ -2246,16 +2159,6 @@ main,
   }
   .preview-scene {
     padding-bottom: 0;
-  }
-  .journey {
-    padding-top: 36px;
-  }
-  .journey-intro h2 {
-    font-size: 25px;
-  }
-  .journey-intro > p:last-child {
-    font-size: 14px;
-    line-height: 1.8;
   }
   footer {
     flex-direction: column;

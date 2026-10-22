@@ -39,7 +39,8 @@ describe('M0 routes', () => {
   });
   it('navigates from Welcome to the fund library', async () => {
     open('/');
-    await userEvent.click(screen.getByRole('link', { name: '浏览基金' }));
+    const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
+    await userEvent.click(within(hero).getByRole('link', { name: '浏览基金' }));
     expect(
       await screen.findByRole('heading', {
         level: 1,

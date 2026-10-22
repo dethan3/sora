@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { portfolioSummary, type DemoData } from '../data/demo';
 import { ActionLink, Change } from '../components/ui';
 import { usePersonal } from '../features/local/PersonalProvider';
+import { LandingSections } from '../components/landing/LandingSections';
 
 export function Welcome({ data }: { data?: DemoData }) {
   const personal = usePersonal();
@@ -144,50 +145,7 @@ export function Welcome({ data }: { data?: DemoData }) {
           </div>
         </div>
       </section>
-      <section className="journey" aria-labelledby="journey-title">
-        <div className="journey-intro">
-          <p className="eyebrow">ONE CONNECTED VIEW</p>
-          <h2 id="journey-title">从市场，到你的组合。</h2>
-          <p>沿着自己的投资路径，逐步建立清晰的认识。</p>
-        </div>
-        <div className="journey-grid">
-          {[
-            {
-              number: '01',
-              title: '发现值得了解的市场',
-              description: '从地区与主题出发，找到你想持续观察的方向。',
-              to: '/discover',
-              label: '发现市场',
-            },
-            {
-              number: '02',
-              title: '把关注集中在一起',
-              description: '在同一个视图中，回看关心的基金与日常变化。',
-              to: '/watchlist',
-              label: '查看关注',
-            },
-            {
-              number: '03',
-              title: '理解组合的全貌',
-              description: '看清投入、收益和分布，建立整体视角。',
-              to: '/portfolio',
-              label: '了解组合',
-            },
-          ].map((item) => (
-            <Link className="journey-item" to={item.to} key={item.number}>
-              <span className="journey-number">{item.number}</span>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-              <span className="journey-link">
-                {item.label} <span aria-hidden="true">→</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-        <p className="journey-disclaimer">
-          市场数据为虚构样本；关注与持仓可在此浏览器保存和备份。
-        </p>
-      </section>
+      <LandingSections data={data} />
     </>
   );
 }
