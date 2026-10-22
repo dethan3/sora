@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '../public/data/demo.json';
 import { App } from './App';
@@ -13,9 +13,11 @@ beforeEach(() => {
 });
 function open(path: string) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <App />
-    </MemoryRouter>,
+    <RouterProvider
+      router={createMemoryRouter([{ path: '*', element: <App /> }], {
+        initialEntries: [path],
+      })}
+    />,
   );
 }
 
@@ -35,13 +37,13 @@ describe('M0 routes', () => {
       screen.getByRole('link', { name: navigationLabel(path) }),
     ).toHaveAttribute('aria-current', 'page');
   });
-  it('navigates from Welcome to discovery', async () => {
+  it('navigates from Welcome to the fund library', async () => {
     open('/');
-    await userEvent.click(screen.getByRole('link', { name: '探索 Sora' }));
+    await userEvent.click(screen.getByRole('link', { name: '浏览基金' }));
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: '发现市场',
+        name: '基金',
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveFocus();

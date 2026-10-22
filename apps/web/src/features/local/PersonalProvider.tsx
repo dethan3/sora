@@ -6,6 +6,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import { useLocation } from 'react-router';
 import {
   emptyPersonal,
   readPersonal,
@@ -37,10 +38,15 @@ function initial(): Snapshot {
   }
 }
 export function PersonalProvider({ children }: PropsWithChildren) {
+  const location = useLocation();
   const [snapshot, setSnapshot] = useState(initial);
   const current = useRef(snapshot);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  useEffect(() => {
+    setError('');
+    setNotice('');
+  }, [location.pathname]);
   useEffect(() => {
     const update = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY && event.key !== null) return;

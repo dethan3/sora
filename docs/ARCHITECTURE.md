@@ -127,6 +127,22 @@ beforeinstallprompt 触发时才显示原生安装按钮，一次事件仅调用
 
 参考：[Vite PWA 预缓存](https://vite-pwa-org.netlify.app/guide/service-worker-precache)、[提示更新](https://vite-pwa-org.netlify.app/guide/prompt-for-update)、[安装事件](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event)、[Cloudflare 静态响应头](https://developers.cloudflare.com/workers/static-assets/headers/)。
 
+## 核心流程连续性
+
+入口改为 createBrowserRouter / RouterProvider，为 useBlocker 提供 Data Router 上下文；数据仍由既有静态 JSON 入口读取，没有新增服务端 loader 或 API。测试用 createMemoryRouter 执行同样的导航保护。
+PersonalProvider 提升到应用层，首页和功能页共享关注 / 持仓状态；更换页面不重建个人状态。操作反馈随实际页面切换清除，存储损坏状态仍保留。
+
+`navigation/flow.ts` 只接受白名单内的站内返回路径。详情的 from 参数保存目录筛选或来源；录入页的 from 参数保存详情路径，两层均规范化并拒绝外部站点。
+列表离开前将一次返回点保存到 `sora.navigation.v1` sessionStorage，并提供内存降级。返回点只包含路径、基金标识和滚动位置，不包含持仓金额。
+显式返回或 POP 恢复已记录的位置和焦点；尺寸变化导致目标不在视野时滚入视野。搜索的 REPLACE 更新不会抢走输入焦点。直接访问详情时回退至基金目录，不依赖外部浏览历史。
+
+`useUnsavedChanges` 统一处理路由离开与页内替换动作；useBlocker 负责 SPA / 浏览器返回，beforeunload 负责支持该事件的刷新和关闭场景。
+确认后仅执行原待处理动作；取消后恢复原字段焦点。保存成功后的清理允许修改编辑 URL，避免重复弹出离开确认。
+编辑器每次重新开启都有独立会话 key，确保确认放弃后确实清空旧输入，且新输入重新启用保护。跨页面冲突检查和数值校验沿用原模型。
+组合币种写入 URL，列表和汇总使用相同筛选；单笔收益仅由既有估值与最小货币单位成本计算，无新汇率或收益口径。
+
+参考：[useBlocker](https://reactrouter.com/api/hooks/useBlocker)、[useBeforeUnload](https://reactrouter.com/api/hooks/useBeforeUnload)。原生离开提醒由浏览器决定，不能替代手机系统强制终止时的草稿恢复；本轮不提供自动草稿持久化。
+
 ## M1 领域与数据契约
 
 从设计确认版 `0bcc320` 创建 `feat/sora-v2-m1`，不修改 main 或 M0 分支。

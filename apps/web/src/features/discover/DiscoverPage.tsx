@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import type { DemoData } from '../../data/demo';
 import { PageHeader } from '../../components/ui';
+import { detailUrl, fundLinkId, rememberList } from '../../navigation/flow';
 
 export function DiscoverPage({ data }: { data: DemoData }) {
   return (
@@ -36,7 +37,14 @@ export function DiscoverPage({ data }: { data: DemoData }) {
                   <p className="market-note">{module.description}</p>
                   <div className="module-funds">
                     {module.fundCodes.map((code) => (
-                      <Link to={`/funds/${code}`} key={code}>
+                      <Link
+                        to={detailUrl(code, '/discover')}
+                        id={fundLinkId(`${module.id}:${code}`)}
+                        key={code}
+                        onClick={() =>
+                          rememberList('/discover', `${module.id}:${code}`)
+                        }
+                      >
                         {data.funds.find((fund) => fund.code === code)?.name}
                         <span aria-hidden="true">↗</span>
                       </Link>

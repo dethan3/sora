@@ -50,7 +50,7 @@ export function EmptyState({
   return (
     <div className="empty">
       <h2>{title}</h2>
-      <p className="muted">{children}</p>
+      <div className="muted">{children}</div>
     </div>
   );
 }

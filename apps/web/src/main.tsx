@@ -1,16 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router';
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import { App } from './App';
 import './styles.css';
 import { pwa } from './pwa/runtime';
 
 pwa.start();
+const router = createBrowserRouter([{ path: '*', element: <App /> }]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </React.StrictMode>,
 );

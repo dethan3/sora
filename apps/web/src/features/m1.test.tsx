@@ -6,7 +6,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '../../public/data/demo.json';
 import { App } from '../App';
@@ -20,9 +20,11 @@ beforeEach(() => {
 });
 function open(path: string) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <App />
-    </MemoryRouter>,
+    <RouterProvider
+      router={createMemoryRouter([{ path: '*', element: <App /> }], {
+        initialEntries: [path],
+      })}
+    />,
   );
 }
 function saved() {
@@ -34,7 +36,7 @@ async function fillPosition(units = '1000', cost = '1000.29') {
     units,
   );
   await userEvent.type(
-    screen.getByRole('textbox', { name: '总投入成本（CNY）' }),
+    screen.getByRole('textbox', { name: '持仓成本总额（CNY）' }),
     cost,
   );
   await userEvent.click(screen.getByRole('button', { name: '保存持仓' }));
@@ -77,6 +79,7 @@ describe('M1 desktop flows', () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     try {
       open('/portfolio');
+      await userEvent.click(await screen.findByText('备份与数据管理'));
       await userEvent.click(
         await screen.findByRole('button', { name: '导出备份' }),
       );
@@ -200,7 +203,7 @@ describe('M1 desktop flows', () => {
       screen.getByRole('heading', { name: '从第一笔持仓开始' }),
     ).toBeInTheDocument();
   });
-  it('rejects invalid input and duplicate holdings without changing the saved state', async () => {
+  it('rejects invalid input and opens existing holdings for editing without duplication', async () => {
     open('/portfolio?add=DEMO-CN');
     await screen.findByRole('textbox', { name: '持有份额' });
     await fillPosition('-2', '10');
@@ -213,8 +216,15 @@ describe('M1 desktop flows', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: '保存持仓' }));
     await userEvent.click(screen.getByRole('button', { name: '+ 录入持仓' }));
-    await fillPosition('1', '1');
-    expect(await screen.findByRole('alert')).toHaveTextContent('已有持仓');
+    expect(screen.getByRole('combobox', { name: '基金' })).toHaveValue('');
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: '基金' }),
+      'DEMO-CN',
+    );
+    expect(
+      screen.getByRole('region', { name: '编辑持仓' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '持有份额' })).toHaveValue('1');
     expect(saved().positions).toHaveLength(1);
   });
   it('keeps incomplete valuations unknown and separates currencies', async () => {
@@ -232,10 +242,11 @@ describe('M1 desktop flows', () => {
     open('/portfolio');
     const cny = await screen.findByRole('region', { name: 'CNY 组合汇总' });
     expect(within(cny).getByText('待完整估值')).toBeInTheDocument();
+    expect(screen.getByText('待估值')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /美元 USD/ }));
     expect(
       screen.getByRole('region', { name: 'USD 组合汇总' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('待估值')).toBeInTheDocument();
   });
   it('preserves corrupted storage until the user explicitly recovers it', async () => {
     localStorage.setItem(STORAGE_KEY, 'corrupted');
@@ -313,6 +324,7 @@ describe('M1 desktop flows', () => {
   it('validates import, previews replacement and preserves data on cancellation', async () => {
     open('/portfolio');
     await screen.findByRole('heading', { name: '从第一笔持仓开始' });
+    await userEvent.click(screen.getByText('备份与数据管理'));
     const file = (text: string) => {
       const value = new File([text], 'backup.json', {
         type: 'application/json',

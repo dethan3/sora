@@ -54,7 +54,13 @@ export function WatchlistPage({ data }: { data: DemoData }) {
           </EmptyState>
         )}
       </Panel>
-      <BackupTools />
+      <details
+        className="data-management"
+        open={local.issue ? true : undefined}
+      >
+        <summary>备份与数据管理</summary>
+        <BackupTools />
+      </details>
     </>
   );
 }

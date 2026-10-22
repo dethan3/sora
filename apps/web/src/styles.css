@@ -2299,6 +2299,135 @@ main,
 .pwa-readiness {
   max-width: 240px;
 }
+.currency-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 24px;
+}
+.currency-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fff;
+  font-size: 14px;
+}
+.currency-switch button[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: #c9c3fb;
+  background: #f0eeff;
+}
+.currency-switch button span {
+  font-size: 12px;
+}
+.data-management {
+  margin-top: 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.data-management > summary {
+  display: list-item;
+  min-height: 44px;
+  padding: 10px 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+}
+.data-management .local-tools {
+  margin-top: 0;
+  border: 0;
+}
+.empty-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 24px;
+}
+.app-shell:not(.is-home) .page-header {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+.app-shell:not(.is-home) .page-header > .eyebrow {
+  display: none;
+}
+.app-shell:not(.is-home) .detail-heading .page-header > .eyebrow {
+  display: block;
+}
+.app-shell:not(.is-home) .page-header h1 {
+  font-size: 36px;
+}
+.holding-profit small {
+  display: block;
+  margin-top: 5px;
+}
+@media (max-width: 640px) {
+  .app-shell:not(.is-home) .page-header h1 {
+    font-size: 28px;
+  }
+  .portfolio-heading {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .app-shell:not(.is-home) .portfolio-heading .page-header {
+    margin: 16px 0 12px;
+  }
+  .currency-group {
+    margin-bottom: 20px;
+  }
+  .currency-group .portfolio-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .portfolio-summary .panel:first-child {
+    grid-column: 1 / -1;
+  }
+  .portfolio-summary .panel {
+    padding: 16px;
+  }
+  .portfolio-summary .metric {
+    font-size: clamp(20px, 5.5vw, 26px);
+    line-height: 1.25;
+  }
+  .portfolio-summary .panel h2 {
+    margin-bottom: 10px;
+  }
+  .portfolio-summary .panel:first-child .metric {
+    font-size: 32px;
+  }
+  .currency-switch {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .currency-switch button {
+    padding: 9px 12px;
+    gap: 8px;
+  }
+  .holding-table .holding-weight {
+    grid-column: auto;
+  }
+  .holding-table .weight-cell {
+    display: block;
+  }
+  .holding-table .weight-cell .allocation-track {
+    display: none;
+  }
+  .empty-actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .empty-actions .action {
+    justify-content: center;
+  }
+}
 footer {
   flex-wrap: wrap;
 }

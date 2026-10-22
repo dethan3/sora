@@ -5,12 +5,11 @@ import { FundsPage } from '../features/funds/FundsPage';
 import { FundDetailPage } from '../features/funds/FundDetailPage';
 import { WatchlistPage } from '../features/watchlist/WatchlistPage';
 import { PortfolioPage } from '../features/portfolio/PortfolioPage';
-import { PersonalProvider } from '../features/local/PersonalProvider';
 import { LocalNotice } from '../features/local/BackupTools';
 
 export function DataPages({ data }: { data: DemoData }) {
   return (
-    <PersonalProvider>
+    <>
       <LocalNotice />
       <Routes>
         <Route path="/discover" element={<DiscoverPage data={data} />} />
@@ -19,6 +18,6 @@ export function DataPages({ data }: { data: DemoData }) {
         <Route path="/watchlist" element={<WatchlistPage data={data} />} />
         <Route path="/portfolio" element={<PortfolioPage data={data} />} />
       </Routes>
-    </PersonalProvider>
+    </>
   );
 }

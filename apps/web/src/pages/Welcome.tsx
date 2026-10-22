@@ -1,8 +1,10 @@
 import { Link } from 'react-router';
 import { portfolioSummary, type DemoData } from '../data/demo';
 import { ActionLink, Change } from '../components/ui';
+import { usePersonal } from '../features/local/PersonalProvider';
 
 export function Welcome({ data }: { data?: DemoData }) {
+  const personal = usePersonal();
   const previewPositions =
     data?.positions.filter(
       (position) =>
@@ -30,9 +32,12 @@ export function Welcome({ data }: { data?: DemoData }) {
             把基金、关注与持仓连在一起，看清变化的全貌。
           </p>
           <div className="hero-actions">
-            <ActionLink to="/discover">探索 Sora</ActionLink>
+            <ActionLink to="/funds">浏览基金</ActionLink>
             <Link className="text-link" to="/portfolio">
-              查看组合示例 <span aria-hidden="true">→</span>
+              {personal.state.positions.length
+                ? '回到我的组合'
+                : '建立我的组合'}{' '}
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
           <p className="hero-caption">无需账户，即可浏览示例</p>

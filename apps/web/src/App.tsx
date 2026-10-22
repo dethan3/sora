@@ -1,14 +1,28 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigationType } from 'react-router';
 import { loadDemo, type DemoData } from './data/demo';
 import { Welcome } from './pages/Welcome';
 import { DataPages } from './pages/DataPages';
 import { EmptyState } from './components/ui';
 import { navigation, SiteHeader } from './components/SiteHeader';
 import { PwaActions, PwaNotice } from './pwa/PwaUi';
+import { PersonalProvider } from './features/local/PersonalProvider';
+import { fundLinkId, returnPoint } from './navigation/flow';
 
 export function App() {
+  return (
+    <PersonalProvider>
+      <AppContent />
+    </PersonalProvider>
+  );
+}
+
+function AppContent() {
   const location = useLocation();
+  const navigationType = useNavigationType();
+  const previousFocus = useRef<{ path: string; data?: DemoData } | undefined>(
+    undefined,
+  );
   const [data, setData] = useState<DemoData>();
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -26,6 +40,31 @@ export function App() {
   }, [attempt]);
   useEffect(() => {
     document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
+    const previous = previousFocus.current;
+    previousFocus.current = { path: location.pathname, data };
+    if (
+      previous?.path === location.pathname &&
+      previous.data === data &&
+      navigationType !== 'POP'
+    )
+      return;
+    const point =
+      data && (navigationType === 'POP' || location.state?.restoreList)
+        ? returnPoint(location.pathname + location.search)
+        : undefined;
+    const returnLink = point && document.getElementById(fundLinkId(point.code));
+    if (returnLink && point) {
+      returnLink.focus({ preventScroll: true });
+      document.documentElement.scrollTop = point.y;
+      document.body.scrollTop = point.y;
+      const rect = returnLink.getBoundingClientRect();
+      const headerHeight =
+        document.querySelector('.site-header')?.getBoundingClientRect()
+          .height ?? 0;
+      if (rect.top < headerHeight + 12 || rect.bottom > window.innerHeight - 24)
+        returnLink.scrollIntoView({ block: 'center' });
+      return;
+    }
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
     const editorInput = document.querySelector<HTMLElement>(
@@ -37,7 +76,14 @@ export function App() {
     } else {
       document.getElementById('main-content')?.focus({ preventScroll: true });
     }
-  }, [location.pathname, data]);
+  }, [
+    location.key,
+    data,
+    location.pathname,
+    location.search,
+    location.state,
+    navigationType,
+  ]);
   const knownDataRoute = navigation.some(
     ([path]) =>
       path === location.pathname ||

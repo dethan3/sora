@@ -71,7 +71,25 @@ export function FundsPage({ data }: { data: DemoData }) {
             {funds.length} 只基金
           </span>
         </div>
-        <FundTable funds={funds} />
+        {funds.length ? (
+          <FundTable funds={funds} />
+        ) : (
+          <div className="empty">
+            <h2>暂无基金</h2>
+            <p className="muted">
+              没有符合当前条件的基金，试试清除搜索和筛选。
+            </p>
+            <button
+              className="button-secondary"
+              onClick={() => {
+                setParams({}, { replace: true });
+                document.getElementById('fund-search')?.focus();
+              }}
+            >
+              清除筛选
+            </button>
+          </div>
+        )}
       </Panel>
     </>
   );

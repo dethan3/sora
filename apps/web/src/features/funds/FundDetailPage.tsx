@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router';
 import type { DemoData, Fund } from '../../data/demo';
 import { Change, EmptyState, PageHeader, Panel } from '../../components/ui';
 import { WatchButton } from './WatchButton';
+import { listSource, sourceLabel } from '../../navigation/flow';
+import { usePersonal } from '../local/PersonalProvider';
 
 export function historyWindow(
   history: Fund['history'],
@@ -17,12 +19,18 @@ export function historyWindow(
 }
 export function FundDetailPage({ data }: { data: DemoData }) {
   const { code } = useParams();
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const source = listSource(params.get('from')) ?? '/funds';
+  const personal = usePersonal();
   const fund = data.funds.find((item) => item.code === code);
   const [period, setPeriod] = useState<'week' | 'all'>('all');
   if (!fund)
     return (
       <EmptyState title="未找到这只基金">
-        <Link to="/funds">返回基金目录</Link>
+        <Link to={source} state={{ restoreList: true }}>
+          返回{sourceLabel(source)}
+        </Link>
       </EmptyState>
     );
   const history = historyWindow(fund.history, period);
@@ -40,8 +48,8 @@ export function FundDetailPage({ data }: { data: DemoData }) {
     .join(' ');
   return (
     <>
-      <Link className="back-link" to="/funds">
-        ← 基金目录
+      <Link className="back-link" to={source} state={{ restoreList: true }}>
+        ← {sourceLabel(source)}
       </Link>
       <div className="detail-heading">
         <PageHeader
@@ -139,7 +147,10 @@ export function FundDetailPage({ data }: { data: DemoData }) {
             </>
           ) : (
             <EmptyState title="暂无足够的净值样本">
-              当前无法展示趋势，持仓中会标记为待估值。
+              历史样本不足，暂不展示走势。
+              {fund.nav === null
+                ? '当前净值也暂不可用，持仓会标记为待估值。'
+                : '当前净值仍可用于持仓估值。'}
             </EmptyState>
           )}
         </Panel>
@@ -149,8 +160,16 @@ export function FundDetailPage({ data }: { data: DemoData }) {
             <p className="muted">
               历史仅为虚构样本，不代表真实收益或未来表现。
             </p>
-            <Link className="action" to={`/portfolio?add=${fund.code}`}>
-              录入持仓 <span aria-hidden="true">→</span>
+            <Link
+              className="action"
+              to={`/portfolio?${new URLSearchParams({ add: fund.code, currency: fund.currency, from: location.pathname + location.search })}`}
+            >
+              {personal.state.positions.some(
+                (position) => position.code === fund.code,
+              )
+                ? '编辑持仓'
+                : '录入持仓'}{' '}
+              <span aria-hidden="true">→</span>
             </Link>
           </Panel>
           <Panel title="如何理解这条曲线">

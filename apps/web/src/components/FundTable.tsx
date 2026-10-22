@@ -1,9 +1,12 @@
 import type { Fund } from '../data/demo';
 import { Change, EmptyState } from './ui';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import { detailUrl, fundLinkId, rememberList } from '../navigation/flow';
 import { WatchButton } from '../features/funds/WatchButton';
 
 export function FundTable({ funds }: { funds: Fund[] }) {
+  const location = useLocation();
+  const source = location.pathname + location.search;
   if (!funds.length)
     return (
       <EmptyState title="暂无基金">试试其他关键词，或稍后再来。</EmptyState>
@@ -35,7 +38,12 @@ export function FundTable({ funds }: { funds: Fund[] }) {
           {funds.map((fund) => (
             <tr role="row" key={fund.code}>
               <th role="rowheader" scope="row">
-                <Link className="fund-name" to={`/funds/${fund.code}`}>
+                <Link
+                  className="fund-name"
+                  id={fundLinkId(fund.code)}
+                  to={detailUrl(fund.code, source)}
+                  onClick={() => rememberList(source, fund.code)}
+                >
                   {fund.name}
                 </Link>
                 <small>{fund.code}</small>

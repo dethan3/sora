@@ -18,13 +18,19 @@ export function downloadText(text: string, filename: string) {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function BackupTools() {
+export function BackupTools({
+  onBeforeReplace = (action) => action(),
+}: {
+  onBeforeReplace?: (action: () => void) => void;
+}) {
   const local = usePersonal();
   const [pending, setPending] = useState<{
     state: PersonalState;
     title: string;
   }>();
   const [error, setError] = useState('');
+  const hasData =
+    local.state.positions.length > 0 || local.state.watchlist.length > 0;
   async function importFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -34,7 +40,9 @@ export function BackupTools() {
       if (file.size > MAX_IMPORT_BYTES)
         throw new Error('请选择 1 MB 以内的 JSON 备份');
       const state = parsePersonal(await file.text());
-      setPending({ state, title: '导入并替换当前本地数据？' });
+      onBeforeReplace(() =>
+        setPending({ state, title: '导入并替换当前本地数据？' }),
+      );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '无法读取文件');
     }
@@ -48,7 +56,7 @@ export function BackupTools() {
       <div className="button-row">
         <button
           className="button-secondary"
-          disabled={!!local.issue}
+          disabled={!!local.issue || !hasData}
           onClick={() =>
             downloadText(
               JSON.stringify(local.state, null, 2),
@@ -69,11 +77,14 @@ export function BackupTools() {
         </label>
         <button
           className="button-quiet danger"
+          disabled={!local.issue && !hasData}
           onClick={() =>
-            setPending({
-              state: emptyPersonal(),
-              title: '清空本地关注与持仓？',
-            })
+            onBeforeReplace(() =>
+              setPending({
+                state: emptyPersonal(),
+                title: '清空本地关注与持仓？',
+              }),
+            )
           }
         >
           清空数据
@@ -132,7 +143,12 @@ export function LocalNotice() {
         </div>
       )}
       {local.error && (
-        <p className="form-error" role="alert">
+        <p
+          className="form-error"
+          role="alert"
+          id="personal-save-error"
+          tabIndex={-1}
+        >
           {local.error}
         </p>
       )}

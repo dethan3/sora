@@ -5,12 +5,14 @@ export function ConfirmDialog({
   onCancel,
   onConfirm,
   confirmLabel = '确认',
+  cancelLabel = '取消',
   children,
 }: PropsWithChildren<{
   title: string;
   onCancel: () => void;
   onConfirm: () => void;
   confirmLabel?: string;
+  cancelLabel?: string;
 }>) {
   const dialog = useRef<HTMLDialogElement>(null);
   const cancelButton = useRef<HTMLButtonElement>(null);
@@ -72,7 +74,7 @@ export function ConfirmDialog({
           onClick={onCancel}
           autoFocus
         >
-          取消
+          {cancelLabel}
         </button>
         <button className="action" onClick={onConfirm}>
           {confirmLabel}

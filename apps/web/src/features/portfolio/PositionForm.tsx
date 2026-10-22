@@ -17,6 +17,9 @@ export function PositionForm({
   onSave,
   onCancel,
   submitError = '',
+  onDirtyChange,
+  onSelectFund,
+  heldCodes,
 }: {
   funds: Fund[];
   position?: Position;
@@ -24,11 +27,12 @@ export function PositionForm({
   onSave: (position: Position) => boolean;
   onCancel: () => void;
   submitError?: string;
+  onDirtyChange: (dirty: boolean) => void;
+  onSelectFund: (code: string) => void;
+  heldCodes: string[];
 }) {
   const id = useId();
-  const [code, setCode] = useState(
-    position?.code ?? defaultCode ?? funds[0]?.code ?? '',
-  );
+  const code = position?.code ?? defaultCode ?? '';
   const [units, setUnits] = useState(position?.units ?? '');
   const [cost, setCost] = useState(position ? costInput(position) : '');
   const [errors, setErrors] = useState<Partial<Record<Fields, string>>>({});
@@ -38,6 +42,17 @@ export function PositionForm({
   const errorRef = useRef<HTMLParagraphElement>(null);
   const fund = funds.find((item) => item.code === code);
   const currency = position?.currency ?? fund?.currency ?? 'CNY';
+  useEffect(() => {
+    onDirtyChange(
+      units !== (position?.units ?? '') ||
+        cost !== (position ? costInput(position) : ''),
+    );
+  }, [units, cost, position, onDirtyChange]);
+  useEffect(() => {
+    const input = code ? unitsRef.current : codeRef.current;
+    input?.focus();
+    input?.scrollIntoView({ block: 'nearest' });
+  }, []);
   useEffect(() => {
     if (submitError) errorRef.current?.focus();
   }, [submitError]);
@@ -104,15 +119,13 @@ export function PositionForm({
             <select
               id={`${id}-code`}
               ref={codeRef}
+              data-position-autofocus={!code ? '' : undefined}
               value={code}
               disabled={!!position}
               aria-invalid={!!errors.code}
               aria-describedby={description('code')}
               onChange={(event) => {
-                setCode(event.target.value);
-                setCost('');
-                clearError('code');
-                clearError('cost');
+                onSelectFund(event.target.value);
               }}
             >
               <option value="" disabled>
@@ -126,6 +139,9 @@ export function PositionForm({
               {funds.map((item) => (
                 <option key={item.code} value={item.code}>
                   {item.name} · {item.currency}
+                  {!position && heldCodes.includes(item.code)
+                    ? ' · 已持有，选择后编辑'
+                    : ''}
                 </option>
               ))}
             </select>
@@ -135,8 +151,9 @@ export function PositionForm({
             <input
               id={`${id}-units`}
               ref={unitsRef}
-              data-position-autofocus=""
+              data-position-autofocus={code ? '' : undefined}
               inputMode="decimal"
+              disabled={!code}
               autoComplete="off"
               value={units}
               onChange={(event) => {
@@ -146,14 +163,16 @@ export function PositionForm({
               placeholder="例如 1000.0000"
               aria-invalid={!!errors.units}
               aria-describedby={description('units')}
-              autoFocus
             />
           </div>
           <div>
-            <label htmlFor={`${id}-cost`}>总投入成本（{currency}）</label>
+            <label htmlFor={`${id}-cost`}>
+              持仓成本总额{code ? `（${currency}）` : ''}
+            </label>
             <input
               id={`${id}-cost`}
               ref={costRef}
+              disabled={!code}
               inputMode={currency === 'KRW' ? 'numeric' : 'decimal'}
               autoComplete="off"
               value={cost}
@@ -168,10 +187,15 @@ export function PositionForm({
           </div>
         </div>
         <p id={`${id}-help`} className="field-help">
-          份额最多 4 位小数；成本可为 0。零成本时收益率显示“—”。
-          {estimate === null
-            ? '缺少有效净值时暂不估值。'
-            : `按当前样本净值估算：${money(estimate, currency)}。`}
+          成本填写这笔持仓对应的总金额，不是每份单价。份额最多 4
+          位小数；成本可为 0，零成本时不计算收益率。
+          {!code
+            ? '请先选择基金，再填写份额与成本。'
+            : !fund || fund.nav === null || fund.currency !== currency
+              ? '缺少可用净值时暂不估值。'
+              : estimate === null
+                ? '填写份额后可预览估值。'
+                : `按当前样本净值估算：${money(estimate, currency)}。`}
         </p>
         {error && (
           <p

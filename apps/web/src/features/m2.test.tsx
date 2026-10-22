@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '../../public/data/demo.json';
 import { App } from '../App';
@@ -15,9 +15,11 @@ beforeEach(() => {
 function open(path: string) {
   return render(
     <StrictMode>
-      <MemoryRouter initialEntries={[path]}>
-        <App />
-      </MemoryRouter>
+      <RouterProvider
+        router={createMemoryRouter([{ path: '*', element: <App /> }], {
+          initialEntries: [path],
+        })}
+      />
     </StrictMode>,
   );
 }
@@ -26,7 +28,7 @@ describe('M2 keyboard and accessible flows', () => {
   it('focuses invalid fields, associates errors and returns focus after saving', async () => {
     open('/portfolio?add=DEMO-CN');
     const units = await screen.findByRole('textbox', { name: '持有份额' });
-    const cost = screen.getByRole('textbox', { name: '总投入成本（CNY）' });
+    const cost = screen.getByRole('textbox', { name: '持仓成本总额（CNY）' });
     expect(units).toHaveFocus();
     await userEvent.click(screen.getByRole('button', { name: '保存持仓' }));
     expect(units).toHaveFocus();
@@ -43,10 +45,21 @@ describe('M2 keyboard and accessible flows', () => {
     expect(
       screen.queryByRole('region', { name: '录入持仓' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '+ 录入持仓' })).toHaveFocus();
+    expect(
+      screen.getByRole('button', { name: '编辑宽基观察示例' }),
+    ).toHaveFocus();
   });
   it('describes confirmation, locks background scroll and restores focus on cancel', async () => {
+    localStorage.setItem(
+      'sora.personal.v1',
+      JSON.stringify({
+        schemaVersion: 1,
+        watchlist: ['DEMO-CN'],
+        positions: [],
+      }),
+    );
     open('/portfolio');
+    await userEvent.click(await screen.findByText('备份与数据管理'));
     const trigger = await screen.findByRole('button', { name: '清空数据' });
     const previousOverflow = document.body.style.overflow;
     await userEvent.click(trigger);
