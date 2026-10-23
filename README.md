@@ -243,12 +243,18 @@ tests/sora/
 
 要求：
 
-- Python 3.11+
+- Python 3.12.15 或更新的 3.12.x 安全补丁版（见 `.python-version`）
 - 已安装 `requirements.txt`
 
 安装依赖：
 
+保留 NumPy 1.x 兼容性，因此当前使用 Python 3.12 系列。先更新系统 CA
+证书；已有环境也需更新 pip、certifi，以及独立安装的 uv（至少 0.13.4）。
+下方第一条命令通过固定 SHA256 校验的官方 wheel 引导到 pip 26.2.2，
+之后再安装项目依赖；仅更新解释器不能修复所有旧虚拟环境。
+
 ```bash
+python -m pip install "pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
 python -m pip install -r requirements.txt
 ```
 
