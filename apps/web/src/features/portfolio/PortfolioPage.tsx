@@ -208,7 +208,11 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                 })
               }
             >
-              {{ CNY: '人民币', USD: '美元', KRW: '韩元' }[group.currency]}{' '}
+              {
+                { CNY: '人民币', USD: '美元', HKD: '港元', KRW: '韩元' }[
+                  group.currency
+                ]
+              }{' '}
               {group.currency}
               <span>
                 {

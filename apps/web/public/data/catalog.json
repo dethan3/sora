@@ -74,18 +74,18 @@
       "sourceUrl": "https://www.ishares.com/us/products/239726/"
     },
     {
-      "code": "510300",
-      "name": "华泰柏瑞沪深300 ETF",
-      "market": "中国市场",
+      "code": "2800.HK",
+      "name": "盈富基金",
+      "market": "香港市场",
       "category": "宽基指数 ETF",
       "changePct": null,
-      "note": "以沪深300指数为跟踪对象。参考指数点位与基金每份净值分别展示。",
-      "currency": "CNY",
+      "note": "目标为提供紧贴恒生指数表现的投资回报。港元柜台代码 2800；指数点位、交易价格和基金净值分别阅读。",
+      "currency": "HKD",
       "nav": null,
       "history": [],
-      "benchmark": "沪深300指数",
-      "sourceName": "上海证券交易所",
-      "sourceUrl": "https://star.sse.com.cn/assortment/options/rule/c/c_20210128_5312080.shtml"
+      "benchmark": "恒生指数",
+      "sourceName": "盈富基金 / 恒生投资管理",
+      "sourceUrl": "https://www.trahk.com.hk/en-hk/trahk-fund/fund-information/"
     }
   ],
   "positions": [],
@@ -177,21 +177,30 @@
       "keywords": ["标普", "标普500ETF", "SP500", "S&P"]
     },
     {
-      "id": "csi300",
-      "title": "沪深300",
+      "id": "hangseng",
+      "title": "香港市场",
       "kind": "index",
-      "symbol": "CSI",
-      "description": "通过沪深300指数，观察 A 股宽基及其跟踪基金。",
-      "scope": ["沪深300指数", "A 股宽基", "指数跟踪产品"],
-      "benchmark": "沪深300指数",
-      "benchmarkNote": "指数点位与基金每份净值使用不同单位，需分别阅读。",
-      "fundCodes": ["510300"],
+      "symbol": "HK",
+      "description": "从恒生指数出发，了解香港市场及其指数跟踪产品。",
+      "scope": ["恒生指数", "香港上市市场", "港元计价产品"],
+      "benchmark": "恒生指数",
+      "benchmarkNote": "恒生指数作为香港市场的观察参考，不代表所有香港上市公司；指数点位与基金净值分别展示。",
+      "fundCodes": ["2800.HK"],
       "fundReasons": {
-        "510300": "华泰柏瑞沪深300 ETF，以沪深300指数为跟踪对象。"
+        "2800.HK": "盈富基金以紧贴恒生指数表现为目标，港元柜台代码为 2800。"
       },
-      "sourceName": "上海证券交易所",
-      "sourceUrl": "https://star.sse.com.cn/assortment/options/rule/c/c_20210128_5312080.shtml",
-      "keywords": ["沪深300ETF", "A股", "宽基300"]
+      "sourceName": "盈富基金 / 恒生投资管理",
+      "sourceUrl": "https://www.trahk.com.hk/en-hk/trahk-fund/fund-information/",
+      "keywords": [
+        "香港",
+        "港股",
+        "恒指",
+        "恒生",
+        "HSI",
+        "Hong Kong",
+        "2800",
+        "盈富"
+      ]
     }
   ]
 }

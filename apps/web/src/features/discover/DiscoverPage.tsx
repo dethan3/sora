@@ -5,6 +5,7 @@ import { DirectionCard } from './DirectionCard';
 import { useDirections } from './DirectionProvider';
 import { fundLinkId } from '../../navigation/flow';
 import './discover.css';
+import { MarketNotice } from '../market/MarketProvider';
 
 export function DiscoverPage({ data }: { data: DemoData }) {
   const [params, setParams] = useSearchParams();
@@ -99,6 +100,7 @@ export function DiscoverPage({ data }: { data: DemoData }) {
         </div>
         <span className="discover-caption">保持好奇，逐步了解。</span>
       </header>
+      <MarketNotice />
       <section
         className={
           'my-directions' + (store.ids.length ? '' : ' my-directions-empty')

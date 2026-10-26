@@ -1,0 +1,10 @@
+services:
+  aktools:
+    build: .
+    ports:
+      - '127.0.0.1:8080:8080'
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp

@@ -183,6 +183,13 @@ config/private.yaml
 *.pem
 
 # Sora V2 frontend
+services/aktools/.bootstrap/
+services/aktools/.python/
+services/aktools/.cache/
+services/aktools/.venv/
+data/market/
+dist-market/
+dist-mock/
 node_modules/
 .pnpm-store/
 .wrangler/

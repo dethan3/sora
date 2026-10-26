@@ -35,7 +35,7 @@ describe('direction discovery', () => {
       'gold',
       'nasdaq100',
       'sp500',
-      'csi300',
+      'hangseng',
     ]);
     expect(data.funds).toHaveLength(6);
     expect(
@@ -138,9 +138,9 @@ describe('direction discovery', () => {
     await userEvent.clear(search);
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: '市场' }),
-      '中国市场',
+      '香港市场',
     );
-    expect(screen.getByRole('link', { name: '沪深300' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '香港市场' })).toBeInTheDocument();
     expect(router.state.location.search).toContain('market=');
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: '方向类型' }),

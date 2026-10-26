@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  server: { proxy: { '/api/market': { target: 'http://127.0.0.1:8788' } } },
   plugins: [
     react(),
     tailwindcss(),
@@ -36,6 +37,7 @@ export default defineConfig({
       workbox: {
         cacheId: 'sora-v2',
         globPatterns: ['**/*.{js,css,html,json,png,svg}'],
+        globIgnores: ['**/data/market.json'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [
           /^\/(?:data|assets|icons|api)(?:\/|$)/,
