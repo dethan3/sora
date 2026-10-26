@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router';
 import type { DemoData } from '../../data/demo';
 import { fundLinkId, rememberList } from '../../navigation/flow';
 import { useDirections } from './DirectionProvider';
+import { MarketQuote } from '../market/MarketQuote';
 export type Direction = DemoData['modules'][number];
 export const directionKind = (kind: Direction['kind']) =>
   kind === 'index' ? '宽基指数' : kind === 'asset' ? '资产与商品' : '投资主题';
@@ -64,15 +65,15 @@ export function DirectionCard({
               <span key={tag}>{tag}</span>
             ))}
           </div>
-          <div className="direction-card-quote">
-            <div>
-              <span>参考指标</span>
-              <p>{direction.benchmark ?? direction.title}</p>
-            </div>
-            <span className="direction-no-data">暂无数据</span>
-          </div>
         </>
       )}
+      <div className="direction-card-quote market-card-quote">
+        <div>
+          <span>参考指标</span>
+          <p>{direction.benchmark ?? direction.title}</p>
+        </div>
+        <MarketQuote id={direction.id} compact />
+      </div>
       <p className="direction-fund-count">
         {direction.fundCodes.length} 项关联产品
         <span>{compact ? '继续观察 →' : '查看方向与关联基金 →'}</span>

@@ -182,7 +182,7 @@ storage 事件同步其他页面；编辑保存时比较原记录，避免覆盖
 份额上限 1,000,000、4 位小数；净值上限 10,000、6 位小数。
 成本最小单位整数上限 1,000,000,000,000；最多 200 笔汇总保持在安全整数范围。
 份额、净值以十进制字符串和 BigInt 定点乘法计算，四舍五入至最小货币单位后转为安全整数。
-CNY / USD 精度 2，KRW 精度 0；分币种汇总，不隐含汇率口径。
+CNY / USD / HKD 精度 2，KRW 精度 0；分币种汇总，不隐含汇率口径。
 缺失返回 null，不等于零；不完整汇总暂停总收益和权重。
 SVG 时间坐标使用 UTC 日期间距，纵轴按样本范围缩放，提供说明和可展开明细表。
 
@@ -225,4 +225,20 @@ StrictMode 重复挂载纳入测试；弹窗最大高度使用 dvh，窄屏内�
 - [IAU / BlackRock](https://www.blackrock.com/us/individual/products/239561/ishares-gold-trust-fund)
 - [QQQ / Invesco](https://www.invesco.com/us/en/financial-products/etfs/invesco-qqq-trust-series-1.html)
 - [IVV / iShares](https://www.ishares.com/us/products/239726/)
-- [510300 / 上海证券交易所](https://star.sse.com.cn/assortment/options/rule/c/c_20210128_5312080.shtml)
+- [2800.HK / 盈富基金](https://www.trahk.com.hk/en-hk/trahk-fund/fund-information/)
+
+## 行情视图与 Mock 隔离
+
+`features/market` 包含独立行情 schema、可注入 loader 的 `MarketProvider`、报价、状态、变化值、走势和详情面板。方向目录只提供资料及关联，不承担行情数据或个人估值。
+
+`MarketSnapshot` 使用独立版本和来源字段；当前只接受 `source: mock`。每条方向观察包含稳定 id、指标名称、单位、交易所时区、交易状态、数据新鲜度、可空报价及日线。报价含前收、UTC asOf、可空延迟分钟数；缺失延迟不代表实时。schema 拒绝重复 id、重复 / 逆序日期、未来报价，以及最后历史点与报价日期 / 数值不一致。具体供应商接入时必须另行扩展来源契约及时间、复权、授权元数据，本轮不虚建实时接口。
+
+`MODE=development` 或 `.env.mock` 的显式开关启用动态 Mock loader；其他构建默认不启用。开关在模块边界静态求值，正式产物不生成 Mock chunk。专用构建输出至已忽略的 `dist-mock`，与 Cloudflare 使用的 `dist` 分开；构建脚本核对两种产物是否按预期包含 Mock chunk，两者公开 data 目录均只有资料 catalog.json。
+
+Mock 固定于 2026-10-24 的演示快照，工作日合成序列不是真实交易日历，不按系统时间伪装刷新。黄金故意呈现旧记录，半导体含延迟状态，标普呈现持平，香港呈现休市，用于组件验收。真实模式尚未实现。
+
+Provider 支持异步载入、解析失败、重试、卸载防止过期写入，以及刷新失败保留已载入结果。失败不阻断方向资料和导航。报价与记录按方向 id 连接，不回填 Fund.nav；港元持仓扩展现有币种枚举并维持旧记录兼容。
+
+图表不引入新依赖，以 SVG 连接已有日线记录，各观察点等距；数值 / 日期使用 HTML，提供 range 滑块、可读数值和历史表。区间写入详情 URL，返回来源仅保留合法四档 period，继续限制嵌套深度和外部来源。区间切换替换当前历史条目，避免返回时逐次回退每个区间。
+
+未来接入保持“供应商 → 独立采集 / 归一化 → 验证后的静态快照 → 组件”的依赖方向。密钥不进入 Vite 环境或前端请求；服务端调度和缓存策略待选源后实现。调研结论与待验证项见 [DATA_SOURCES.md](./DATA_SOURCES.md)。

@@ -5,6 +5,8 @@ import { FundTable } from '../../components/FundTable';
 import { listSource } from '../../navigation/flow';
 import { directionKind, FollowDirection } from './DirectionCard';
 import './discover.css';
+import { MarketNotice } from '../market/MarketProvider';
+import { MarketPanel } from '../market/MarketPanel';
 export function DirectionDetailPage({ data }: { data: DemoData }) {
   const { id } = useParams();
   const [params] = useSearchParams();
@@ -34,27 +36,13 @@ export function DirectionDetailPage({ data }: { data: DemoData }) {
         </div>
         <FollowDirection direction={direction} />
       </header>
+      <MarketNotice />
       <div className="direction-detail-grid">
-        <section
-          className="direction-benchmark"
-          aria-labelledby="benchmark-title"
-        >
-          <p className="eyebrow">REFERENCE INDICATOR</p>
-          <h2 id="benchmark-title">{direction.benchmark ?? direction.title}</h2>
-          <div className="direction-quote-placeholder">
-            <strong>—</strong>
-            <span>暂无数据</span>
-          </div>
-          <p>{direction.benchmarkNote ?? '参考指标与关联基金分别展示。'}</p>
-          <div className="direction-chart-empty">
-            <span aria-hidden="true">∿</span>
-            <p>暂无走势数据</p>
-            <small>有可用的历史记录后，将在这里展示。</small>
-          </div>
-          <p className="direction-indicator-note">
-            指标数据尚未接入，不以关联基金涨跌替代。
-          </p>
-        </section>
+        <MarketPanel
+          id={direction.id}
+          benchmark={direction.benchmark ?? direction.title}
+          note={direction.benchmarkNote ?? '参考指标与关联基金分别展示。'}
+        />
         <aside className="direction-scope">
           <h2>这个方向包含什么</h2>
           <ul>

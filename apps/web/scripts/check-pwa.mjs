@@ -1,8 +1,17 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 
-const dist = new URL('../dist/', import.meta.url);
+const dist = new URL(
+  `../${process.argv[2] === 'dist-mock' ? 'dist-mock' : 'dist'}/`,
+  import.meta.url,
+);
 const publicData = await readdir(new URL('data/', dist));
+const assetNames = await readdir(new URL('assets/', dist));
+assert.equal(
+  assetNames.some((name) => /^mock-.*\.js$/.test(name)),
+  process.argv[2] === 'dist-mock',
+  'Synthetic market data must only ship in the explicit mock build',
+);
 assert.deepEqual(
   publicData,
   ['catalog.json'],
@@ -47,6 +56,12 @@ const html = await readFile(new URL('index.html', dist), 'utf8');
 assert.match(html, /rel="manifest"/);
 assert.match(html, /apple-touch-icon/);
 const sw = await readFile(new URL('sw.js', dist), 'utf8');
+for (const name of assetNames.filter((name) => name.endsWith('.js'))) {
+  assert.ok(
+    sw.includes(`assets/${name}`),
+    `Offline precache missing JavaScript ${name}`,
+  );
+}
 for (const path of [
   'index.html',
   'data/catalog.json',

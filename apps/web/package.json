@@ -8,7 +8,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build": "tsc --noEmit && vite build && node scripts/check-pwa.mjs",
+    "build:mock": "tsc --noEmit && vite build --mode mock --outDir dist-mock && node scripts/check-pwa.mjs dist-mock",
     "preview": "vite preview --host 127.0.0.1",
+    "preview:mock": "vite preview --host 127.0.0.1 --outDir dist-mock",
     "cf:check": "wrangler deploy --dry-run",
     "cf:preview": "wrangler versions upload"
   },

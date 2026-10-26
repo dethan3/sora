@@ -33,6 +33,13 @@ export function listSource(value: string | null, depth = 0): string | null {
     const item = url.searchParams.get(key);
     if (item) params.set(key, item);
   }
+  const period = url.searchParams.get('period');
+  if (
+    url.pathname.startsWith('/discover/') &&
+    period &&
+    ['1W', '1M', '3M', '1Y'].includes(period)
+  )
+    params.set('period', period);
   if (url.pathname === '/funds' || url.pathname.startsWith('/discover/')) {
     const from = listSource(url.searchParams.get('from'), depth + 1);
     if (

@@ -183,6 +183,7 @@ config/private.yaml
 *.pem
 
 # Sora V2 frontend
+dist-mock/
 node_modules/
 .pnpm-store/
 .wrangler/

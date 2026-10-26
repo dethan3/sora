@@ -8,10 +8,11 @@ import { PortfolioPage } from '../features/portfolio/PortfolioPage';
 import { LocalNotice } from '../features/local/BackupTools';
 import { DirectionDetailPage } from '../features/discover/DirectionDetailPage';
 import { DirectionNotice } from '../features/discover/DirectionProvider';
+import { MarketProvider } from '../features/market/MarketProvider';
 
 export function DataPages({ data }: { data: DemoData }) {
   return (
-    <>
+    <MarketProvider>
       <LocalNotice />
       <DirectionNotice />
       <Routes>
@@ -25,6 +26,6 @@ export function DataPages({ data }: { data: DemoData }) {
         <Route path="/watchlist" element={<WatchlistPage data={data} />} />
         <Route path="/portfolio" element={<PortfolioPage data={data} />} />
       </Routes>
-    </>
+    </MarketProvider>
   );
 }
