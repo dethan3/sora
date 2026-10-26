@@ -5,6 +5,7 @@ import {
   observationTime,
   unitText,
   type MarketSeries,
+  isStale,
 } from './model';
 export function MarketChange({
   value,
@@ -37,21 +38,19 @@ export function MarketStatus({ series }: { series: MarketSeries }) {
   return (
     <span className="market-status">
       <span>
-        {
-          {
-            open: '交易中',
-            closed: '已收盘',
-            holiday: '休市',
-            unknown: '交易状态未知',
-          }[series.session]
-        }
+        {series.quote?.kind === 'daily-close'
+          ? '日线收盘'
+          : {
+              open: '交易中',
+              closed: '已收盘',
+              holiday: '休市',
+              unknown: '交易状态未知',
+            }[series.session]}
       </span>
       {series.quote?.delayMinutes ? (
         <span>延迟 {series.quote.delayMinutes} 分钟</span>
       ) : null}
-      {series.freshness === 'stale' && (
-        <span className="market-stale">更新滞后</span>
-      )}
+      {isStale(series) && <span className="market-stale">更新滞后</span>}
     </span>
   );
 }
@@ -97,13 +96,16 @@ export function MarketQuote({
       <time dateTime={quote.asOf} className="market-asof">
         {observationTime(series)}
       </time>
-      {series.freshness === 'stale' && !compact && (
+      {isStale(series) && !compact && (
         <p className="market-stale-note">
           保留最近有效记录，最新行情尚未更新。
         </p>
       )}
       {market.status === 'error' && (
         <p className="market-stale-note">本次更新失败，正在显示上次记录。</p>
+      )}
+      {series.provenance?.updateStatus === 'failed' && (
+        <p className="market-stale-note">本次采集失败，保留最近有效记录。</p>
       )}
     </div>
   );

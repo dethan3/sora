@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
+import { marketSnapshotSchema } from '@sora/market-data';
 
 const dist = new URL(
-  `../${process.argv[2] === 'dist-mock' ? 'dist-mock' : 'dist'}/`,
+  `../${['dist-mock', 'dist-market'].includes(process.argv[2]) ? process.argv[2] : 'dist'}/`,
   import.meta.url,
 );
 const publicData = await readdir(new URL('data/', dist));
@@ -14,7 +15,9 @@ assert.equal(
 );
 assert.deepEqual(
   publicData,
-  ['catalog.json'],
+  process.argv[2] === 'dist-market'
+    ? ['catalog.json', 'market.json']
+    : ['catalog.json'],
   'Only the production catalog may be published',
 );
 const catalog = JSON.parse(
@@ -56,6 +59,17 @@ const html = await readFile(new URL('index.html', dist), 'utf8');
 assert.match(html, /rel="manifest"/);
 assert.match(html, /apple-touch-icon/);
 const sw = await readFile(new URL('sw.js', dist), 'utf8');
+if (process.argv[2] === 'dist-market') {
+  const snapshot = marketSnapshotSchema.parse(
+    JSON.parse(await readFile(new URL('data/market.json', dist), 'utf8')),
+  );
+  assert.equal(snapshot.source, 'market-snapshot');
+  assert.ok(snapshot.series.length > 0);
+  assert.ok(
+    !sw.includes('data/market.json'),
+    'Mutable market observations must not be pinned in the application precache',
+  );
+}
 for (const name of assetNames.filter((name) => name.endsWith('.js'))) {
   assert.ok(
     sw.includes(`assets/${name}`),

@@ -88,7 +88,7 @@ export function MarketHistory({
             <svg
               viewBox="0 0 760 240"
               role="img"
-              aria-label={`${series.name}演示走势，${first.date}至${last!.date}`}
+              aria-label={`${series.name}${series.provenance ? '' : '演示'}走势，${first.date}至${last!.date}`}
               onPointerMove={(event) => {
                 if (event.pointerType === 'touch') return;
                 const bounds = event.currentTarget.getBoundingClientRect();
@@ -183,7 +183,10 @@ export function MarketHistory({
             <summary>查看 {history.length} 条历史记录</summary>
             <div className="market-history-scroll">
               <table>
-                <caption className="sr-only">{series.name}演示历史记录</caption>
+                <caption className="sr-only">
+                  {series.name}
+                  {series.provenance ? '' : '演示'}历史记录
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">日期</th>

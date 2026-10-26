@@ -12,8 +12,24 @@ importers:
         specifier: ^3.9.10
         version: 3.9.10
 
+  apps/data-service:
+    dependencies:
+      '@sora/market-data':
+        specifier: workspace:*
+        version: link:../../packages/market-data
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   apps/web:
     dependencies:
+      '@sora/market-data':
+        specifier: workspace:*
+        version: link:../../packages/market-data
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -72,6 +88,12 @@ importers:
       wrangler:
         specifier: ^4.151.1
         version: 4.151.1(@types/node@26.6.5)
+
+  packages/market-data:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
 packages:
 

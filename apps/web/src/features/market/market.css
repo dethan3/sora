@@ -17,6 +17,22 @@
   font-weight: 600;
   white-space: nowrap;
 }
+.market-live-notice {
+  background: #f3f6fc;
+  border-color: #e0e7f3;
+  color: #63758e;
+}
+.market-live-label {
+  font-weight: 600;
+  color: #425f89;
+}
+.market-live-notice button {
+  border-color: #d6dfed;
+  color: #506b93;
+}
+.direction-indicator-note a {
+  color: var(--accent);
+}
 .market-notice button {
   margin-left: 10px;
   padding: 5px 12px;

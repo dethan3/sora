@@ -45,9 +45,31 @@ export function MarketPanel({
         </div>
       )}
       <p className="direction-indicator-note">
-        {market.enabled
-          ? '行情来源：Sora Mock · 人工生成的固定演示记录，未连接任何行情供应商。'
-          : '指标数据尚未接入，不以关联基金涨跌替代。'}
+        {series?.provenance ? (
+          <>
+            行情来源：
+            <a
+              href={series.provenance.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {series.provenance.upstream} ↗
+            </a>
+            {' · '}
+            {series.provenance.provider === 'aktools'
+              ? '经 AKTools 获取'
+              : 'Yahoo 接口'}{' '}
+            · 未复权日线。获取于{' '}
+            {series.provenance.retrievedAt
+              .replace('T', ' ')
+              .replace('Z', ' UTC')}
+            。
+          </>
+        ) : market.data?.source === 'mock' ? (
+          '行情来源：Sora Mock · 人工生成的固定演示记录，未连接任何行情供应商。'
+        ) : (
+          '指标数据尚未接入，不以关联基金涨跌替代。'
+        )}
       </p>
     </section>
   );

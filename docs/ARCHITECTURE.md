@@ -241,4 +241,20 @@ Provider 支持异步载入、解析失败、重试、卸载防止过期写入�
 
 图表不引入新依赖，以 SVG 连接已有日线记录，各观察点等距；数值 / 日期使用 HTML，提供 range 滑块、可读数值和历史表。区间写入详情 URL，返回来源仅保留合法四档 period，继续限制嵌套深度和外部来源。区间切换替换当前历史条目，避免返回时逐次回退每个区间。
 
-未来接入保持“供应商 → 独立采集 / 归一化 → 验证后的静态快照 → 组件”的依赖方向。密钥不进入 Vite 环境或前端请求；服务端调度和缓存策略待选源后实现。调研结论与待验证项见 [DATA_SOURCES.md](./DATA_SOURCES.md)。
+该阶段规划的实际接入已在下一节实现。调研结论与待验证项见 [DATA_SOURCES.md](./DATA_SOURCES.md)。
+
+## AKTools 与 TypeScript 快照层 · 2026-10-26
+
+当前实现覆盖上一节仅支持 Mock 的边界：
+
+`AKShare / AKTools → apps/data-service → packages/market-data 校验 → 私有 JSON → 只读 API 或静态导出 → MarketProvider → 行情组件`。
+
+- `services/aktools` 提供独立 Python 环境的固定版本依赖及 Docker / Compose 文件；不改旧 Python 项目。实际连接使用本地 Python 3.13，容器尚未运行验收。
+- `apps/data-service` 使用 Node 24 原生 TypeScript，固定三个指数映射、请求超时和体积限制、日期及数值校验、历史去重、回退拒绝、独占更新锁、原子文件替换和私有尝试报告。可选 Yahoo 整条序列回退默认关闭，不混合来源拼接历史。
+- `packages/market-data` 共享 Zod schema 与纯计算函数。实际快照要求日期型收盘报价、至少两条历史、前收一致、来源及有序采集时间；Mock 保持独立来源标识。
+- 本机只读 API 默认 127.0.0.1:8788，提供 GET / HEAD、ETag、无可用数据时 503。浏览器刷新只读快照，不触发 Python 采集；AKTools 默认仅映射本机端口。
+- `data/market` 不纳入 Git。`pnpm data:update` 单次更新；`pnpm dev:market` 经 Vite 代理读取本机 API；`build:snapshot` 只导出通过校验的实际数据，不能用测试 fixture 代替。
+- 浏览器仅缓存有效真实快照，损坏记录忽略且保留原文；更新失败保留旧值和时间。四个自然日的陈旧阈值是保守提醒，不代表完整交易日历。
+- 实际 JSON 不进入 Service Worker 预缓存，读取使用 no-cache，失败恢复依赖独立有效快照缓存。构建检查确保正式 / 实际构建没有 Mock chunk，且实际产物的 JSON 合法。
+
+定时调度、VPS、对外 API 访问控制和生产运维尚未实施。依赖版本、命令、故障恢复和后续容器部署见 [AKTOOLS.md](./AKTOOLS.md)。
