@@ -1,0 +1,30 @@
+name: Sora V2 Web CI
+on:
+  push:
+    branches: [main, 'feat/sora-v2-*']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check app and PWA build artifacts
+        run: pnpm check
+      - run: pnpm --filter @sora/web cf:check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sora-v2-static
+          path: apps/web/dist
+          if-no-files-found: error
