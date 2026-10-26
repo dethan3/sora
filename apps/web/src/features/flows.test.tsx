@@ -8,7 +8,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider, useNavigate } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import fixture from '../../public/data/demo.json';
+import fixture from '../test/fixtures/demo.json';
 import { App } from '../App';
 import { emptyPersonal, STORAGE_KEY } from './local/state';
 import { detailSource, listSource } from '../navigation/flow';

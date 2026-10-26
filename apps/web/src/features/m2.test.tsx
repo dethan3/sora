@@ -3,7 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import fixture from '../../public/data/demo.json';
+import fixture from '../test/fixtures/demo.json';
 import { App } from '../App';
 
 beforeEach(() => {
@@ -80,7 +80,7 @@ describe('M2 keyboard and accessible flows', () => {
   });
   it('keeps one semantic table and one action per fund for all layouts', async () => {
     open('/funds');
-    const table = await screen.findByRole('table', { name: '基金示例列表' });
+    const table = await screen.findByRole('table', { name: '基金列表' });
     expect(within(table).getAllByRole('columnheader')).toHaveLength(5);
     expect(within(table).getAllByRole('rowheader')).toHaveLength(4);
     expect(within(table).getAllByRole('button')).toHaveLength(4);
@@ -94,7 +94,7 @@ describe('M2 keyboard and accessible flows', () => {
   it('announces filtered counts while preserving keyboard input focus', async () => {
     open('/funds');
     const search = await screen.findByRole('searchbox', {
-      name: '搜索示例基金',
+      name: '搜索基金',
     });
     await userEvent.type(search, 'DEMO-KR');
     expect(search).toHaveFocus();

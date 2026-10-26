@@ -195,7 +195,7 @@ export function PositionForm({
               ? '缺少可用净值时暂不估值。'
               : estimate === null
                 ? '填写份额后可预览估值。'
-                : `按当前样本净值估算：${money(estimate, currency)}。`}
+                : `按当前可用净值估算：${money(estimate, currency)}。`}
         </p>
         {error && (
           <p
@@ -213,7 +213,7 @@ export function PositionForm({
             保存持仓
           </button>
           <span className="field-help">
-            只保存到此浏览器，使用虚构样本估值。
+            只保存到此浏览器，暂无净值时不显示估值。
           </span>
         </div>
       </form>

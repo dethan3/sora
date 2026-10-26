@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "source": "reference-catalog",
+  "asOf": "2026-10-26",
+  "funds": [
+    {
+      "code": "AIQ",
+      "name": "Global X 人工智能与科技 ETF",
+      "market": "美国市场",
+      "category": "人工智能主题 ETF",
+      "changePct": null,
+      "note": "跟踪 Indxx Artificial Intelligence & Big Data Index，涉及人工智能、大数据及相关硬件。上市地点与底层公司的地域分布不同。",
+      "currency": "USD",
+      "nav": null,
+      "history": [],
+      "benchmark": "Indxx Artificial Intelligence & Big Data Index",
+      "sourceName": "Global X",
+      "sourceUrl": "https://www.globalxetfs.com/funds/aiq"
+    },
+    {
+      "code": "SOXX",
+      "name": "iShares 半导体 ETF",
+      "market": "美国市场",
+      "category": "半导体行业 ETF",
+      "changePct": null,
+      "note": "跟踪 NYSE Semiconductor Index，观察半导体行业及其产业链。行业基金与宽基指数的覆盖范围不同。",
+      "currency": "USD",
+      "nav": null,
+      "history": [],
+      "benchmark": "NYSE Semiconductor Index",
+      "sourceName": "iShares",
+      "sourceUrl": "https://www.ishares.com/us/products/239705/ishares-phlx-semiconductor-etf"
+    },
+    {
+      "code": "IAU",
+      "name": "iShares 黄金信托",
+      "market": "美国市场",
+      "category": "实物黄金信托",
+      "changePct": null,
+      "note": "以实物黄金价格为观察对象。黄金信托不同于黄金矿业股票基金，也不同于注册于美国投资公司法下的股票 ETF。",
+      "currency": "USD",
+      "nav": null,
+      "history": [],
+      "benchmark": "黄金价格",
+      "sourceName": "iShares / BlackRock",
+      "sourceUrl": "https://www.blackrock.com/us/individual/products/239561/ishares-gold-trust-fund"
+    },
+    {
+      "code": "QQQ",
+      "name": "Invesco 纳斯达克100 ETF",
+      "market": "美国市场",
+      "category": "宽基指数 ETF",
+      "changePct": null,
+      "note": "跟踪 Nasdaq-100 Index。指数与 ETF 是不同对象；ETF 的交易价格、净值与指数点位不能混用。",
+      "currency": "USD",
+      "nav": null,
+      "history": [],
+      "benchmark": "Nasdaq-100 Index",
+      "sourceName": "Invesco",
+      "sourceUrl": "https://www.invesco.com/us/en/financial-products/etfs/invesco-qqq-trust-series-1.html"
+    },
+    {
+      "code": "IVV",
+      "name": "iShares 标普500 ETF",
+      "market": "美国市场",
+      "category": "宽基指数 ETF",
+      "changePct": null,
+      "note": "跟踪 S&P 500 Index。通过基金资料了解其跟踪对象与投资范围。",
+      "currency": "USD",
+      "nav": null,
+      "history": [],
+      "benchmark": "S&P 500 Index",
+      "sourceName": "iShares",
+      "sourceUrl": "https://www.ishares.com/us/products/239726/"
+    },
+    {
+      "code": "510300",
+      "name": "华泰柏瑞沪深300 ETF",
+      "market": "中国市场",
+      "category": "宽基指数 ETF",
+      "changePct": null,
+      "note": "以沪深300指数为跟踪对象。参考指数点位与基金每份净值分别展示。",
+      "currency": "CNY",
+      "nav": null,
+      "history": [],
+      "benchmark": "沪深300指数",
+      "sourceName": "上海证券交易所",
+      "sourceUrl": "https://star.sse.com.cn/assortment/options/rule/c/c_20210128_5312080.shtml"
+    }
+  ],
+  "positions": [],
+  "watchlist": [],
+  "modules": [
+    {
+      "id": "ai",
+      "title": "人工智能 AI",
+      "kind": "theme",
+      "symbol": "AI",
+      "description": "从应用、软件到算力，认识人工智能所连接的产业。",
+      "scope": ["人工智能应用", "数据与软件", "算力与硬件"],
+      "benchmark": "Indxx Artificial Intelligence & Big Data Index",
+      "benchmarkNote": "作为人工智能方向的参考指标，不代表所有 AI 企业或所有市场。",
+      "fundCodes": ["AIQ"],
+      "fundReasons": {
+        "AIQ": "跟踪人工智能与大数据指数，投资范围涉及 AI 技术及相关硬件。"
+      },
+      "sourceName": "Global X 产品资料",
+      "sourceUrl": "https://www.globalxetfs.com/funds/aiq",
+      "keywords": ["AI", "人工智能", "AIGC"]
+    },
+    {
+      "id": "semiconductors",
+      "title": "半导体",
+      "kind": "theme",
+      "symbol": "CHIP",
+      "description": "沿着芯片设计、制造与设备，了解半导体产业链。",
+      "scope": ["芯片设计", "晶圆制造", "半导体设备"],
+      "benchmark": "NYSE Semiconductor Index",
+      "benchmarkNote": "以美国上市半导体企业组成的指数为参考，与整个全球产业并不等同。",
+      "fundCodes": ["SOXX"],
+      "fundReasons": {
+        "SOXX": "跟踪半导体行业指数，与芯片及相关产业链直接关联。"
+      },
+      "sourceName": "iShares 产品资料",
+      "sourceUrl": "https://www.ishares.com/us/products/239705/ishares-phlx-semiconductor-etf",
+      "keywords": ["半导体", "芯片", "chip"]
+    },
+    {
+      "id": "gold",
+      "title": "黄金",
+      "kind": "asset",
+      "symbol": "AU",
+      "description": "关注黄金价格，分清实物黄金与黄金矿业公司的不同。",
+      "scope": ["黄金价格", "实物黄金产品", "黄金与矿业股的区别"],
+      "benchmark": "黄金价格",
+      "benchmarkNote": "以黄金价格作为参考。黄金矿业股票还受到公司经营因素影响，本方向不把二者涨跌混算。",
+      "fundCodes": ["IAU"],
+      "fundReasons": {
+        "IAU": "持有实物黄金，目标是反映黄金价格表现；不是黄金矿业股票基金。"
+      },
+      "sourceName": "iShares / BlackRock 产品资料",
+      "sourceUrl": "https://www.blackrock.com/us/individual/products/239561/ishares-gold-trust-fund",
+      "keywords": ["黄金", "gold", "贵金属"]
+    },
+    {
+      "id": "nasdaq100",
+      "title": "纳斯达克100",
+      "kind": "index",
+      "symbol": "NDX",
+      "description": "通过纳斯达克100指数，观察对应的市场与基金。",
+      "scope": ["纳斯达克100指数", "指数跟踪产品", "指数与 ETF 的区别"],
+      "benchmark": "Nasdaq-100 Index",
+      "benchmarkNote": "指数点位与基金净值分别计算；不使用关联 ETF 的涨跌替代指数涨跌。",
+      "fundCodes": ["QQQ"],
+      "fundReasons": {
+        "QQQ": "基金明确以 Nasdaq-100 Index 为跟踪对象。"
+      },
+      "sourceName": "Invesco 产品资料",
+      "sourceUrl": "https://www.invesco.com/us/en/financial-products/etfs/invesco-qqq-trust-series-1.html",
+      "keywords": ["纳指", "纳指100", "纳指100ETF", "NASDAQ"]
+    },
+    {
+      "id": "sp500",
+      "title": "标普500",
+      "kind": "index",
+      "symbol": "SPX",
+      "description": "从标普500指数，了解美国大型公司相关的宽基方向。",
+      "scope": ["标普500指数", "美国市场宽基", "指数跟踪产品"],
+      "benchmark": "S&P 500 Index",
+      "benchmarkNote": "指数是观察基准，关联 ETF 是跟踪该指数的投资产品。",
+      "fundCodes": ["IVV"],
+      "fundReasons": {
+        "IVV": "基金跟踪 S&P 500 Index，属于本方向的指数跟踪产品。"
+      },
+      "sourceName": "iShares 产品资料",
+      "sourceUrl": "https://www.ishares.com/us/products/239726/",
+      "keywords": ["标普", "标普500ETF", "SP500", "S&P"]
+    },
+    {
+      "id": "csi300",
+      "title": "沪深300",
+      "kind": "index",
+      "symbol": "CSI",
+      "description": "通过沪深300指数，观察 A 股宽基及其跟踪基金。",
+      "scope": ["沪深300指数", "A 股宽基", "指数跟踪产品"],
+      "benchmark": "沪深300指数",
+      "benchmarkNote": "指数点位与基金每份净值使用不同单位，需分别阅读。",
+      "fundCodes": ["510300"],
+      "fundReasons": {
+        "510300": "华泰柏瑞沪深300 ETF，以沪深300指数为跟踪对象。"
+      },
+      "sourceName": "上海证券交易所",
+      "sourceUrl": "https://star.sse.com.cn/assortment/options/rule/c/c_20210128_5312080.shtml",
+      "keywords": ["沪深300ETF", "A股", "宽基300"]
+    }
+  ]
+}

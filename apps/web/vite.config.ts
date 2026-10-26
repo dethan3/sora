@@ -15,7 +15,7 @@ export default defineConfig({
         id: '/',
         name: 'Sora · 投资，清晰可见',
         short_name: 'Sora',
-        description: '发现基金，记录关注与组合。当前为虚构示例预览。',
+        description: '发现基金，记录关注与组合。观察市场方向，发现相关基金。',
         lang: 'zh-CN',
         start_url: '/',
         scope: '/',

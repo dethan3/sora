@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import fixture from '../public/data/demo.json';
+import fixture from './test/fixtures/demo.json';
 import { App } from './App';
 
 beforeEach(() => {
@@ -52,7 +52,7 @@ describe('M0 routes', () => {
   it('filters funds and shows an empty state', async () => {
     open('/funds');
     const search = await screen.findByRole('searchbox', {
-      name: '搜索示例基金',
+      name: '搜索基金',
     });
     await userEvent.type(search, 'DEMO-KR');
     expect(screen.getByText('韩国市场示例')).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('M0 routes', () => {
     open('/funds');
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      '暂时无法读取示例',
+      '暂时无法读取数据',
     );
     await userEvent.click(screen.getByRole('button', { name: '重新加载' }));
     expect(await screen.findByRole('searchbox')).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('M0 routes', () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'));
     open('/funds');
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      '暂时无法读取示例',
+      '暂时无法读取数据',
     );
     expect(screen.getByRole('button', { name: '重新加载' })).toBeEnabled();
   });

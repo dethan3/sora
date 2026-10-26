@@ -1,18 +1,11 @@
 import { Link } from 'react-router';
-import { portfolioSummary, type DemoData } from '../data/demo';
-import { ActionLink, Change } from '../components/ui';
+import type { DemoData } from '../data/demo';
+import { ActionLink } from '../components/ui';
 import { usePersonal } from '../features/local/PersonalProvider';
 import { LandingSections } from '../components/landing/LandingSections';
 
 export function Welcome({ data }: { data?: DemoData }) {
   const personal = usePersonal();
-  const previewPositions =
-    data?.positions.filter(
-      (position) =>
-        data?.funds.find((fund) => fund.code === position.code)?.currency ===
-        'CNY',
-    ) ?? [];
-  const summary = data ? portfolioSummary(previewPositions) : undefined;
   return (
     <>
       <section className="hero">
@@ -41,97 +34,97 @@ export function Welcome({ data }: { data?: DemoData }) {
               <span aria-hidden="true">→</span>
             </Link>
           </div>
-          <p className="hero-caption">无需账户，即可浏览示例</p>
+          <p className="hero-caption">无需账户，即可开始探索</p>
         </div>
         <div className="preview-scene">
           <div className="preview-caption">
             <span className="status-dot" />
-            产品预览 <span>静态示例</span>
+            从兴趣开始 <span>发现 · 研究 · 关注</span>
           </div>
-          <section className="portfolio-preview" aria-label="组合示例预览">
+          <section className="portfolio-preview" aria-label="Sora 观察路径">
             <div className="preview-top">
               <span className="preview-wordmark">sora</span>
               <span>
-                我的组合 <span aria-hidden="true">↗</span>
+                我的观察 <span aria-hidden="true">↗</span>
               </span>
             </div>
             <div className="preview-balance">
-              <p>
-                组合总市值 <span>CNY</span>
-              </p>
-              {summary ? (
-                <>
-                  <strong>
-                    {summary.value.toLocaleString('zh-CN', {
-                      minimumFractionDigits: 2,
-                    })}
-                  </strong>
-                  <div className="preview-profit">
-                    <span>持有收益</span>
-                    <span>¥{summary.profit.toFixed(2)}</span>
-                    <Change value={summary.changePct} />
-                  </div>
-                </>
-              ) : (
-                <p className="muted">组合示例正在准备中，可先探索市场。</p>
-              )}
+              <p>找到想持续了解的方向</p>
+              <strong style={{ fontSize: '28px' }}>AI · 半导体 · 黄金</strong>
+              <div className="preview-profit">
+                <span>连接市场与基金，建立自己的观察路径。</span>
+              </div>
             </div>
             <div className="illustration-chart">
               <svg
                 viewBox="0 0 440 116"
                 role="img"
-                aria-label="走势示意图，不代表历史净值"
+                aria-label="市场、主题与基金相连的观察路径"
               >
-                <defs>
-                  <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#635bff" stopOpacity=".18" />
-                    <stop offset="100%" stopColor="#635bff" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
                 <path
-                  className="chart-grid"
-                  d="M0 18H440 M0 58H440 M0 98H440"
+                  d="M30 58H410"
+                  fill="none"
+                  stroke="#e1def8"
+                  strokeWidth="2"
                 />
                 <path
-                  d="M0 99L20 91L40 97L60 77L80 81L100 72L120 77L140 55L160 61L180 53L200 64L220 44L240 47L260 30L280 40L300 27L320 33L340 19L360 27L380 14L400 21L420 8L440 12V116H0Z"
-                  fill="url(#chart-fill)"
-                />
-                <path
-                  d="M0 99L20 91L40 97L60 77L80 81L100 72L120 77L140 55L160 61L180 53L200 64L220 44L240 47L260 30L280 40L300 27L320 33L340 19L360 27L380 14L400 21L420 8L440 12"
+                  d="M30 58C100 58 140 28 220 58S340 88 410 58"
                   fill="none"
                   stroke="#635bff"
                   strokeWidth="2.5"
-                  strokeLinejoin="round"
                 />
+                {[30, 220, 410].map((x) => (
+                  <circle key={x} cx={x} cy="58" r="6" fill="#635bff" />
+                ))}
+                <text
+                  x="30"
+                  y="98"
+                  textAnchor="middle"
+                  fill="#63718a"
+                  fontSize="12"
+                >
+                  市场
+                </text>
+                <text
+                  x="220"
+                  y="98"
+                  textAnchor="middle"
+                  fill="#63718a"
+                  fontSize="12"
+                >
+                  主题
+                </text>
+                <text
+                  x="410"
+                  y="98"
+                  textAnchor="middle"
+                  fill="#63718a"
+                  fontSize="12"
+                >
+                  基金
+                </text>
               </svg>
-              <p>走势示意 · 非历史净值</p>
             </div>
             <div className="preview-holdings">
               <div className="preview-row-label">
-                <span>持仓分布</span>
-                <span>市值 / 占比</span>
+                <span>探索观察方向</span>
+                <span>继续了解</span>
               </div>
-              {previewPositions.map((position, i) => (
-                <div className="preview-position" key={position.code}>
+              {(data?.modules.slice(0, 3) ?? []).map((item, i) => (
+                <Link
+                  className="preview-position"
+                  key={item.id}
+                  to={'/discover/' + item.id}
+                >
                   <span className={'asset-dot asset-' + i} />
-                  <span>
-                    {
-                      data?.funds.find((fund) => fund.code === position.code)
-                        ?.name
-                    }
-                  </span>
-                  <strong>¥{position.value.toLocaleString('zh-CN')}</strong>
-                  <span>
-                    {summary?.value
-                      ? ((position.value / summary.value) * 100).toFixed(1)
-                      : '0.0'}
-                    %
-                  </span>
-                </div>
+                  <span>{item.title}</span>
+                  <strong>{item.symbol}</strong>
+                  <span aria-hidden="true">↗</span>
+                </Link>
               ))}
             </div>
             <div className="preview-foot">
-              虚构数据 <span>{data?.asOf ?? '示例预览'}</span>
+              按自己的节奏探索 <span>在发现页管理观察方向</span>
             </div>
           </section>
           <div className="preview-note">
@@ -140,7 +133,7 @@ export function Welcome({ data }: { data?: DemoData }) {
             </span>
             <div>
               <strong>从整体，理解变化</strong>
-              <p>市值、收益与持仓分布，一处呈现。</p>
+              <p>让每一次浏览，接上上一次的思考。</p>
             </div>
           </div>
         </div>

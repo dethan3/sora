@@ -5,7 +5,7 @@ import { ActionLink, Change } from '../ui';
 import './landing.css';
 
 function MarketPreview({ data }: { data?: DemoData }) {
-  const [direction, setDirection] = useState('technology');
+  const [direction, setDirection] = useState('ai');
   const resultId = useId();
   const selected =
     data?.modules.find((module) => module.id === direction) ?? data?.modules[0];
@@ -16,15 +16,11 @@ function MarketPreview({ data }: { data?: DemoData }) {
     <div className="landing-market-preview">
       <div className="landing-preview-bar">
         <span className="landing-preview-brand">sora / 发现</span>
-        <span className="landing-example-label">交互示例</span>
+        <span className="landing-example-label">找到你的方向</span>
       </div>
       <div className="landing-market-body">
         <p className="landing-preview-label">选择一个观察方向</p>
-        <div
-          className="landing-directions"
-          role="group"
-          aria-label="示例观察方向"
-        >
+        <div className="landing-directions" role="group" aria-label="观察方向">
           {data?.modules.map((module) => (
             <button
               key={module.id}
@@ -51,7 +47,11 @@ function MarketPreview({ data }: { data?: DemoData }) {
                 </span>
                 <div>
                   <p className="landing-preview-label">
-                    {selected.kind === 'theme' ? '主题视角' : '地区视角'}
+                    {selected.kind === 'index'
+                      ? '宽基指数'
+                      : selected.kind === 'asset'
+                        ? '资产与商品'
+                        : '主题视角'}
                   </p>
                   <h3>{selected.title}</h3>
                 </div>
@@ -65,7 +65,7 @@ function MarketPreview({ data }: { data?: DemoData }) {
               </div>
               <ul
                 className="landing-related-funds"
-                aria-label={`${selected.title}关联的示例基金`}
+                aria-label={`${selected.title}关联的基金`}
               >
                 {funds.map((fund) => (
                   <li key={fund.code}>
@@ -76,7 +76,7 @@ function MarketPreview({ data }: { data?: DemoData }) {
                       </span>
                     </div>
                     <div className="landing-example-change">
-                      <span>示例日变化</span>
+                      <span>日变化</span>
                       {fund.nav === null ? (
                         <strong>暂无净值</strong>
                       ) : (
@@ -101,18 +101,13 @@ function MarketPreview({ data }: { data?: DemoData }) {
           <span aria-hidden="true">→</span>
         </Link>
       </div>
-      <p className="landing-preview-footnote">
-        虚构样本 · 非实时行情{data ? ` · ${data.asOf}` : ''}
-      </p>
+      <p className="landing-preview-footnote">从观察方向，继续了解关联基金。</p>
     </div>
   );
 }
 
 export function LandingSections({ data }: { data?: DemoData }) {
-  const watchExamples =
-    data?.funds
-      .filter((fund) => data.watchlist.includes(fund.code))
-      .slice(0, 3) ?? [];
+  const watchExamples = data?.funds.slice(0, 2) ?? [];
 
   return (
     <div className="landing-content">
@@ -156,7 +151,7 @@ export function LandingSections({ data }: { data?: DemoData }) {
               ['选一个观察方向', '从地区或投资主题切入，缩小需要了解的范围。'],
               [
                 '查看基金的细节',
-                '进入关联基金，了解净值、历史样本、计价币种与数据日期。',
+                '进入关联基金，了解净值、历史记录、计价币种与数据日期。',
               ],
               [
                 '留下值得继续看的基金',
@@ -199,9 +194,9 @@ export function LandingSections({ data }: { data?: DemoData }) {
               寻找想关注的基金 <span aria-hidden="true">→</span>
             </Link>
           </div>
-          <div className="landing-watch-preview" aria-label="关注列表示意">
+          <div className="landing-watch-preview" aria-label="基金观察路径">
             <div className="landing-watch-heading">
-              <span>我的关注</span>
+              <span>发现值得关注的基金</span>
               <span>WATCHLIST</span>
             </div>
             <p>给关心的方向，留一个位置。</p>
@@ -226,7 +221,9 @@ export function LandingSections({ data }: { data?: DemoData }) {
                 </li>
               )}
             </ul>
-            <p className="landing-watch-note">关注列表示意 · 非你的个人记录</p>
+            <p className="landing-watch-note">
+              在基金详情选择关注，建立自己的清单。
+            </p>
           </div>
         </div>
         <div className="landing-benefits">
@@ -237,7 +234,7 @@ export function LandingSections({ data }: { data?: DemoData }) {
             ],
             [
               '多一点前后参照',
-              '查看基金的历史样本与日期，让单个数字有更多上下文。',
+              '查看基金的历史记录与日期，让单个数字有更多上下文。',
             ],
             [
               '连接自己的视角',
@@ -268,7 +265,7 @@ export function LandingSections({ data }: { data?: DemoData }) {
             [
               '01 / 信息有上下文',
               '知道自己在看什么',
-              '数据日期、计价币种和样本来源一起呈现。当前体验明确使用虚构数据，帮助你了解产品的组织方式。',
+              '资料来源和计价币种一起呈现。缺少行情时明确显示暂无数据，让每个数字有清楚的依据。',
             ],
             [
               '02 / 记录由你掌握',
@@ -294,17 +291,17 @@ export function LandingSections({ data }: { data?: DemoData }) {
         <div>
           <p className="landing-eyebrow">开始之前</p>
           <h2 id="landing-faq-title">你可能还想了解。</h2>
-          <p className="landing-description">关于当前体验的几个直接回答。</p>
+          <p className="landing-description">关于如何开始的几个直接回答。</p>
         </div>
         <div className="landing-faq-list">
           {[
             [
               '现在可以查看真实行情吗？',
-              '当前开放的是产品示例体验，市场、基金净值与历史走势均为虚构样本，并标注数据日期。真实行情尚未接入，示例数据不用于实际投资判断。',
+              '基金资料附有来源。行情尚未接入的方向和产品显示暂无数据，不用其他数据替代；有可用行情后会标明对应日期与口径。',
             ],
             [
               '需要先注册账户吗？',
-              '无需注册即可浏览示例基金、建立关注列表和记录持仓。登录与注册暂未开放，目前不提供账户或跨设备同步。',
+              '无需注册即可浏览基金资料、关注观察方向和基金、记录持仓。登录与注册暂未开放，目前不提供账户或跨设备同步。',
             ],
             [
               '我的关注和持仓会保存在哪里？',
@@ -339,7 +336,7 @@ export function LandingSections({ data }: { data?: DemoData }) {
           <Link className="landing-inline-link" to="/funds">
             浏览基金 <span aria-hidden="true">→</span>
           </Link>
-          <p>当前开放示例体验 · 无需注册</p>
+          <p>从你关心的方向开始 · 无需注册</p>
         </div>
       </section>
     </div>

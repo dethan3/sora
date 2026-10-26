@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import fixture from '../../../public/data/demo.json';
+import fixture from '../../test/fixtures/demo.json';
 import { demoSchema } from '../../data/demo';
 import {
   money,

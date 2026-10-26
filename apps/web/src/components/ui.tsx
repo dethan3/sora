@@ -55,7 +55,8 @@ export function EmptyState({
   );
 }
 
-export function Change({ value }: { value: number }) {
+export function Change({ value }: { value: number | null }) {
+  if (value === null) return <span className="muted">—</span>;
   return (
     <span className={value >= 0 ? 'positive' : 'negative'}>
       {value > 0 ? '+' : ''}

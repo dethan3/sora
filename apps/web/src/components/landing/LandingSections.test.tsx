@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import fixture from '../../../public/data/demo.json';
+import fixture from '../../test/fixtures/demo.json';
 import { App } from '../../App';
 
 beforeEach(() => {
@@ -24,7 +24,7 @@ describe('Landing Page product introduction', () => {
   it('carries a chosen research direction into the actual fund library', async () => {
     const router = open();
     const directions = await screen.findByRole('group', {
-      name: '示例观察方向',
+      name: '观察方向',
     });
     const china = await within(directions).findByRole('button', {
       name: '中国市场',
@@ -35,7 +35,7 @@ describe('Landing Page product introduction', () => {
       within(directions).getByRole('button', { name: '科技主题' }),
     ).toHaveAttribute('aria-pressed', 'false');
     const related = screen.getByRole('list', {
-      name: '中国市场关联的示例基金',
+      name: '中国市场关联的基金',
     });
     expect(within(related).getByText('宽基观察示例')).toBeInTheDocument();
     expect(within(related).getByText('暂无净值')).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('Landing Page product introduction', () => {
     );
     expect(router.state.location.pathname).toBe('/funds');
     expect(router.state.location.search).toBe('?module=china');
-    const table = await screen.findByRole('table', { name: '基金示例列表' });
+    const table = await screen.findByRole('table', { name: '基金列表' });
     expect(
       within(table).getByRole('link', { name: '宽基观察示例' }),
     ).toBeInTheDocument();
@@ -66,14 +66,16 @@ describe('Landing Page product introduction', () => {
     ).toBeInTheDocument();
     const previewLink = screen.getByRole('link', { name: '前往发现页' });
     expect(previewLink).toHaveAttribute('href', '/discover');
-    expect(screen.getByText('虚构样本 · 非实时行情')).toBeInTheDocument();
+    expect(
+      screen.getByText('从观察方向，继续了解关联基金。'),
+    ).toBeInTheDocument();
     const start = screen.getByRole('region', { name: '从你关心的市场开始。' });
     await userEvent.click(
       within(start).getByRole('link', { name: '探索市场' }),
     );
     expect(router.state.location.pathname).toBe('/discover');
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      '暂时无法读取示例',
+      '暂时无法读取数据',
     );
   });
 
@@ -83,7 +85,7 @@ describe('Landing Page product introduction', () => {
     await userEvent.click(question);
     const details = question.closest('details')!;
     expect(details).toHaveAttribute('open');
-    expect(within(details).getByText(/真实行情尚未接入/)).toBeVisible();
+    expect(within(details).getByText(/行情尚未接入/)).toBeVisible();
     await userEvent.click(question);
     expect(details).not.toHaveAttribute('open');
     await userEvent.click(screen.getByText('需要先注册账户吗？'));

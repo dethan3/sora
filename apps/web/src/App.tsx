@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigationType } from 'react-router';
 import { loadDemo, type DemoData } from './data/demo';
 import { Welcome } from './pages/Welcome';
@@ -8,11 +8,14 @@ import { navigation, SiteHeader } from './components/SiteHeader';
 import { PwaActions, PwaNotice } from './pwa/PwaUi';
 import { PersonalProvider } from './features/local/PersonalProvider';
 import { fundLinkId, returnPoint } from './navigation/flow';
+import { DirectionProvider } from './features/discover/DirectionProvider';
 
 export function App() {
   return (
     <PersonalProvider>
-      <AppContent />
+      <DirectionProvider>
+        <AppContent />
+      </DirectionProvider>
     </PersonalProvider>
   );
 }
@@ -38,8 +41,8 @@ function AppContent() {
       });
     return () => controller.abort();
   }, [attempt]);
-  useEffect(() => {
-    document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
+  useLayoutEffect(() => {
+    document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname.startsWith('/discover/') ? (data?.modules.find((item) => '/discover/' + item.id === location.pathname)?.title ?? '方向详情') : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
     const previous = previousFocus.current;
     previousFocus.current = { path: location.pathname, data };
     if (
@@ -87,7 +90,9 @@ function AppContent() {
   const knownDataRoute = navigation.some(
     ([path]) =>
       path === location.pathname ||
-      (path === '/funds' && /^\/funds\/[^/]+\/?$/.test(location.pathname)),
+      (path === '/funds' && /^\/funds\/[^/]+\/?$/.test(location.pathname)) ||
+      (path === '/discover' &&
+        /^\/discover\/[a-z0-9-]+\/?$/.test(location.pathname)),
   );
   return (
     <>
@@ -109,7 +114,7 @@ function AppContent() {
               </EmptyState>
             ) : error ? (
               <div role="alert">
-                <EmptyState title="暂时无法读取示例">
+                <EmptyState title="暂时无法读取数据">
                   请检查连接后重试。
                 </EmptyState>
                 <button
@@ -120,22 +125,23 @@ function AppContent() {
                 </button>
               </div>
             ) : data ? (
-              <>
-                <p className="data-date">
-                  <span className="snapshot-label">示例快照</span> {data.asOf} ·
-                  虚构示例，非真实行情
-                </p>
-                <DataPages data={data} />
-              </>
+              <DataPages data={data} />
             ) : (
-              <p role="status">正在读取示例数据…</p>
+              <div role="status" aria-label="正在载入内容">
+                <p>正在载入内容…</p>
+                <div className="direction-skeleton" aria-hidden="true">
+                  <div className="direction-loading" />
+                  <div className="direction-loading" />
+                  <div className="direction-loading" />
+                </div>
+              </div>
             )}
           </main>
           <footer>
             <span className="footer-brand">
               sora<span>投资，清晰可见。</span>
             </span>
-            <span>示例数据仅供演示 · 非投资建议</span>
+            <span>独立观察，理性判断。</span>
             <PwaActions />
           </footer>
         </div>

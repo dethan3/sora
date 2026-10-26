@@ -14,7 +14,7 @@ export function FundTable({ funds }: { funds: Fund[] }) {
   return (
     <div className="table-scroll responsive-list">
       <table className="responsive-table fund-table" role="table">
-        <caption className="sr-only">基金示例列表</caption>
+        <caption className="sr-only">基金列表</caption>
         <thead role="rowgroup">
           <tr role="row">
             <th role="columnheader" scope="col">
@@ -27,7 +27,7 @@ export function FundTable({ funds }: { funds: Fund[] }) {
               类型
             </th>
             <th role="columnheader" scope="col" className="numeric">
-              示例日变化
+              日变化
             </th>
             <th role="columnheader" scope="col" className="numeric">
               关注
@@ -63,7 +63,7 @@ export function FundTable({ funds }: { funds: Fund[] }) {
               </td>
               <td role="cell" className="numeric">
                 <span className="mobile-field-label" aria-hidden="true">
-                  示例日变化
+                  日变化
                 </span>
                 {fund.nav === null ? (
                   <span className="muted">暂无净值</span>

@@ -60,30 +60,52 @@ export function FundDetailPage({ data }: { data: DemoData }) {
         <WatchButton fund={fund} />
       </div>
       <div className="detail-grid">
-        <Panel title="净值样本">
+        <Panel title="净值与走势">
           <div className="fund-quote">
-            <strong>{fund.nav ?? '待更新'}</strong>
+            <strong>{fund.nav ?? '—'}</strong>
             <span>{fund.currency} / 份</span>
             {fund.nav !== null && <Change value={fund.changePct} />}
           </div>
-          <p className="muted">快照日期 {data.asOf} · 来源：Sora 虚构样本</p>
-          <div className="chart-toolbar">
-            <h3>样本走势</h3>
-            <div className="segmented" aria-label="样本区间">
-              <button
-                aria-pressed={period === 'all'}
-                onClick={() => setPeriod('all')}
-              >
-                全部样本
-              </button>
-              <button
-                aria-pressed={period === 'week'}
-                onClick={() => setPeriod('week')}
-              >
-                近 7 天
-              </button>
+          {fund.nav === null && <p className="muted">暂无净值数据</p>}
+          {fund.benchmark && (
+            <p className="muted">跟踪对象 / 观察基准：{fund.benchmark}</p>
+          )}
+          <p className="muted">
+            资料核对日期 {data.asOf}
+            {fund.sourceUrl && (
+              <>
+                {' '}
+                ·{' '}
+                <a
+                  className="landing-inline-link"
+                  href={fund.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {fund.sourceName} ↗
+                </a>
+              </>
+            )}
+          </p>
+          {history.length > 1 && (
+            <div className="chart-toolbar">
+              <h3>净值走势</h3>
+              <div className="segmented" aria-label="所选区间">
+                <button
+                  aria-pressed={period === 'all'}
+                  onClick={() => setPeriod('all')}
+                >
+                  全部记录
+                </button>
+                <button
+                  aria-pressed={period === 'week'}
+                  onClick={() => setPeriod('week')}
+                >
+                  近 7 天
+                </button>
+              </div>
             </div>
-          </div>
+          )}
           {history.length > 1 ? (
             <>
               <figure className="history-figure">
@@ -99,7 +121,7 @@ export function FundDetailPage({ data }: { data: DemoData }) {
                   viewBox="0 0 800 200"
                   preserveAspectRatio="none"
                   role="img"
-                  aria-label={`${fund.name}净值样本趋势，${first.date}至${last!.date}`}
+                  aria-label={`${fund.name}净值趋势，${first.date}至${last!.date}`}
                 >
                   <path
                     d="M40 40H760 M40 105H760 M40 170H760"
@@ -120,14 +142,14 @@ export function FundDetailPage({ data }: { data: DemoData }) {
                 </figcaption>
               </figure>
               <p className="trend-explanation">
-                样本区间{change! > 0 ? '上行' : change! < 0 ? '下行' : '持平'}{' '}
+                所选区间{change! > 0 ? '上行' : change! < 0 ? '下行' : '持平'}{' '}
                 <Change value={change!} />
                 。按区间首末净值计算，不含分红、费用或汇率变化。
               </p>
               <details className="history-details">
-                <summary>查看 {history.length} 条样本数据</summary>
+                <summary>查看 {history.length} 条历史记录</summary>
                 <table>
-                  <caption className="sr-only">净值样本明细</caption>
+                  <caption className="sr-only">历史净值明细</caption>
                   <thead>
                     <tr>
                       <th scope="col">日期</th>
@@ -146,8 +168,8 @@ export function FundDetailPage({ data }: { data: DemoData }) {
               </details>
             </>
           ) : (
-            <EmptyState title="暂无足够的净值样本">
-              历史样本不足，暂不展示走势。
+            <EmptyState title="暂无走势数据">
+              历史记录不足，暂不展示走势。
               {fund.nav === null
                 ? '当前净值也暂不可用，持仓会标记为待估值。'
                 : '当前净值仍可用于持仓估值。'}
@@ -158,7 +180,7 @@ export function FundDetailPage({ data }: { data: DemoData }) {
           <Panel title="观察这只基金">
             <p className="muted">{fund.note}</p>
             <p className="muted">
-              历史仅为虚构样本，不代表真实收益或未来表现。
+              基金交易价格、每份净值与参考指数点位是不同指标，应分别阅读。
             </p>
             <Link
               className="action"
@@ -174,7 +196,7 @@ export function FundDetailPage({ data }: { data: DemoData }) {
           </Panel>
           <Panel title="如何理解这条曲线">
             <p className="muted">
-              纵轴按当前样本范围缩放，不从零起。区间变化只说明这些样本的首末差异。
+              纵轴按当前记录范围缩放，不从零起。区间变化只说明这些记录的首末差异。
             </p>
             <p className="muted">
               报价缺失时不使用旧值冒充当前净值；不同币种在组合中分别统计。

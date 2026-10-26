@@ -78,7 +78,7 @@ export function SiteHeader() {
         <nav id="site-navigation" aria-label="主导航" data-open={open}>
           {navigation.map(([path, label]) => (
             <NavLink
-              end={path !== '/funds'}
+              end={path !== '/funds' && path !== '/discover'}
               to={path}
               key={path}
               onClick={() => navigate(path)}

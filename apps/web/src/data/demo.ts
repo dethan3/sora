@@ -5,7 +5,7 @@ const amount = z.number().finite().nonnegative();
 export const demoSchema = z
   .object({
     schemaVersion: z.literal(1),
-    source: z.literal('fictional-demo'),
+    source: z.enum(['fictional-demo', 'reference-catalog']),
     asOf: z.iso.date(),
     funds: z.array(
       z.object({
@@ -13,7 +13,7 @@ export const demoSchema = z
         name: z.string().min(1),
         market: z.string(),
         category: z.string(),
-        changePct: z.number().finite(),
+        changePct: z.number().finite().nullable(),
         note: z.string(),
         currency: currencySchema,
         nav: z
@@ -33,6 +33,12 @@ export const demoSchema = z
             }),
           )
           .max(1000),
+        sourceUrl: z
+          .url()
+          .refine((value) => value.startsWith('https://'))
+          .optional(),
+        sourceName: z.string().optional(),
+        benchmark: z.string().optional(),
       }),
     ),
     watchlist: z.array(z.string()),
@@ -40,10 +46,20 @@ export const demoSchema = z
       z.object({
         id: z.string().regex(/^[a-z0-9-]+$/),
         title: z.string(),
-        kind: z.enum(['region', 'theme']),
+        kind: z.enum(['region', 'theme', 'asset', 'index']),
         symbol: z.string().max(4),
         description: z.string(),
         fundCodes: z.array(z.string()),
+        scope: z.array(z.string()).default([]),
+        keywords: z.array(z.string()).default([]),
+        benchmark: z.string().optional(),
+        benchmarkNote: z.string().optional(),
+        fundReasons: z.record(z.string(), z.string()).default({}),
+        sourceUrl: z
+          .url()
+          .refine((value) => value.startsWith('https://'))
+          .optional(),
+        sourceName: z.string().optional(),
       }),
     ),
     positions: z.array(
@@ -51,6 +67,30 @@ export const demoSchema = z
     ),
   })
   .superRefine((data, ctx) => {
+    if (
+      data.source === 'reference-catalog' &&
+      (data.positions.length ||
+        data.watchlist.length ||
+        data.funds.some(
+          (fund) =>
+            fund.nav !== null ||
+            fund.history.length ||
+            fund.changePct !== null ||
+            !fund.sourceUrl ||
+            !fund.sourceName,
+        ) ||
+        data.modules.some(
+          (module) =>
+            !module.sourceUrl ||
+            !module.benchmark ||
+            module.fundCodes.some((code) => !module.fundReasons[code]),
+        ))
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: '资料目录必须包含来源和关联依据，不能混入行情或个人记录',
+      });
+    }
     const codes = new Set(data.funds.map((fund) => fund.code));
     if (codes.size !== data.funds.length)
       ctx.addIssue({ code: 'custom', message: '基金代码重复' });
@@ -61,7 +101,7 @@ export const demoSchema = z
         ...data.modules.flatMap((module) => module.fundCodes),
       ].some((code) => !codes.has(code))
     ) {
-      ctx.addIssue({ code: 'custom', message: '示例引用不存在的基金' });
+      ctx.addIssue({ code: 'custom', message: '引用不存在的基金' });
     }
     if (
       new Set(data.modules.map((module) => module.id)).size !==
@@ -94,10 +134,10 @@ export type DemoData = z.infer<typeof demoSchema>;
 export type Fund = DemoData['funds'][number];
 
 export async function loadDemo(signal?: AbortSignal): Promise<DemoData> {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/demo.json`, {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.json`, {
     signal,
   });
-  if (!response.ok) throw new Error('示例数据读取失败');
+  if (!response.ok) throw new Error('数据读取失败');
   return demoSchema.parse(await response.json());
 }
 

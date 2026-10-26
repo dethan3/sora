@@ -16,10 +16,11 @@ Python 原代码与 requirements、配置、测试完整保留，不迁移目录
 
 ```text
 apps/web/
-  public/data/demo.json      # 可独立替换的虚构静态数据
+  public/data/catalog.json   # 带来源的产品资料与观察方向，无行情值
   src/data/                 # Zod schema、HTTP 读取、组合计算
   src/components/           # 页面基础组件与基金表格
   src/features/             # M1 领域页面、计算与本地状态
+  src/test/fixtures/         # 虚构测试数据，不随站点发布
   src/pages/                # Welcome 与数据页面模块
   src/App.tsx               # Shell、导航和边界状态
   src/main.tsx              # 浏览器入口
@@ -102,7 +103,7 @@ PWA 在主要页面和响应式稳定后增加，单独设计缓存版本与陈�
 
 ### 缓存边界
 
-预缓存只包含本次构建的 HTML / JS / CSS / 图标 / manifest / `data/demo.json`，按内容 revision 更新。
+预缓存只包含本次构建的 HTML / JS / CSS / 图标 / manifest / `data/catalog.json`，按内容 revision 更新。
 JSON 与页面作为同一发布版本使用，现阶段不增加通用网络请求缓存，也不缓存账户或外部接口。
 导航回退指向 `/index.html`，排除 data / assets / icons / api / sw.js，避免把资源或接口错误返回为页面。
 新版本安装未完成时保留当前已激活版本；新版本激活后 Workbox 清理过期预缓存条目和旧格式缓存，避免永久占用旧资源。
@@ -204,3 +205,24 @@ PositionForm 对各字段提供 aria-invalid、说明与错误关联，校验失
 StrictMode 重复挂载纳入测试；弹窗最大高度使用 dvh，窄屏内部可滚动，操作区保持可达。
 
 参考：[dialog](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog)、[aria-invalid](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-invalid)。
+
+## 观察方向与资料目录
+
+`/discover` 提供搜索与市场 / 类型筛选，`/discover/:id` 解释方向、参考指标与关联依据。资料目录保持静态 JSON，复用现有加载、校验、失败重试和离线缓存；不增加行情采集或数据库。
+
+公开目录 source 为 `reference-catalog`。校验要求来源与关联依据齐全，禁止混入非空净值、历史走势、涨跌或预置个人记录；报价字段保持 null。构建同时检查 dist/data 只有 catalog.json，不发布测试 fixture。
+
+`sora.directions.v1` 保存 `{schemaVersion:1, ids:string[]}`。未知方向保留；损坏及未来版本保留原文，明确重置前可下载恢复。写入核对上次原文，成功后才更新界面；storage 事件同步其他页面，外部修改使旧撤销失效。此存储不修改 `sora.personal.v1`，现有个人备份范围保持基金关注与持仓。
+
+返回来源仅接受明确的站内路径和有限查询参数，嵌套解析限制深度与长度。返回点最多保存 20 个列表地址，兼容旧单点记录，让“发现列表 → 方向 → 基金”的多级返回保留各自焦点及滚动位置。
+
+### 产品资料来源（2026-10-26 核对）
+
+仅提取产品名称、类型、跟踪对象和方向关联，不导入网页价格或收益。
+
+- [AIQ / Global X](https://www.globalxetfs.com/funds/aiq)
+- [SOXX / iShares](https://www.ishares.com/us/products/239705/ishares-phlx-semiconductor-etf)
+- [IAU / BlackRock](https://www.blackrock.com/us/individual/products/239561/ishares-gold-trust-fund)
+- [QQQ / Invesco](https://www.invesco.com/us/en/financial-products/etfs/invesco-qqq-trust-series-1.html)
+- [IVV / iShares](https://www.ishares.com/us/products/239726/)
+- [510300 / 上海证券交易所](https://star.sse.com.cn/assortment/options/rule/c/c_20210128_5312080.shtml)

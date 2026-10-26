@@ -12,7 +12,7 @@ export function PwaNotice({ runtime = pwa }: { runtime?: PwaRuntime }) {
           <span className="pwa-dot" aria-hidden="true" />
           <span>
             {state.ready
-              ? '当前离线 · 使用此设备缓存的示例快照，请以页面日期为准。'
+              ? '当前离线 · 使用此设备缓存的数据，请以页面日期为准。'
               : '当前离线 · 离线内容尚未准备好，部分页面可能无法打开。'}
           </span>
         </div>

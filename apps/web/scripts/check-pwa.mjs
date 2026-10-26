@@ -1,7 +1,27 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 
 const dist = new URL('../dist/', import.meta.url);
+const publicData = await readdir(new URL('data/', dist));
+assert.deepEqual(
+  publicData,
+  ['catalog.json'],
+  'Only the production catalog may be published',
+);
+const catalog = JSON.parse(
+  await readFile(new URL('data/catalog.json', dist), 'utf8'),
+);
+assert.equal(catalog.source, 'reference-catalog');
+assert.ok(
+  catalog.funds.every(
+    (fund) =>
+      fund.nav === null &&
+      fund.changePct === null &&
+      fund.history.length === 0 &&
+      fund.sourceUrl,
+  ),
+);
+assert.ok(!/DEMO|示例|虚构/.test(JSON.stringify(catalog)));
 const manifest = JSON.parse(
   await readFile(new URL('manifest.webmanifest', dist), 'utf8'),
 );
@@ -29,7 +49,7 @@ assert.match(html, /apple-touch-icon/);
 const sw = await readFile(new URL('sw.js', dist), 'utf8');
 for (const path of [
   'index.html',
-  'data/demo.json',
+  'data/catalog.json',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',

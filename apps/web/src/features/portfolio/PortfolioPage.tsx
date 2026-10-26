@@ -232,7 +232,11 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           >
             <div className="section-heading">
               <h2>{group.currency} 组合</h2>
-              <span>估值日期 {data.asOf} · 虚构净值</span>
+              <span>
+                {data.source === 'reference-catalog'
+                  ? '暂无净值数据，持仓待估值'
+                  : '净值日期 ' + data.asOf}
+              </span>
             </div>
             <div className="summary-grid portfolio-summary">
               <Panel title={`总市值 · ${group.currency}`}>
@@ -286,7 +290,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                     总成本
                   </th>
                   <th role="columnheader" scope="col" className="numeric">
-                    样本估值
+                    持仓估值
                   </th>
                   <th role="columnheader" scope="col" className="numeric">
                     持有收益
@@ -348,7 +352,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                       </td>
                       <td role="cell" className="numeric">
                         <span className="mobile-field-label" aria-hidden="true">
-                          样本估值
+                          持仓估值
                         </span>
                         {value === null ? (
                           <span className="valuation-missing">待估值</span>
@@ -467,8 +471,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
         )}
         <div className="portfolio-footnote">
           <p>
-            来源：Sora
-            虚构净值样本。估值不含分红、交易费用和汇率；缺失净值不计作零。
+            估值基于可用的每份净值，不含分红、交易费用和汇率；缺失净值不计作零。资料来源见产品详情。
           </p>
         </div>
       </Panel>
@@ -485,18 +488,20 @@ export function PortfolioPage({ data }: { data: DemoData }) {
             })
           }
         />
-        <button
-          className="button-quiet"
-          disabled={!!local.issue}
-          onClick={() =>
-            unsaved.request(() => {
-              closeEditor();
-              setLoadDemo(true);
-            })
-          }
-        >
-          载入演示持仓
-        </button>
+        {data.source === 'fictional-demo' && (
+          <button
+            className="button-quiet"
+            disabled={!!local.issue}
+            onClick={() =>
+              unsaved.request(() => {
+                closeEditor();
+                setLoadDemo(true);
+              })
+            }
+          >
+            载入演示持仓
+          </button>
+        )}
       </details>
       {unsaved.dialog}
       {pendingDelete && (

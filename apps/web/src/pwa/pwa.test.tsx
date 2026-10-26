@@ -73,7 +73,7 @@ describe('PWA lifecycle and user data', () => {
     render(<PwaNotice runtime={runtime} />);
     act(() => window.dispatchEvent(new Event('offline')));
     expect(screen.getByRole('status')).toHaveTextContent(
-      '使用此设备缓存的示例快照',
+      '使用此设备缓存的数据',
     );
     act(() => window.dispatchEvent(new Event('online')));
     expect(screen.queryByText(/当前离线/)).not.toBeInTheDocument();

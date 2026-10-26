@@ -8,7 +8,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import fixture from '../../public/data/demo.json';
+import fixture from '../test/fixtures/demo.json';
 import { App } from '../App';
 import { emptyPersonal, STORAGE_KEY, parsePersonal } from './local/state';
 
@@ -138,9 +138,7 @@ describe('M1 desktop flows', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: '全球科技示例' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('img', { name: /净值样本趋势/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /净值趋势/ })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: '近 7 天' }));
     expect(
       screen.getByRole('img', { name: /2026-10-13至2026-10-19/ }),
@@ -158,10 +156,10 @@ describe('M1 desktop flows', () => {
     first.unmount();
     open('/funds/DEMO-BOND');
     expect(
-      await screen.findByRole('heading', { name: '暂无足够的净值样本' }),
+      await screen.findByRole('heading', { name: '暂无走势数据' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('img', { name: /净值样本趋势/ }),
+      screen.queryByRole('img', { name: /净值趋势/ }),
     ).not.toBeInTheDocument();
   });
   it('adds, edits and deletes positions with durable state and confirmation', async () => {

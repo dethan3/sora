@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import fixture from '../../public/data/demo.json';
+import fixture from '../test/fixtures/demo.json';
 import { demoSchema, loadDemo, portfolioSummary } from './demo';
 
 describe('static demo contract', () => {
@@ -42,7 +42,7 @@ describe('static demo contract', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response('', { status: 503 }),
     );
-    await expect(loadDemo()).rejects.toThrow('示例数据读取失败');
+    await expect(loadDemo()).rejects.toThrow('数据读取失败');
     vi.mocked(fetch).mockResolvedValueOnce(new Response('not json'));
     await expect(loadDemo()).rejects.toThrow();
   });
