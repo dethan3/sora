@@ -24,7 +24,7 @@ function open(path: string) {
 describe('M0 routes', () => {
   it.each<[string, string | RegExp]>([
     ['/', /让每一份投资/],
-    ['/discover', '发现市场'],
+    ['/discover', 'AI 芯片'],
     ['/funds', '基金'],
     ['/watchlist', '我的关注'],
     ['/portfolio', '我的组合'],
@@ -46,7 +46,7 @@ describe('M0 routes', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: '发现市场',
+        name: 'AI 芯片',
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveFocus();

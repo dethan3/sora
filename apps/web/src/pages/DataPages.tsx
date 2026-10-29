@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useSearchParams } from 'react-router';
 import type { DemoData } from '../data/demo';
 import { DiscoverPage } from '../features/discover/DiscoverPage';
 import { FundsPage } from '../features/funds/FundsPage';
@@ -10,6 +10,15 @@ import { DirectionDetailPage } from '../features/discover/DirectionDetailPage';
 import { DirectionNotice } from '../features/discover/DirectionProvider';
 import { MarketProvider } from '../features/market/MarketProvider';
 import { ResearchPage } from '../features/research/Research';
+import { DomainPage } from '../features/domains/DomainPage';
+
+function Discovery({ data }: { data: DemoData }) {
+  const [params] = useSearchParams();
+  const legacy =
+    params.get('view') === 'markets' ||
+    ['q', 'market', 'kind'].some((key) => params.has(key));
+  return legacy ? <DiscoverPage data={data} /> : <DomainPage data={data} />;
+}
 
 export function DataPages({ data }: { data: DemoData }) {
   return (
@@ -18,7 +27,7 @@ export function DataPages({ data }: { data: DemoData }) {
       <DirectionNotice />
       <Routes>
         <Route path="/research/:id" element={<ResearchPage data={data} />} />
-        <Route path="/discover" element={<DiscoverPage data={data} />} />
+        <Route path="/discover" element={<Discovery data={data} />} />
         <Route
           path="/discover/:id"
           element={<DirectionDetailPage data={data} />}

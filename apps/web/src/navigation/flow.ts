@@ -28,7 +28,7 @@ export function listSource(value: string | null, depth = 0): string | null {
       : url.pathname === '/portfolio'
         ? ['currency']
         : url.pathname === '/discover'
-          ? ['q', 'market', 'kind']
+          ? ['q', 'market', 'kind', 'view', 'company']
           : [];
   for (const key of keys) {
     const item = url.searchParams.get(key);

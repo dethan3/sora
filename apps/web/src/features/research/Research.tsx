@@ -20,6 +20,8 @@ import {
   type ResearchSignal,
 } from './model';
 import { RESEARCH_KEY, useResearchSaved } from './saved';
+import { fundSnapshot, holdingFor } from '../domains/model';
+import { DomainSource } from '../domains/FundStructure';
 import './research.css';
 
 export function FollowResearch({ signal }: { signal: ResearchSignal }) {
@@ -170,10 +172,12 @@ export function RelatedResearch({
       {fundCode && (
         <p className="research-disclosure">
           结构观察：
-          {
-            items[0].funds.find((fund) => fund.code === fundCode)?.difference
-          }{' '}
-          当前未取得带日期的持仓明细，暂不计算公司权重、集中度及基金重叠。
+          {fundSnapshot(fundCode)?.description ??
+            items[0].funds.find((fund) => fund.code === fundCode)
+              ?.difference}{' '}
+          {fundSnapshot(fundCode)
+            ? '已核对发行人持仓，请在上方结构中查看公司权重与资料日期；不同日期或节选资料不用于完整重叠率计算。'
+            : '当前未取得带日期的持仓明细，暂不计算公司权重、集中度及基金重叠。'}
         </p>
       )}
     </section>
@@ -325,37 +329,50 @@ export function ResearchPage({ data }: { data: DemoData }) {
             <p className="eyebrow">03 / FUND MAPPING</p>
             <h2>无法直接买入公司时，如何继续研究基金？</h2>
             <p>
-              先比较覆盖方式。以下是基于投资范围的研究关联，不代表直接持有
-              ASML、交易替代或优劣排名。购买渠道与资格需单独核实。
+              区分已确认的直接持仓与投资范围关联，分别查看资料日期和证据。基金关联不构成交易替代或优劣排名，购买渠道与资格需单独核实。
             </p>
             <div className="research-mapping">
               {signal.funds.map((mapping) => {
                 const fund = data.funds.find(
                   (item) => item.code === mapping.code,
                 );
+                const snapshot = fundSnapshot(mapping.code);
+                const holding =
+                  snapshot && holdingFor(snapshot, signal.company.symbol);
+                const confirmed = holding?.status === 'held';
                 return (
                   <article key={mapping.code}>
                     <div className="research-mapping-heading">
                       <span className="research-status">
-                        {mapping.relation}
+                        {confirmed
+                          ? '直接持有 ' + signal.company.symbol
+                          : mapping.relation}
                       </span>
                       <strong>{mapping.code}</strong>
                       <span>{mapping.scope}</span>
                     </div>
                     <h3>{fund?.name ?? mapping.code}</h3>
                     <p>{mapping.reason}</p>
-                    <p className="research-difference">{mapping.difference}</p>
+                    <p className="research-difference">
+                      {confirmed ? snapshot!.description : mapping.difference}
+                    </p>
                     <dl>
                       <div>
-                        <dt>持仓披露日期</dt>
-                        <dd>{mapping.holdingsAsOf ?? '未取得'}</dd>
+                        <dt>持仓资料日期</dt>
+                        <dd>
+                          {snapshot?.asOf ?? mapping.holdingsAsOf ?? '未取得'}
+                        </dd>
                       </div>
                       <div>
                         <dt>目标公司权重</dt>
                         <dd>
-                          {mapping.weight === null
-                            ? '未核实'
-                            : mapping.weight + '%'}
+                          {confirmed
+                            ? holding.weight.toFixed(2) + '%'
+                            : holding?.status === 'unknown'
+                              ? '节选未列出，持有状态待核实'
+                              : mapping.weight === null
+                                ? '未核实'
+                                : mapping.weight + '%'}
                         </dd>
                       </div>
                       <div>
@@ -363,7 +380,11 @@ export function ResearchPage({ data }: { data: DemoData }) {
                         <dd>{signal.reviewedAt}（投资范围）</dd>
                       </div>
                     </dl>
-                    <SourceLink signal={signal} id={mapping.sourceId} />
+                    {snapshot ? (
+                      <DomainSource id={snapshot.sourceId} />
+                    ) : (
+                      <SourceLink signal={signal} id={mapping.sourceId} />
+                    )}
                     <div className="research-mapping-actions">
                       {fund ? (
                         <>
@@ -394,7 +415,7 @@ export function ResearchPage({ data }: { data: DemoData }) {
               })}
             </div>
             <p className="research-disclosure">
-              没有完整、同一时期的持仓明细，暂不展示前十大持仓、集中度、重叠比例或替代评分。
+              已核对产品可在基金详情查看前十大持仓；资料日期和覆盖范围不同，暂不计算完整重叠率或替代评分。未核对的产品保留缺失状态。
             </p>
           </section>
           <section id="verification" className="research-block">
@@ -424,7 +445,7 @@ export function ResearchPage({ data }: { data: DemoData }) {
           <section className="research-block">
             <h2>这条研究如何阅读</h2>
             <p>
-              事实来自原始披露；影响路径是待验证假设；基金按投资范围建立关联。
+              事实来自原始披露；影响路径是待验证假设；基金的直接持仓与投资范围关联分别标明。
             </p>
             <p>线索用于辅助研究，不提供买卖结论。</p>
             <h3>关联方向</h3>

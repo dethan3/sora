@@ -16,7 +16,7 @@ beforeEach(() => {
     async () => new Response(JSON.stringify(catalog)),
   );
 });
-function open(path = '/discover') {
+function open(path = '/discover?view=markets') {
   const router = createMemoryRouter([{ path: '*', element: <App /> }], {
     initialEntries: [path],
   });
@@ -153,7 +153,7 @@ describe('direction discovery', () => {
       screen.getByRole('button', { name: '重新浏览全部方向' }),
     );
     expect(search).toHaveFocus();
-    expect(router.state.location.search).toBe('');
+    expect(router.state.location.search).toBe('?view=markets');
     await userEvent.type(search, '纳指100ETF');
     expect(
       screen.getByRole('link', { name: '纳斯达克100' }),

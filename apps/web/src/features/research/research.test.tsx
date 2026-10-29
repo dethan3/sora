@@ -59,7 +59,7 @@ it('requires dated traceable evidence and does not invent holdings or direct own
 });
 
 it('connects followed interests to research without requiring positions', async () => {
-  open('/discover');
+  open('/discover?view=markets');
   await userEvent.click(
     await screen.findByRole('button', { name: /与我相关/ }),
   );
@@ -105,7 +105,7 @@ it('returns from a mapped fund to the original research and keeps fund follows s
   expect(router.state.location.pathname).toBe('/funds/SOXX');
   expect(
     screen.getByRole('region', { name: '关联研究线索' }),
-  ).toHaveTextContent('当前未取得带日期的持仓明细');
+  ).toHaveTextContent('已核对发行人持仓');
   await userEvent.click(
     screen.getByRole('button', {
       name: '关注' + catalog.funds.find((fund) => fund.code === 'SOXX')!.name,

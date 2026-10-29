@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "id": "ai-chips",
+  "name": "AI 芯片",
+  "description": "沿着计算芯片与制造设备，连接公司披露、基金持仓与产业变化。",
+  "reviewedAt": "2026-10-29",
+  "companies": [
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA",
+      "role": "计算与加速器",
+      "description": "从数据中心业务观察计算需求；业务增长与基金价格表现分别阅读。",
+      "sourceId": "nvidia-results"
+    },
+    {
+      "symbol": "AMD",
+      "name": "AMD",
+      "role": "CPU 与 GPU",
+      "description": "数据中心同时包含 EPYC 处理器与 Instinct GPU，分部收入不等于 AI 芯片收入。",
+      "sourceId": "amd-results"
+    },
+    {
+      "symbol": "ASML",
+      "name": "ASML",
+      "role": "制造设备",
+      "description": "通过光刻设备交付观察制造投入，属于上游设备环节。",
+      "sourceId": "asml-results"
+    }
+  ],
+  "events": [
+    {
+      "id": "asml-q3-2026",
+      "company": "ASML",
+      "publishedAt": "2026-10-14",
+      "period": "2026 年第三季度",
+      "title": "设备交付增加，继续观察制造投入",
+      "fact": "ASML 披露当季净销售额约 117 亿欧元，新光刻系统售出 113 台；上一季度为 86 台。",
+      "interpretation": "设备环节出现交付变化，但单季交付不能直接证明整个 AI 产业持续扩产。",
+      "watch": "后续订单、客户资本开支与设备交付能否相互印证。",
+      "sourceId": "asml-results",
+      "researchId": "semiconductor-equipment"
+    },
+    {
+      "id": "nvidia-q2-fy2027",
+      "company": "NVDA",
+      "publishedAt": "2026-08-26",
+      "period": "2027 财年第二季度，结束于 2026-07-26",
+      "title": "数据中心业务增长，关注需求能否延续",
+      "fact": "NVIDIA 披露当季总收入约 962 亿美元，数据中心收入约 890 亿美元。",
+      "interpretation": "数据中心业务可作为计算需求的一项观察依据，不能把整个分部收入都归为单一芯片产品。",
+      "watch": "后续收入、毛利率和客户部署披露；历史增长不直接推出未来收益。",
+      "sourceId": "nvidia-results",
+      "researchId": null
+    },
+    {
+      "id": "amd-q2-2026",
+      "company": "AMD",
+      "publishedAt": "2026-08-04",
+      "period": "2026 年第二季度，结束于 2026-06-27",
+      "title": "数据中心收入增长，拆开 CPU 与 GPU 理解",
+      "fact": "AMD 披露当季数据中心收入约 67 亿美元，同比增长 107%，驱动因素包括 EPYC CPU 和 Instinct GPU 需求。",
+      "interpretation": "分部业务提供需求线索，但不同产品贡献需要更多披露才能拆分。",
+      "watch": "后续产品部署、业务构成及需求持续性。",
+      "sourceId": "amd-results",
+      "researchId": null
+    }
+  ],
+  "fundSnapshots": [
+    {
+      "code": "SOXX",
+      "asOf": "2026-10-27",
+      "coverage": "full-equity",
+      "reportedEquityCount": 30,
+      "sourceId": "soxx-holdings",
+      "scope": "美国上市半导体行业股票",
+      "description": "同时覆盖计算、存储、模拟与设备公司。持有 NVIDIA 不代表这只基金只覆盖 AI 芯片。",
+      "holdings": [
+        { "symbol": "AMD", "name": "AMD", "weight": 9.46 },
+        { "symbol": "INTC", "name": "Intel", "weight": 8.32 },
+        { "symbol": "NVDA", "name": "NVIDIA", "weight": 7.85 },
+        { "symbol": "MU", "name": "Micron", "weight": 7.7 },
+        { "symbol": "AVGO", "name": "Broadcom", "weight": 7.35 },
+        { "symbol": "TXN", "name": "Texas Instruments", "weight": 4.71 },
+        { "symbol": "ADI", "name": "Analog Devices", "weight": 4.67 },
+        { "symbol": "MRVL", "name": "Marvell", "weight": 4.57 },
+        { "symbol": "QCOM", "name": "Qualcomm", "weight": 4.29 },
+        { "symbol": "NXPI", "name": "NXP", "weight": 3.51 },
+        { "symbol": "KLAC", "name": "KLA", "weight": 3.48 },
+        { "symbol": "AMAT", "name": "Applied Materials", "weight": 3.43 },
+        { "symbol": "TSM", "name": "TSMC ADR", "weight": 3.2 },
+        { "symbol": "LRCX", "name": "Lam Research", "weight": 3.17 },
+        {
+          "symbol": "MPWR",
+          "name": "Monolithic Power Systems",
+          "weight": 3.16
+        },
+        { "symbol": "TER", "name": "Teradyne", "weight": 2.76 },
+        { "symbol": "SKHY", "name": "SK Hynix ADS", "weight": 2.69 },
+        { "symbol": "MCHP", "name": "Microchip", "weight": 2.35 },
+        { "symbol": "ALAB", "name": "Astera Labs", "weight": 2.24 },
+        { "symbol": "ON", "name": "ON Semiconductor", "weight": 1.67 },
+        { "symbol": "CRDO", "name": "Credo", "weight": 1.55 },
+        { "symbol": "ASML", "name": "ASML ADR", "weight": 1.47 },
+        { "symbol": "ENTG", "name": "Entegris", "weight": 1.25 },
+        { "symbol": "TSEM", "name": "Tower Semiconductor", "weight": 1.09 },
+        { "symbol": "MTSI", "name": "MACOM", "weight": 1.0 },
+        { "symbol": "ASX", "name": "ASE Technology ADR", "weight": 0.94 },
+        { "symbol": "CBRS", "name": "Cerebras", "weight": 0.63 },
+        { "symbol": "UMC", "name": "UMC ADR", "weight": 0.6 },
+        { "symbol": "ARM", "name": "Arm ADS", "weight": 0.43 },
+        { "symbol": "STM", "name": "STMicroelectronics ADR", "weight": 0.42 }
+      ]
+    },
+    {
+      "code": "AIQ",
+      "asOf": "2026-10-28",
+      "coverage": "top-ten",
+      "reportedEquityCount": null,
+      "sourceId": "aiq-holdings",
+      "scope": "AI 应用、软件与硬件主题",
+      "description": "持仓节选同时出现软件、平台和芯片公司；这里展示的是前十大，不是全量持仓。",
+      "holdings": [
+        { "symbol": "PLTR", "name": "Palantir", "weight": 4.35 },
+        { "symbol": "MSFT", "name": "Microsoft", "weight": 3.8 },
+        { "symbol": "TSLA", "name": "Tesla", "weight": 3.45 },
+        {
+          "symbol": "SPCX",
+          "name": "Space Exploration Technologies",
+          "weight": 3.35
+        },
+        { "symbol": "ORCL", "name": "Oracle", "weight": 3.28 },
+        { "symbol": "AMZN", "name": "Amazon", "weight": 2.97 },
+        { "symbol": "AMD", "name": "AMD", "weight": 2.92 },
+        { "symbol": "AAPL", "name": "Apple", "weight": 2.92 },
+        { "symbol": "TSM", "name": "TSMC ADR", "weight": 2.88 },
+        { "symbol": "NVDA", "name": "NVIDIA", "weight": 2.81 }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "nvidia-results",
+      "name": "NVIDIA · FY2027 Q2 业绩公告",
+      "url": "https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Second-Quarter-Fiscal-2027/default.aspx",
+      "kind": "company-release"
+    },
+    {
+      "id": "amd-results",
+      "name": "AMD · 2026 Q2 业绩公告",
+      "url": "https://newsroom.amd.com/news/amd-2q-2026-earnings/",
+      "kind": "company-release"
+    },
+    {
+      "id": "asml-results",
+      "name": "ASML · 2026 Q3 业绩公告",
+      "url": "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026",
+      "kind": "company-release"
+    },
+    {
+      "id": "soxx-holdings",
+      "name": "iShares · SOXX 持仓 CSV",
+      "url": "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf/latest-holdings.csv",
+      "kind": "issuer-holdings"
+    },
+    {
+      "id": "aiq-holdings",
+      "name": "Global X · AIQ 持仓表",
+      "url": "https://www.globalxetfs.com/funds/aiq",
+      "kind": "issuer-holdings"
+    }
+  ]
+}

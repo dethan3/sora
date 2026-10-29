@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import type { DemoData } from '../../data/demo';
 import { DirectionCard } from './DirectionCard';
@@ -70,7 +71,7 @@ export function DiscoverPage({ data }: { data: DemoData }) {
     setParams(next, { replace: true });
   }
   function clear() {
-    setParams({}, { replace: true });
+    setParams({ view: 'markets' }, { replace: true });
     document.getElementById('direction-search')?.focus();
   }
   const followed = store.ids
@@ -93,6 +94,9 @@ export function DiscoverPage({ data }: { data: DemoData }) {
   ];
   return (
     <div className="discover-page">
+      <Link className="back-link" to="/discover">
+        ← AI 芯片领域研究
+      </Link>
       <header className="discover-heading">
         <div>
           <p className="eyebrow">YOUR NEXT PERSPECTIVE</p>
