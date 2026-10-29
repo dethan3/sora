@@ -4,6 +4,7 @@ import { EmptyState, PageHeader, Panel } from '../../components/ui';
 import { FundTable } from '../../components/FundTable';
 import { usePersonal } from '../local/PersonalProvider';
 import { BackupTools } from '../local/BackupTools';
+import { MarketNotice } from '../market/MarketProvider';
 
 export function WatchlistPage({ data }: { data: DemoData }) {
   const local = usePersonal();
@@ -15,8 +16,9 @@ export function WatchlistPage({ data }: { data: DemoData }) {
       <PageHeader
         eyebrow="WATCHLIST"
         title="我的关注"
-        description="集中回看关心的基金，关注列表自动保存在此浏览器。"
+        description="集中查看关心产品的收盘价与变化，关注列表自动保存在此浏览器。"
       />
+      {local.state.watchlist.length > 0 && <MarketNotice />}
       <Panel title={`已关注 · ${local.state.watchlist.length}`}>
         {local.state.watchlist.length ? (
           <>

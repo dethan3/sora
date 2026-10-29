@@ -311,6 +311,38 @@
   text-align: center;
   color: #8490a1;
 }
+.fund-market-price {
+  display: grid;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.fund-market-price strong {
+  font-size: 16px;
+  white-space: normal;
+}
+.fund-market-price strong span {
+  display: inline-block;
+  white-space: nowrap;
+}
+.fund-market-price strong span,
+.fund-market-price div > span:last-child {
+  font-size: 10px;
+  font-weight: 400;
+  color: #68768c;
+}
+.fund-market-price small {
+  display: block;
+  max-width: 100%;
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: normal;
+}
+.fund-related-direction {
+  margin: 20px 0;
+}
+.detail-grid > .direction-benchmark {
+  min-width: 0;
+}
 .market-chart-empty strong {
   font-size: 14px;
   font-weight: 500;

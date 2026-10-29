@@ -96,7 +96,7 @@ export function MarketNotice() {
         {mock
           ? '价格与走势为 Mock 数据，仅供页面体验。'
           : market.data?.series.length
-            ? `${market.data.series.length} 个方向有可用记录，具体日期与来源见各指标。`
+            ? `${market.data.series.filter((item) => item.instrumentType !== 'fund-price').length} 个方向、${market.data.series.filter((item) => item.instrumentType === 'fund-price').length} 只产品有可用记录，具体日期与来源见各项。`
             : market.status === 'error'
               ? '暂无可用的市场记录。'
               : '正在连接已保存的市场记录。'}

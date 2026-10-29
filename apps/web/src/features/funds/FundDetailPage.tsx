@@ -5,6 +5,9 @@ import { Change, EmptyState, PageHeader, Panel } from '../../components/ui';
 import { WatchButton } from './WatchButton';
 import { listSource, sourceLabel } from '../../navigation/flow';
 import { usePersonal } from '../local/PersonalProvider';
+import { MarketPanel } from '../market/MarketPanel';
+import { MarketNotice } from '../market/MarketProvider';
+import { fundMarketId } from '../market/model';
 
 export function historyWindow(
   history: Fund['history'],
@@ -59,23 +62,154 @@ export function FundDetailPage({ data }: { data: DemoData }) {
         />
         <WatchButton fund={fund} />
       </div>
+      {data.source === 'reference-catalog' && <MarketNotice />}
       <div className="detail-grid">
-        <Panel title="净值与走势">
-          <div className="fund-quote">
-            <strong>{fund.nav ?? '—'}</strong>
-            <span>{fund.currency} / 份</span>
-            {fund.nav !== null && <Change value={fund.changePct} />}
-          </div>
-          {fund.nav === null && <p className="muted">暂无净值数据</p>}
-          {fund.benchmark && (
-            <p className="muted">跟踪对象 / 观察基准：{fund.benchmark}</p>
-          )}
-          <p className="muted">
-            资料核对日期 {data.asOf}
-            {fund.sourceUrl && (
+        {data.source === 'reference-catalog' ? (
+          <MarketPanel
+            id={fundMarketId(fund.code)}
+            fund={fund}
+            benchmark={fund.name}
+            note="交易价格与每份净值、指数点位分别展示。日线收盘不代表盘中即时价格。"
+          />
+        ) : (
+          <Panel title="净值与走势">
+            <div className="fund-quote">
+              <strong>{fund.nav ?? '—'}</strong>
+              <span>{fund.currency} / 份</span>
+              {fund.nav !== null && <Change value={fund.changePct} />}
+            </div>
+            {fund.nav === null && <p className="muted">暂无净值数据</p>}
+            {fund.benchmark && (
+              <p className="muted">跟踪对象 / 观察基准：{fund.benchmark}</p>
+            )}
+            <p className="muted">
+              资料核对日期 {data.asOf}
+              {fund.sourceUrl && (
+                <>
+                  {' '}
+                  ·{' '}
+                  <a
+                    className="landing-inline-link"
+                    href={fund.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {fund.sourceName} ↗
+                  </a>
+                </>
+              )}
+            </p>
+            {history.length > 1 && (
+              <div className="chart-toolbar">
+                <h3>净值走势</h3>
+                <div className="segmented" aria-label="所选区间">
+                  <button
+                    aria-pressed={period === 'all'}
+                    onClick={() => setPeriod('all')}
+                  >
+                    全部记录
+                  </button>
+                  <button
+                    aria-pressed={period === 'week'}
+                    onClick={() => setPeriod('week')}
+                  >
+                    近 7 天
+                  </button>
+                </div>
+              </div>
+            )}
+            {history.length > 1 ? (
               <>
-                {' '}
-                ·{' '}
+                <figure className="history-figure">
+                  <div className="chart-scale">
+                    <span>区间净值范围</span>
+                    <span>
+                      {minimum.toFixed(4)} — {maximum.toFixed(4)}{' '}
+                      {fund.currency} / 份
+                    </span>
+                  </div>
+                  <svg
+                    className="history-chart"
+                    viewBox="0 0 800 200"
+                    preserveAspectRatio="none"
+                    role="img"
+                    aria-label={`${fund.name}净值趋势，${first.date}至${last!.date}`}
+                  >
+                    <path
+                      d="M40 40H760 M40 105H760 M40 170H760"
+                      className="chart-grid"
+                    />
+                    <polyline
+                      points={points}
+                      fill="none"
+                      stroke="#635bff"
+                      strokeWidth="3"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                  <figcaption className="chart-dates">
+                    <time dateTime={first.date}>{first.date}</time>
+                    <time dateTime={last!.date}>{last!.date}</time>
+                  </figcaption>
+                </figure>
+                <p className="trend-explanation">
+                  所选区间{change! > 0 ? '上行' : change! < 0 ? '下行' : '持平'}{' '}
+                  <Change value={change!} />
+                  。按区间首末净值计算，不含分红、费用或汇率变化。
+                </p>
+                <details className="history-details">
+                  <summary>查看 {history.length} 条历史记录</summary>
+                  <table>
+                    <caption className="sr-only">历史净值明细</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">日期</th>
+                        <th scope="col">净值（{fund.currency} / 份）</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((point) => (
+                        <tr key={point.date}>
+                          <th scope="row">{point.date}</th>
+                          <td>{point.value.toFixed(6)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              </>
+            ) : (
+              <EmptyState title="暂无走势数据">
+                历史记录不足，暂不展示走势。
+                {fund.nav === null
+                  ? '当前净值也暂不可用，持仓会标记为待估值。'
+                  : '当前净值仍可用于持仓估值。'}
+              </EmptyState>
+            )}
+          </Panel>
+        )}
+        <aside className="detail-aside">
+          <Panel title="观察这只基金">
+            <p className="muted">{fund.note}</p>
+            {fund.benchmark && (
+              <p className="muted">跟踪对象 / 观察基准：{fund.benchmark}</p>
+            )}
+            {data.modules
+              .filter((direction) => direction.fundCodes.includes(fund.code))
+              .map((direction) => (
+                <div className="fund-related-direction" key={direction.id}>
+                  <Link className="text-link" to={`/discover/${direction.id}`}>
+                    {direction.title} →
+                  </Link>
+                  <p className="muted">
+                    {direction.fundReasons[fund.code] ?? direction.description}
+                  </p>
+                </div>
+              ))}
+            {fund.sourceUrl && (
+              <p className="muted">
+                资料核对日期 {data.asOf} ·{' '}
                 <a
                   className="landing-inline-link"
                   href={fund.sourceUrl}
@@ -84,101 +218,8 @@ export function FundDetailPage({ data }: { data: DemoData }) {
                 >
                   {fund.sourceName} ↗
                 </a>
-              </>
-            )}
-          </p>
-          {history.length > 1 && (
-            <div className="chart-toolbar">
-              <h3>净值走势</h3>
-              <div className="segmented" aria-label="所选区间">
-                <button
-                  aria-pressed={period === 'all'}
-                  onClick={() => setPeriod('all')}
-                >
-                  全部记录
-                </button>
-                <button
-                  aria-pressed={period === 'week'}
-                  onClick={() => setPeriod('week')}
-                >
-                  近 7 天
-                </button>
-              </div>
-            </div>
-          )}
-          {history.length > 1 ? (
-            <>
-              <figure className="history-figure">
-                <div className="chart-scale">
-                  <span>区间净值范围</span>
-                  <span>
-                    {minimum.toFixed(4)} — {maximum.toFixed(4)} {fund.currency}{' '}
-                    / 份
-                  </span>
-                </div>
-                <svg
-                  className="history-chart"
-                  viewBox="0 0 800 200"
-                  preserveAspectRatio="none"
-                  role="img"
-                  aria-label={`${fund.name}净值趋势，${first.date}至${last!.date}`}
-                >
-                  <path
-                    d="M40 40H760 M40 105H760 M40 170H760"
-                    className="chart-grid"
-                  />
-                  <polyline
-                    points={points}
-                    fill="none"
-                    stroke="#635bff"
-                    strokeWidth="3"
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
-                <figcaption className="chart-dates">
-                  <time dateTime={first.date}>{first.date}</time>
-                  <time dateTime={last!.date}>{last!.date}</time>
-                </figcaption>
-              </figure>
-              <p className="trend-explanation">
-                所选区间{change! > 0 ? '上行' : change! < 0 ? '下行' : '持平'}{' '}
-                <Change value={change!} />
-                。按区间首末净值计算，不含分红、费用或汇率变化。
               </p>
-              <details className="history-details">
-                <summary>查看 {history.length} 条历史记录</summary>
-                <table>
-                  <caption className="sr-only">历史净值明细</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">日期</th>
-                      <th scope="col">净值（{fund.currency} / 份）</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((point) => (
-                      <tr key={point.date}>
-                        <th scope="row">{point.date}</th>
-                        <td>{point.value.toFixed(6)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </details>
-            </>
-          ) : (
-            <EmptyState title="暂无走势数据">
-              历史记录不足，暂不展示走势。
-              {fund.nav === null
-                ? '当前净值也暂不可用，持仓会标记为待估值。'
-                : '当前净值仍可用于持仓估值。'}
-            </EmptyState>
-          )}
-        </Panel>
-        <aside className="detail-aside">
-          <Panel title="观察这只基金">
-            <p className="muted">{fund.note}</p>
+            )}
             <p className="muted">
               基金交易价格、每份净值与参考指数点位是不同指标，应分别阅读。
             </p>
@@ -194,6 +235,14 @@ export function FundDetailPage({ data }: { data: DemoData }) {
               <span aria-hidden="true">→</span>
             </Link>
           </Panel>
+          {data.source === 'reference-catalog' && (
+            <Panel title="基金净值与持仓估值">
+              <p className="muted">暂无净值数据</p>
+              <p className="muted">
+                交易收盘价没有写入基金净值；已录入的持仓仍为待估值。
+              </p>
+            </Panel>
+          )}
           <Panel title="如何理解这条曲线">
             <p className="muted">
               纵轴按当前记录范围缩放，不从零起。区间变化只说明这些记录的首末差异。

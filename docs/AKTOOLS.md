@@ -6,7 +6,7 @@
 
 ```text
 官方 AKTools（Python / FastAPI，127.0.0.1:8080）
-  ↑ 仅三个明确的指数接口调用
+  ↑ 三个指数与六只产品的明确接口调用
 TypeScript 更新命令（apps/data-service）
   ↓ 校验、来源、错误报告、原子替换
 data/market/market.json（不提交到 Git）
@@ -58,23 +58,29 @@ Vite 的 live 模式把 `/api/market` 转发到 127.0.0.1:8788。现有 `pnpm de
 
 环境变量属于本地任务或服务，不包含在 Vite 构建内。不要给 AKTOOLS_BASE_URL 填写带账号密码的 URL。远端访问入口与鉴权等 VPS 确定后再配置。
 
-Yahoo 备用读取复用了既有项目的 chart 端点思路；只接受符号、INDEX 类型和交易所时区都匹配的结果。选择整条来源序列，不把不同供应商的历史线拼在一起。本轮真实成功读取的是 AKTools；Yahoo 备用仅完成自动化测试，没有宣称联网可用。
+Yahoo 备用读取复用了既有项目的 chart 端点思路；指数要求 INDEX，产品价格要求 ETF 类型与 USD / HKD 币种，另核对符号和交易所时区。选择整条来源序列，不把不同供应商的历史线拼在一起。实际成功读取的是 AKTools；Yahoo 备用仅完成自动化测试，没有宣称联网可用。
 
 ## 首轮数据范围与口径
 
-| 页面方向            | AKShare 接口              | 上游代码 | 单位   |
-| ------------------- | ------------------------- | -------- | ------ |
-| 纳斯达克100         | index_us_stock_sina       | .NDX     | 指数点 |
-| 标普500             | index_us_stock_sina       | .INX     | 指数点 |
-| 香港市场 / 恒生指数 | stock_hk_index_daily_sina | HSI      | 指数点 |
+| 页面方向                 | AKShare 接口              | 上游代码 | 单位     |
+| ------------------------ | ------------------------- | -------- | -------- |
+| 纳斯达克100              | index_us_stock_sina       | .NDX     | 指数点   |
+| 标普500                  | index_us_stock_sina       | .INX     | 指数点   |
+| 香港市场 / 恒生指数      | stock_hk_index_daily_sina | HSI      | 指数点   |
+| AIQ、SOXX、IAU、QQQ、IVV | stock_us_daily            | 对应代码 | USD / 份 |
+| 盈富基金港元柜台         | stock_hk_daily            | 02800    | HKD / 份 |
 
 只采纳交易地“今天”之前的日线，保守排除可能尚未完成的当日记录；即使收盘后，当天记录也在交易地日期变更后才进入快照。本轮不是盘中或实时行情。
 
-保留最近约 380 个自然日的数据，按日期排序，拒绝冲突日期、非正数、无效 / 未来日期和不足两条的历史。前收为同一来源中前一条有效日线的 close。所有记录为未复权价格指数点，不含分红，不是 ETF 交易价或基金净值。
+保留最近约 380 个自然日的数据，按日期排序，拒绝冲突日期、非正数、无效 / 未来日期和不足两条的历史。前收为同一来源中前一条有效日线的 close。指数保存点位；产品保存未复权交易收盘价，并显式请求 adjust 为空。价格曲线不包含分红再投资或汇率变化，拆分、合并及除息可能造成跳变，不代表总回报。
+
+产品序列使用 fund:AIQ 等独立 ID，instrumentType 为 fund-price，fundCode 保存目录代码，美元 / 港元使用不同单位。2800.HK 在 AKTools 映射为 02800，在 Yahoo 保留 2800.HK。更新器另核对类型、单位、来源与符号，不接受串入指数或其他币种。
 
 日线只提供交易日期，所以 `quote.asOf` 保存 YYYY-MM-DD，不虚构时分秒；采集完成时间另存 provenance.retrievedAt。页面显示“收盘 / 纽约或香港交易日”，不据此推断当前市场开闭状态。
 
-AI、半导体和黄金仍没有接入准确对应的参考指标，真实模式显示暂无数据，不用 AIQ、SOXX、IAU 的价格冒充参考指数或现货。基金净值及个人持仓估值本轮也不回填。
+AI、半导体和黄金仍没有接入准确对应的参考指标，真实模式显示暂无数据，不用 AIQ、SOXX、IAU 的价格冒充参考指数或现货。关联产品详情、目录、关注页现可查看独立交易价格及走势。基金净值及个人持仓估值不回填。
+
+2026-10-29 本地实测更新 9/9 成功，六只产品接口均返回日线。快照按保守的交易地日期规则过滤：此次美国产品记录截至 10-27，香港截至 10-28，具体以页面逐项日期为准。记录的获取时间与交易日期分别保存。
 
 ## 失败、缓存与恢复
 
@@ -102,4 +108,4 @@ docker compose up --build -d
 
 Compose 默认只映射本机回环端口，AKTools 本身运行在非 root 用户下。该配置留待 VPS 环境验证；本机 Docker 引擎未启动，本轮没有完成镜像构建或容器运行验收。
 
-参考：[AKTools 官方工具](https://aktools.akfamily.xyz/)、[AKShare 指数接口](https://akshare.akfamily.xyz/data/index/index.html)。软件和数据使用边界继续见 [DATA_SOURCES.md](./DATA_SOURCES.md)。
+参考：[AKTools 官方工具](https://aktools.akfamily.xyz/)、[AKShare 指数接口](https://akshare.akfamily.xyz/data/index/index.html)、[美股日线实现](https://github.com/akfamily/akshare/blob/main/akshare/stock/stock_us_sina.py)、[港股日线实现](https://github.com/akfamily/akshare/blob/main/akshare/stock/stock_hk_sina.py)。软件和数据使用边界继续见 [DATA_SOURCES.md](./DATA_SOURCES.md)。

@@ -1,5 +1,6 @@
 import type { Fund } from '../data/demo';
-import { Change, EmptyState } from './ui';
+import { EmptyState } from './ui';
+import { FundPrice } from '../features/market/FundPrice';
 import { Link, useLocation } from 'react-router';
 import { detailUrl, fundLinkId, rememberList } from '../navigation/flow';
 import { WatchButton } from '../features/funds/WatchButton';
@@ -27,7 +28,7 @@ export function FundTable({ funds }: { funds: Fund[] }) {
               类型
             </th>
             <th role="columnheader" scope="col" className="numeric">
-              日变化
+              收盘价 / 日变化
             </th>
             <th role="columnheader" scope="col" className="numeric">
               关注
@@ -63,13 +64,9 @@ export function FundTable({ funds }: { funds: Fund[] }) {
               </td>
               <td role="cell" className="numeric">
                 <span className="mobile-field-label" aria-hidden="true">
-                  日变化
+                  收盘价 / 日变化
                 </span>
-                {fund.nav === null ? (
-                  <span className="muted">暂无净值</span>
-                ) : (
-                  <Change value={fund.changePct} />
-                )}
+                <FundPrice fund={fund} />
               </td>
               <td role="cell" className="numeric card-actions">
                 <WatchButton fund={fund} />

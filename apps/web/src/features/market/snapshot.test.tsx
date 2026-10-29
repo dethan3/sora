@@ -126,7 +126,7 @@ it('makes fetch errors visible with retry and leaves the existing quote unchange
       <MarketNotice />
     </MarketProvider>,
   );
-  await screen.findByText(/1 个方向有可用记录/);
+  await screen.findByText(/1 个方向、0 只产品有可用记录/);
   await userEvent.click(screen.getByRole('button', { name: '刷新行情' }));
   expect(await screen.findByRole('alert')).toHaveTextContent(
     '行情暂时无法载入',

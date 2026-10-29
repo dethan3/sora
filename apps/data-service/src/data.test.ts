@@ -123,6 +123,107 @@ test('bounds download size and rejects non-JSON responses', async () => {
   const html = (async () => new Response('<html>blocked</html>')) as Fetcher;
   await assert.rejects(fetchJson(new URL('https://example.test'), html, 1000));
 });
+
+test('maps all six product prices separately from indices with explicit unadjusted requests', async () => {
+  const funds = instruments.filter(
+    (item) => item.instrumentType === 'fund-price',
+  );
+  assert.deepEqual(
+    funds.map((item) => item.fundCode),
+    ['AIQ', 'SOXX', 'IAU', 'QQQ', 'IVV', '2800.HK'],
+  );
+  for (const item of funds) {
+    let requested = new URL('https://unused.test');
+    const fetcher = (async (url) => {
+      requested = new URL(String(url));
+      return new Response(JSON.stringify(rows));
+    }) as Fetcher;
+    const series = await getAktools(
+      item,
+      'http://127.0.0.1:8080',
+      now,
+      fetcher,
+    );
+    assert.equal(series.id, `fund:${item.fundCode}`);
+    assert.equal(series.fundCode, item.fundCode);
+    assert.equal(
+      series.unit,
+      item.fundCode === '2800.HK' ? 'hkd-per-share' : 'usd-per-share',
+    );
+    assert.equal(requested.searchParams.get('adjust'), '');
+    assert.equal(
+      requested.searchParams.get('symbol'),
+      item.fundCode === '2800.HK' ? '02800' : item.fundCode,
+    );
+    assert.equal(
+      requested.pathname,
+      `/api/public/${item.fundCode === '2800.HK' ? 'stock_hk_daily' : 'stock_us_daily'}`,
+    );
+  }
+});
+
+test('rejects currency and instrument confusion in ETF fallback and collected snapshots', async () => {
+  const item = instruments.find(
+    (instrument) => instrument.fundCode === '2800.HK',
+  )!;
+  const raw = {
+    chart: {
+      result: [
+        {
+          meta: {
+            symbol: '2800.HK',
+            instrumentType: 'ETF',
+            currency: 'HKD',
+            exchangeTimezoneName: 'Asia/Hong_Kong',
+          },
+          timestamp: [
+            Date.parse('2026-10-22T08:00:00Z') / 1000,
+            Date.parse('2026-10-23T08:00:00Z') / 1000,
+          ],
+          indicators: { quote: [{ close: [23, 24] }] },
+        },
+      ],
+    },
+  };
+  assert.equal(normalizeYahoo(raw, item, now).unit, 'hkd-per-share');
+  raw.chart.result[0].meta.currency = 'USD';
+  assert.throws(() => normalizeYahoo(raw, item, now));
+  raw.chart.result[0].meta.currency = 'HKD';
+  raw.chart.result[0].meta.instrumentType = 'INDEX';
+  assert.throws(() => normalizeYahoo(raw, item, now));
+  const snapshot = (await updateSnapshot({ now, primary: collect })).snapshot;
+  const fund = snapshot.series.find((series) => series.fundCode === '2800.HK')!;
+  fund.unit = 'points';
+  assert.equal(marketSnapshotSchema.safeParse(snapshot).success, false);
+});
+
+test('a failed ETF refresh retains its original price while other series update', async () => {
+  const previous = (await updateSnapshot({ now, primary: collect })).snapshot;
+  const result = await updateSnapshot({
+    previous,
+    now: '2026-10-27T10:00:00Z',
+    primary: async (item, at) => {
+      if (item.fundCode === '2800.HK') return fail();
+      return normalizeAktools(
+        rows.map((row) => ({ ...row, close: Number(row.close) + 1 })),
+        item,
+        at,
+      );
+    },
+  });
+  assert.equal(result.successes, instruments.length - 1);
+  const saved = result.snapshot.series.find(
+    (series) => series.fundCode === '2800.HK',
+  )!;
+  assert.equal(saved.quote?.value, 102);
+  assert.equal(saved.provenance?.retrievedAt, now);
+  assert.equal(saved.provenance?.updateStatus, 'failed');
+  assert.equal(
+    result.snapshot.series.find((series) => series.fundCode === 'AIQ')?.quote
+      ?.value,
+    103,
+  );
+});
 test('validates the exact Yahoo index identity and timezone before using a fallback', () => {
   const raw = {
     chart: {
@@ -159,8 +260,8 @@ test('prefers AKTools and does not call a fallback on success', async () => {
       throw new Error('Should not run');
     },
   });
-  assert.equal(result.successes, 3);
-  assert.equal(result.snapshot.series.length, 3);
+  assert.equal(result.successes, instruments.length);
+  assert.equal(result.snapshot.series.length, instruments.length);
   assert.equal(fallbackCalls, 0);
 });
 test('falls back per instrument and records the actual selected source', async () => {
@@ -180,8 +281,8 @@ test('falls back per instrument and records the actual selected source', async (
       };
     },
   });
-  assert.equal(result.attempts.length, 6);
-  assert.equal(result.successes, 3);
+  assert.equal(result.attempts.length, instruments.length * 2);
+  assert.equal(result.successes, instruments.length);
   assert.equal(result.snapshot.series[0].provenance?.provider, 'yahoo');
 });
 test('preserves original quote dates and provenance on partial or complete failure', async () => {
@@ -192,7 +293,7 @@ test('preserves original quote dates and provenance on partial or complete failu
     primary: fail,
   });
   assert.equal(result.successes, 0);
-  assert.equal(result.snapshot.series.length, 3);
+  assert.equal(result.snapshot.series.length, instruments.length);
   assert.equal(result.snapshot.series[0].quote?.asOf, '2026-10-23');
   assert.equal(result.snapshot.series[0].provenance?.retrievedAt, now);
   assert.equal(result.snapshot.series[0].provenance?.updateStatus, 'failed');

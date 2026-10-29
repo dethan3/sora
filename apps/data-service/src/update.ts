@@ -53,7 +53,14 @@ export async function updateSnapshot(options: {
           validated.id !== instrument.id ||
           validated.name !== instrument.name ||
           validated.timeZone !== instrument.timeZone ||
-          validated.unit !== 'points'
+          validated.unit !== (instrument.unit ?? 'points') ||
+          validated.instrumentType !== (instrument.instrumentType ?? 'index') ||
+          validated.fundCode !== instrument.fundCode ||
+          validated.provenance?.provider !== provider ||
+          validated.provenance.symbol !==
+            (provider === 'aktools'
+              ? instrument.symbol
+              : instrument.yahooSymbol)
         )
           throw new Error('Instrument mapping mismatch');
         const prior = previous?.series.find(

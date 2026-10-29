@@ -2,18 +2,22 @@ import { useSearchParams } from 'react-router';
 import { useMarket } from './MarketProvider';
 import { MarketQuote } from './MarketQuote';
 import { MarketHistory } from './MarketHistory';
-import { periods, type Period } from './model';
+import { periods, fundPriceSeries, type Period } from './model';
 export function MarketPanel({
   id,
   benchmark,
   note,
+  fund,
 }: {
   id: string;
   benchmark: string;
   note: string;
+  fund?: { code: string; currency: string };
 }) {
   const market = useMarket();
-  const series = market.data?.series.find((item) => item.id === id);
+  const series = fund
+    ? fundPriceSeries(market.data, fund.code, fund.currency)
+    : market.data?.series.find((item) => item.id === id);
   const [params, setParams] = useSearchParams();
   const rawPeriod = params.get('period');
   const period: Period = periods.includes(rawPeriod as Period)
@@ -21,9 +25,11 @@ export function MarketPanel({
     : '1M';
   return (
     <section className="direction-benchmark" aria-labelledby="benchmark-title">
-      <p className="eyebrow">REFERENCE INDICATOR</p>
-      <h2 id="benchmark-title">{series?.name ?? benchmark}</h2>
-      <MarketQuote id={id} />
+      <p className="eyebrow">{fund ? 'MARKET PRICE' : 'REFERENCE INDICATOR'}</p>
+      <h2 id="benchmark-title">
+        {fund ? '交易收盘价' : (series?.name ?? benchmark)}
+      </h2>
+      <MarketQuote id={id} fund={fund} />
       <p>{note}</p>
       {series ? (
         <MarketHistory
@@ -67,6 +73,8 @@ export function MarketPanel({
           </>
         ) : market.data?.source === 'mock' ? (
           '行情来源：Sora Mock · 人工生成的固定演示记录，未连接任何行情供应商。'
+        ) : fund ? (
+          '暂无可用的交易价格记录。'
         ) : (
           '指标数据尚未接入，不以关联基金涨跌替代。'
         )}

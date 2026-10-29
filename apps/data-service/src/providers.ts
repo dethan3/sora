@@ -90,7 +90,9 @@ function collectedSeries(
   return marketSeriesSchema.parse({
     id: instrument.id,
     name: instrument.name,
-    unit: 'points',
+    instrumentType: instrument.instrumentType ?? 'index',
+    ...(instrument.fundCode ? { fundCode: instrument.fundCode } : {}),
+    unit: instrument.unit ?? 'points',
     timeZone: instrument.timeZone,
     session: 'unknown',
     freshness:
@@ -145,6 +147,7 @@ export function normalizeYahoo(
         meta?: {
           symbol?: string;
           instrumentType?: string;
+          currency?: string;
           exchangeTimezoneName?: string;
         };
         timestamp?: number[];
@@ -157,7 +160,11 @@ export function normalizeYahoo(
     root?.chart?.error ||
     !result ||
     result.meta?.symbol !== instrument.yahooSymbol ||
-    result.meta?.instrumentType !== 'INDEX' ||
+    result.meta?.instrumentType !==
+      (instrument.instrumentType === 'fund-price' ? 'ETF' : 'INDEX') ||
+    (instrument.instrumentType === 'fund-price' &&
+      result.meta.currency !==
+        (instrument.unit === 'hkd-per-share' ? 'HKD' : 'USD')) ||
     result.meta.exchangeTimezoneName !== instrument.timeZone
   )
     throw new Error('Unexpected Yahoo instrument');
@@ -205,6 +212,8 @@ export async function getAktools(
     throw new Error('Invalid AKTools base URL');
   const url = new URL(`/api/public/${instrument.api}`, base);
   url.searchParams.set('symbol', instrument.symbol);
+  if (instrument.instrumentType === 'fund-price')
+    url.searchParams.set('adjust', '');
   return normalizeAktools(
     await fetchJson(url, fetcher, timeoutMs),
     instrument,

@@ -87,10 +87,12 @@ function Refresh() {
 
 describe('market observations and boundaries', () => {
   it('keeps synthetic market observations separate from unpriced fund metadata and positions', () => {
-    expect(marketSnapshotSchema.parse(mockMarket).series).toHaveLength(6);
-    expect(mockMarket.series.map((item) => item.id)).toEqual(
-      data.modules.map((item) => item.id),
-    );
+    expect(marketSnapshotSchema.parse(mockMarket).series).toHaveLength(12);
+    expect(
+      mockMarket.series
+        .filter((item) => item.instrumentType !== 'fund-price')
+        .map((item) => item.id),
+    ).toEqual(data.modules.map((item) => item.id));
     expect(
       data.funds.every(
         (fund) =>

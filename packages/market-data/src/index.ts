@@ -8,7 +8,9 @@ export const marketSeriesSchema = z
   .object({
     id: z.string().min(1),
     name: z.string().min(1),
-    unit: z.enum(['points', 'usd-per-ounce']),
+    instrumentType: z.enum(['index', 'fund-price']).default('index'),
+    fundCode: z.string().min(1).optional(),
+    unit: z.enum(['points', 'usd-per-ounce', 'usd-per-share', 'hkd-per-share']),
     timeZone: z.enum(['America/New_York', 'Asia/Hong_Kong', 'UTC']),
     session: z.enum(['open', 'closed', 'holiday', 'unknown']),
     freshness: z.enum(['current', 'stale']),
@@ -36,6 +38,23 @@ export const marketSeriesSchema = z
       .optional(),
   })
   .superRefine((series, ctx) => {
+    const isPrice = series.instrumentType === 'fund-price';
+    if (
+      isPrice
+        ? !series.fundCode ||
+          series.id !== `fund:${series.fundCode}` ||
+          !['usd-per-share', 'hkd-per-share'].includes(series.unit) ||
+          (series.unit === 'hkd-per-share'
+            ? series.timeZone !== 'Asia/Hong_Kong'
+            : series.timeZone !== 'America/New_York')
+        : !!series.fundCode ||
+          series.id.startsWith('fund:') ||
+          ['usd-per-share', 'hkd-per-share'].includes(series.unit)
+    )
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Invalid instrument identity or currency',
+      });
     const last = series.history.at(-1);
     if (
       series.history.some(
@@ -145,7 +164,13 @@ export const numberText = (value: number) =>
     maximumFractionDigits: 2,
   }).format(value);
 export const unitText = (unit: MarketSeries['unit']) =>
-  unit === 'points' ? '点' : 'USD / 盎司';
+  ({
+    points: '点',
+    'usd-per-ounce': 'USD / 盎司',
+    'usd-per-share': 'USD / 份',
+    'hkd-per-share': 'HKD / 份',
+  })[unit];
+export const fundMarketId = (code: string) => `fund:${code}`;
 export function observationTime(series: MarketSeries) {
   if (!series.quote) return '暂无报价时间';
   if (!series.quote.asOf.includes('T'))

@@ -258,3 +258,13 @@ Provider 支持异步载入、解析失败、重试、卸载防止过期写入�
 - 实际 JSON 不进入 Service Worker 预缓存，读取使用 no-cache，失败恢复依赖独立有效快照缓存。构建检查确保正式 / 实际构建没有 Mock chunk，且实际产物的 JSON 合法。
 
 定时调度、VPS、对外 API 访问控制和生产运维尚未实施。依赖版本、命令、故障恢复和后续容器部署见 [AKTOOLS.md](./AKTOOLS.md)。
+
+## 产品价格契约与组件复用 · 2026-10-29
+
+共享 schema 增加 instrumentType（index / fund-price）、可选 fundCode、美元 / 港元每份价格单位。旧指数快照默认解析为 index，无需改写旧缓存。fund-price 必须使用 fund:CODE 标识并匹配 fundCode、单位和交易所时区；更新器另核对固定映射、来源和上游符号，避免价格、指数或币种混淆。
+
+采集器新增 stock_us_daily 与 stock_hk_daily，显式传入空 adjust 获取未复权收盘；2800.HK 在 AKTools 映射为 02800，Yahoo 保留 2800.HK。Yahoo 对产品要求 ETF 类型并核对币种，仍默认关闭。仍逐条采集及保留旧记录，不增加 SDK、数据库或前端直连上游请求。
+
+MarketPanel、MarketQuote 与 MarketHistory 复用到产品详情，切换为交易价格文案和每份币种单位。fundPriceSeries 读取时核对目录代码、类型与币种；FundPrice 在目录、关联产品和关注列表展示紧凑报价及失败状态。目录中的 nav / history 不变，估值模型不消费市场价格快照。
+
+detailSource 只新增四档合法 period 的透传，保留站内来源限制；录入持仓后的返回路径可恢复产品区间和上游方向区间。Mock 新增六条人工产品序列，继续只进入独立演示构建。

@@ -46,7 +46,9 @@ export function MarketHistory({
   return (
     <div className="market-history">
       <div className="market-chart-toolbar">
-        <h3 id={id + '-title'}>指标走势</h3>
+        <h3 id={id + '-title'}>
+          {series.instrumentType === 'fund-price' ? '交易价格走势' : '指标走势'}
+        </h3>
         <div className="market-periods" role="group" aria-label="走势区间">
           {periods.map((item) => (
             <button
@@ -177,7 +179,9 @@ export function MarketHistory({
             />
           </label>
           <p className="market-chart-note">
-            按所选区间首末记录计算；日线仅连接已有记录，非交易日不补点。指标变化不代表基金收益。
+            {series.instrumentType === 'fund-price'
+              ? '按所选区间首末收盘价计算，未复权，不含分红再投资或汇率变化。拆分、合并及除息可能造成跳变；此曲线不是总回报或持仓收益。'
+              : '按所选区间首末记录计算；日线仅连接已有记录，非交易日不补点。指标变化不代表基金收益。'}
           </p>
           <details className="market-history-records">
             <summary>查看 {history.length} 条历史记录</summary>

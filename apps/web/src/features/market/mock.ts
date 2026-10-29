@@ -46,37 +46,73 @@ export const mockMarket = marketSnapshotSchema.parse({
   schemaVersion: 1,
   source: 'mock',
   generatedAt: '2026-10-24T00:00:00Z',
-  series: configs.map((item, index) => {
-    const gold = item.id === 'gold';
-    const hongKong = item.id === 'hangseng';
-    const points = history(
-      index,
-      item.value,
-      gold ? '2026-10-22' : '2026-10-23',
-      item.id === 'sp500',
-    );
-    const previousClose = Number(
-      (item.value / (1 + item.movement / 100)).toFixed(2),
-    );
-    points[points.length - 2].value = previousClose;
-    return {
-      id: item.id,
-      name: item.name,
-      unit: gold ? 'usd-per-ounce' : 'points',
-      timeZone: hongKong ? 'Asia/Hong_Kong' : gold ? 'UTC' : 'America/New_York',
-      session: hongKong ? 'holiday' : 'closed',
-      freshness: gold ? 'stale' : 'current',
-      quote: {
-        value: item.value,
-        previousClose,
-        asOf: gold
-          ? '2026-10-22T20:00:00Z'
-          : hongKong
-            ? '2026-10-23T08:00:00Z'
-            : '2026-10-23T20:00:00Z',
-        delayMinutes: item.id === 'semiconductors' ? 15 : null,
-      },
-      history: points,
-    };
-  }),
+  series: [
+    ...configs.map((item, index) => {
+      const gold = item.id === 'gold';
+      const hongKong = item.id === 'hangseng';
+      const points = history(
+        index,
+        item.value,
+        gold ? '2026-10-22' : '2026-10-23',
+        item.id === 'sp500',
+      );
+      const previousClose = Number(
+        (item.value / (1 + item.movement / 100)).toFixed(2),
+      );
+      points[points.length - 2].value = previousClose;
+      return {
+        id: item.id,
+        name: item.name,
+        unit: gold ? 'usd-per-ounce' : 'points',
+        timeZone: hongKong
+          ? 'Asia/Hong_Kong'
+          : gold
+            ? 'UTC'
+            : 'America/New_York',
+        session: hongKong ? 'holiday' : 'closed',
+        freshness: gold ? 'stale' : 'current',
+        quote: {
+          value: item.value,
+          previousClose,
+          asOf: gold
+            ? '2026-10-22T20:00:00Z'
+            : hongKong
+              ? '2026-10-23T08:00:00Z'
+              : '2026-10-23T20:00:00Z',
+          delayMinutes: item.id === 'semiconductors' ? 15 : null,
+        },
+        history: points,
+      };
+    }),
+    ...[
+      ['AIQ', 'Global X 人工智能与科技 ETF', 42.6],
+      ['SOXX', 'iShares 半导体 ETF', 220.4],
+      ['IAU', 'iShares 黄金信托', 52.8],
+      ['QQQ', 'Invesco 纳斯达克100 ETF', 480.2],
+      ['IVV', 'iShares 标普500 ETF', 562.1],
+      ['2800.HK', '盈富基金', 24.2],
+    ].map(([rawCode, rawName, rawValue], index) => {
+      const code = String(rawCode);
+      const points = history(index + 10, Number(rawValue), '2026-10-23');
+      const hk = code === '2800.HK';
+      return {
+        id: `fund:${code}`,
+        name: String(rawName),
+        instrumentType: 'fund-price',
+        fundCode: code,
+        unit: hk ? 'hkd-per-share' : 'usd-per-share',
+        timeZone: hk ? 'Asia/Hong_Kong' : 'America/New_York',
+        session: 'closed',
+        freshness: 'current',
+        history: points,
+        quote: {
+          value: Number(rawValue),
+          previousClose: points.at(-2)!.value,
+          asOf: '2026-10-23',
+          kind: 'daily-close',
+          delayMinutes: null,
+        },
+      };
+    }),
+  ],
 });

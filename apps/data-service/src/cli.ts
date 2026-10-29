@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { updateSnapshot, yahooFallback } from './update.ts';
 import { atomicWrite, readSnapshot, withUpdateLock } from './storage.ts';
 import { snapshotServer } from './server.ts';
+import { instruments } from './instruments.ts';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const path = resolve(
@@ -33,7 +34,7 @@ try {
           `${attempt.id} / ${attempt.provider}: ${attempt.ok ? 'ok' : attempt.error}`,
         );
       console.log(
-        `Updated ${result.successes}/3 directions; ${result.snapshot.series.length} available. Snapshot: ${path}`,
+        `Updated ${result.successes}/${instruments.length} series; ${result.snapshot.series.length} available. Snapshot: ${path}`,
       );
       if (!result.successes) process.exitCode = 1;
     });

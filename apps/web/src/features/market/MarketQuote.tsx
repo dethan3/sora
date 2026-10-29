@@ -6,6 +6,7 @@ import {
   unitText,
   type MarketSeries,
   isStale,
+  fundPriceSeries,
 } from './model';
 export function MarketChange({
   value,
@@ -57,12 +58,16 @@ export function MarketStatus({ series }: { series: MarketSeries }) {
 export function MarketQuote({
   id,
   compact = false,
+  fund,
 }: {
   id: string;
   compact?: boolean;
+  fund?: { code: string; currency: string };
 }) {
   const market = useMarket();
-  const series = market.data?.series.find((item) => item.id === id);
+  const series = fund
+    ? fundPriceSeries(market.data, fund.code, fund.currency)
+    : market.data?.series.find((item) => item.id === id);
   if (market.status === 'loading' && !series)
     return (
       <div

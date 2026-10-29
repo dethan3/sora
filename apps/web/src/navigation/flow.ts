@@ -71,7 +71,11 @@ export function detailSource(value: string | null): string | null {
   )
     return null;
   const from = listSource(url.searchParams.get('from'));
-  return url.pathname + (from ? `?${new URLSearchParams({ from })}` : '');
+  const params = new URLSearchParams(from ? { from } : {});
+  const period = url.searchParams.get('period');
+  if (period && ['1W', '1M', '3M', '1Y'].includes(period))
+    params.set('period', period);
+  return url.pathname + (params.size ? `?${params}` : '');
 }
 
 export function rememberList(href: string, code: string) {
