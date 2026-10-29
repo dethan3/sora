@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "signals": [
+    {
+      "id": "semiconductor-equipment",
+      "title": "从 ASML 财报，观察半导体设备投入的传导",
+      "summary": "设备公司的收入变化，能否反映更广泛的扩产需求？沿着制造、设备与 AI 应用，比较三种基金覆盖方式。",
+      "directionIds": ["semiconductors", "ai"],
+      "eventDate": "2026-10-14",
+      "reviewedAt": "2026-10-29",
+      "status": "待验证",
+      "company": {
+        "symbol": "ASML",
+        "name": "ASML",
+        "role": "光刻设备 · 研究起点，不代表下列基金直接持有"
+      },
+      "facts": [
+        {
+          "text": "ASML 在 2026 年第三季度公告中披露，季度净销售额约 117 亿欧元，较第二季度约 93 亿欧元增加。",
+          "sourceId": "asml-q3"
+        },
+        {
+          "text": "公司披露当季售出 113 台新光刻系统，上一季度为 86 台。收入确认与设备交付节奏仍需结合后续披露阅读。",
+          "sourceId": "asml-q3"
+        }
+      ],
+      "hypothesis": "如果设备交付的增长伴随客户持续扩产，制造和设备环节可能出现更广泛的业务变化。单家公司单季数据还不足以确认整个行业的趋势。",
+      "chain": [
+        {
+          "title": "设备交付",
+          "text": "已披露事实：ASML 当季新光刻系统销售数量增加。"
+        },
+        {
+          "title": "制造投入",
+          "text": "待验证：客户扩产意愿是否持续，还是订单积压释放或交付时点变化。"
+        },
+        {
+          "title": "基金覆盖",
+          "text": "研究映射：分别查看半导体行业、AI 主题与宽基基金的投资范围，不能把产业联系当成持仓证明。"
+        }
+      ],
+      "counterpoints": [
+        "单季交付、验收与收入确认时点可能造成波动，不能直接外推未来增长。",
+        "客户资本开支、出口限制和终端需求可能让传导中断。",
+        "业务增长可能已经反映在价格中；这条线索尚未验证超额收益。"
+      ],
+      "checkpoints": [
+        {
+          "title": "下一次公司披露",
+          "question": "后续订单、交付和展望能否支持需求持续？",
+          "state": "待核对"
+        },
+        {
+          "title": "客户与同行验证",
+          "question": "制造商资本开支及其他设备公司的披露是否同向？",
+          "state": "待补充来源"
+        },
+        {
+          "title": "基金持仓核验",
+          "question": "取得带披露日期的持仓后，再确认公司权重、集中度和重叠。",
+          "state": "待获取持仓"
+        }
+      ],
+      "funds": [
+        {
+          "code": "SOXX",
+          "relation": "同领域",
+          "scope": "半导体行业",
+          "reason": "发行人将其目标定义为跟踪美国上市半导体股票组成的指数，可用于研究行业层面的覆盖。",
+          "difference": "行业集中度较高；行业覆盖不证明持有 ASML，也不代表纯设备敞口。",
+          "sourceId": "soxx",
+          "holdingsAsOf": null,
+          "weight": null
+        },
+        {
+          "code": "AIQ",
+          "relation": "相邻主题",
+          "scope": "AI 与大数据主题",
+          "reason": "发行人的投资范围涵盖 AI 应用及相关硬件，可沿需求端继续研究。",
+          "difference": "覆盖范围比设备环节更广，主题关联不代表设备业务收入占比。",
+          "sourceId": "aiq",
+          "holdingsAsOf": null,
+          "weight": null
+        },
+        {
+          "code": "QQQ",
+          "relation": "宽基参照",
+          "scope": "Nasdaq-100",
+          "reason": "以 Nasdaq-100 为跟踪对象，作为跨行业覆盖方式的对照。",
+          "difference": "指数包含多个行业；不能用它替代单一半导体公司的表现。",
+          "sourceId": "qqq",
+          "holdingsAsOf": null,
+          "weight": null
+        }
+      ],
+      "extension": {
+        "title": "下一条跨领域问题：算力扩张与电力、散热",
+        "text": "这是待研究的问题，目前没有在此线索中核验其数据或映射基金。先跟踪需求与供给证据，再判断是否建立独立线索。"
+      },
+      "sources": [
+        {
+          "id": "asml-q3",
+          "name": "ASML · 2026 Q3 业绩公告",
+          "url": "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026",
+          "publishedAt": "2026-10-14"
+        },
+        {
+          "id": "soxx",
+          "name": "iShares · SOXX 投资目标",
+          "url": "https://www.ishares.com/us/products/239705/ishares-phlx-semiconductor-etf",
+          "publishedAt": null
+        },
+        {
+          "id": "aiq",
+          "name": "Global X · AIQ 投资范围",
+          "url": "https://www.globalxetfs.com/funds/aiq",
+          "publishedAt": null
+        },
+        {
+          "id": "qqq",
+          "name": "Invesco · QQQ 产品资料",
+          "url": "https://www.invesco.com/us/en/financial-products/etfs/invesco-qqq-trust-series-1.html",
+          "publishedAt": null
+        }
+      ]
+    }
+  ]
+}

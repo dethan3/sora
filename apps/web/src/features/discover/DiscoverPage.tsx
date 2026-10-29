@@ -6,6 +6,7 @@ import { useDirections } from './DirectionProvider';
 import { fundLinkId } from '../../navigation/flow';
 import './discover.css';
 import { MarketNotice } from '../market/MarketProvider';
+import { ResearchFeed } from '../research/Research';
 
 export function DiscoverPage({ data }: { data: DemoData }) {
   const [params, setParams] = useSearchParams();
@@ -96,11 +97,11 @@ export function DiscoverPage({ data }: { data: DemoData }) {
         <div>
           <p className="eyebrow">YOUR NEXT PERSPECTIVE</p>
           <h1>发现市场</h1>
-          <p>从你关心的方向出发，连接市场、主题与基金。</p>
+          <p>从你关心的方向出发，发现线索，理解公司与基金的关联。</p>
         </div>
         <span className="discover-caption">保持好奇，逐步了解。</span>
       </header>
-      <MarketNotice />
+      <ResearchFeed />
       <section
         className={
           'my-directions' + (store.ids.length ? '' : ' my-directions-empty')
@@ -145,6 +146,7 @@ export function DiscoverPage({ data }: { data: DemoData }) {
           </div>
         ))}
       </section>
+      <MarketNotice />
       <div id="explore-directions" className="discover-explore-heading">
         <div>
           <p className="eyebrow">EXPLORE YOUR INTERESTS</p>

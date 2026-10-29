@@ -9,6 +9,7 @@ import { LocalNotice } from '../features/local/BackupTools';
 import { DirectionDetailPage } from '../features/discover/DirectionDetailPage';
 import { DirectionNotice } from '../features/discover/DirectionProvider';
 import { MarketProvider } from '../features/market/MarketProvider';
+import { ResearchPage } from '../features/research/Research';
 
 export function DataPages({ data }: { data: DemoData }) {
   return (
@@ -16,6 +17,7 @@ export function DataPages({ data }: { data: DemoData }) {
       <LocalNotice />
       <DirectionNotice />
       <Routes>
+        <Route path="/research/:id" element={<ResearchPage data={data} />} />
         <Route path="/discover" element={<DiscoverPage data={data} />} />
         <Route
           path="/discover/:id"

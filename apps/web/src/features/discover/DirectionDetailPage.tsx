@@ -7,6 +7,7 @@ import { directionKind, FollowDirection } from './DirectionCard';
 import './discover.css';
 import { MarketNotice } from '../market/MarketProvider';
 import { MarketPanel } from '../market/MarketPanel';
+import { RelatedResearch } from '../research/Research';
 export function DirectionDetailPage({ data }: { data: DemoData }) {
   const { id } = useParams();
   const [params] = useSearchParams();
@@ -36,6 +37,7 @@ export function DirectionDetailPage({ data }: { data: DemoData }) {
         </div>
         <FollowDirection direction={direction} />
       </header>
+      <RelatedResearch directionId={direction.id} />
       <MarketNotice />
       <div className="direction-detail-grid">
         <MarketPanel

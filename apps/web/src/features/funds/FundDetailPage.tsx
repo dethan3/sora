@@ -8,6 +8,7 @@ import { usePersonal } from '../local/PersonalProvider';
 import { MarketPanel } from '../market/MarketPanel';
 import { MarketNotice } from '../market/MarketProvider';
 import { fundMarketId } from '../market/model';
+import { RelatedResearch } from '../research/Research';
 
 export function historyWindow(
   history: Fund['history'],
@@ -62,6 +63,7 @@ export function FundDetailPage({ data }: { data: DemoData }) {
         />
         <WatchButton fund={fund} />
       </div>
+      <RelatedResearch fundCode={fund.code} />
       {data.source === 'reference-catalog' && <MarketNotice />}
       <div className="detail-grid">
         {data.source === 'reference-catalog' ? (
