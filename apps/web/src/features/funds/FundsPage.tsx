@@ -4,6 +4,7 @@ import { FundTable } from '../../components/FundTable';
 import { PageHeader, Panel } from '../../components/ui';
 import { Link } from 'react-router';
 import { listSource } from '../../navigation/flow';
+import { MarketNotice } from '../market/MarketProvider';
 
 export function FundsPage({ data }: { data: DemoData }) {
   const [params, setParams] = useSearchParams();
@@ -34,8 +35,9 @@ export function FundsPage({ data }: { data: DemoData }) {
       <PageHeader
         eyebrow="FUND LIBRARY"
         title="基金"
-        description="查找基金、查看净值走势，建立自己的关注列表。"
+        description="查看产品价格与走势，了解跟踪对象，建立自己的关注列表。"
       />
+      <MarketNotice />
       <Panel title="基金目录">
         <div className="filter-row">
           <div>

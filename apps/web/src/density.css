@@ -1,0 +1,108 @@
+/* Internal research screens share a compact reading scale; landing typography stays independent. */
+.app-shell:not(.is-home) .header-inner {
+  min-height: 68px;
+}
+.app-shell:not(.is-home) .brand {
+  font-size: 27px;
+}
+.app-shell:not(.is-home) main {
+  padding-top: 22px;
+  padding-bottom: 48px;
+}
+.app-shell:not(.is-home) .page-header {
+  margin: 12px 0 20px;
+}
+.app-shell:not(.is-home) .page-header h1,
+.app-shell:not(.is-home) .direction-detail-heading h1 {
+  font-size: 28px;
+  letter-spacing: -0.8px;
+  margin-bottom: 10px;
+}
+.app-shell:not(.is-home) .discover-heading h1 {
+  font-size: 28px !important;
+  margin-bottom: 8px;
+}
+.app-shell:not(.is-home) .discover-heading {
+  margin: 0 0 20px;
+}
+.app-shell:not(.is-home) .panel {
+  padding: 20px;
+}
+.app-shell:not(.is-home) .panel h2 {
+  margin-bottom: 16px;
+}
+.app-shell:not(.is-home) .my-directions {
+  padding: 18px;
+  margin-bottom: 24px;
+}
+.app-shell:not(.is-home) .discover-section-heading {
+  margin-bottom: 16px;
+}
+.app-shell:not(.is-home) .discover-section-heading h2 {
+  font-size: 18px;
+}
+.app-shell:not(.is-home) .discover-explore-heading {
+  margin-bottom: 18px;
+}
+.app-shell:not(.is-home) .discover-explore-heading h2 {
+  font-size: 22px;
+}
+.app-shell:not(.is-home) .direction-grid {
+  gap: 16px;
+}
+.app-shell:not(.is-home) .direction-card {
+  padding: 20px;
+}
+.app-shell:not(.is-home) .direction-title {
+  font-size: 21px;
+}
+.app-shell:not(.is-home) .direction-category {
+  margin-top: 24px;
+}
+.app-shell:not(.is-home) .direction-detail-heading {
+  margin-bottom: 20px;
+}
+.app-shell:not(.is-home) .market-quote-value strong {
+  font-size: 32px;
+}
+.app-shell:not(.is-home) .market-quote-compact .market-quote-value strong {
+  font-size: 22px;
+}
+.app-shell:not(.is-home) .action {
+  padding: 10px 16px;
+  gap: 16px;
+}
+.app-shell:not(.is-home) .market-notice {
+  margin-bottom: 18px;
+}
+@media (min-width: 768px) {
+  .app-shell:not(.is-home) .header-actions button {
+    min-height: 38px;
+  }
+  .app-shell:not(.is-home) .button-secondary {
+    padding: 9px 14px;
+  }
+}
+@media (max-width: 767px) {
+  .app-shell:not(.is-home) .header-inner {
+    min-height: 64px;
+  }
+  .app-shell:not(.is-home) main {
+    padding-top: 16px;
+  }
+  .app-shell:not(.is-home) .panel,
+  .app-shell:not(.is-home) .direction-card {
+    padding: 16px;
+  }
+  .app-shell:not(.is-home) .page-header h1,
+  .app-shell:not(.is-home) .direction-detail-heading h1 {
+    font-size: 24px;
+  }
+  .app-shell:not(.is-home) .discover-heading h1 {
+    font-size: 24px !important;
+  }
+  .app-shell:not(.is-home) .action,
+  .app-shell:not(.is-home) .direction-follow {
+    min-height: 44px;
+  }
+}

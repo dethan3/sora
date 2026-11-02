@@ -1,11 +1,9 @@
 import { Link } from 'react-router';
 import type { DemoData } from '../data/demo';
 import { ActionLink } from '../components/ui';
-import { usePersonal } from '../features/local/PersonalProvider';
 import { LandingSections } from '../components/landing/LandingSections';
 
 export function Welcome({ data }: { data?: DemoData }) {
-  const personal = usePersonal();
   return (
     <>
       <section className="hero">
@@ -13,7 +11,7 @@ export function Welcome({ data }: { data?: DemoData }) {
         <div className="hero-copy">
           <p className="eyebrow">
             <span className="eyebrow-line" />
-            YOUR INVESTMENT, IN PERSPECTIVE
+            YOUR FUND RESEARCH ASSISTANT
           </p>
           <h1>
             让每一份投资，
@@ -21,17 +19,14 @@ export function Welcome({ data }: { data?: DemoData }) {
             <span>清晰可见。</span>
           </h1>
           <p className="hero-description">
-            从发现市场，到理解你的组合。
+            从你关心的方向，发现值得研究的变化。
             <br />
-            把基金、关注与持仓连在一起，看清变化的全貌。
+            沿着事实、公司与基金的关联，建立有据可循的观察。
           </p>
           <div className="hero-actions">
-            <ActionLink to="/funds">浏览基金</ActionLink>
-            <Link className="text-link" to="/portfolio">
-              {personal.state.positions.length
-                ? '回到我的组合'
-                : '建立我的组合'}{' '}
-              <span aria-hidden="true">→</span>
+            <ActionLink to="/discover">发现研究线索</ActionLink>
+            <Link className="text-link" to="/research/semiconductor-equipment">
+              阅读第一条研究 <span aria-hidden="true">→</span>
             </Link>
           </div>
           <p className="hero-caption">无需账户，即可开始探索</p>
@@ -39,7 +34,7 @@ export function Welcome({ data }: { data?: DemoData }) {
         <div className="preview-scene">
           <div className="preview-caption">
             <span className="status-dot" />
-            从兴趣开始 <span>发现 · 研究 · 关注</span>
+            智能投研助手 <span>发现 · 研究 · 验证</span>
           </div>
           <section className="portfolio-preview" aria-label="Sora 观察路径">
             <div className="preview-top">
@@ -52,7 +47,7 @@ export function Welcome({ data }: { data?: DemoData }) {
               <p>找到想持续了解的方向</p>
               <strong style={{ fontSize: '28px' }}>AI · 半导体 · 黄金</strong>
               <div className="preview-profit">
-                <span>连接市场与基金，建立自己的观察路径。</span>
+                <span>从事件出发，理解公司与基金的关联。</span>
               </div>
             </div>
             <div className="illustration-chart">

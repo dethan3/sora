@@ -17,7 +17,8 @@ export function listSource(value: string | null, depth = 0): string | null {
   if (
     url.origin !== 'https://sora.invalid' ||
     (!listPaths.includes(url.pathname) &&
-      !/^\/discover\/[a-z0-9-]+$/.test(url.pathname))
+      !/^\/discover\/[a-z0-9-]+$/.test(url.pathname) &&
+      !/^\/research\/[a-z0-9-]+$/.test(url.pathname))
   )
     return null;
   const params = new URLSearchParams();
@@ -27,11 +28,22 @@ export function listSource(value: string | null, depth = 0): string | null {
       : url.pathname === '/portfolio'
         ? ['currency']
         : url.pathname === '/discover'
-          ? ['q', 'market', 'kind']
+          ? ['q', 'market', 'kind', 'view', 'company']
           : [];
   for (const key of keys) {
     const item = url.searchParams.get(key);
     if (item) params.set(key, item);
+  }
+  const period = url.searchParams.get('period');
+  if (
+    url.pathname.startsWith('/discover/') &&
+    period &&
+    ['1W', '1M', '3M', '1Y'].includes(period)
+  )
+    params.set('period', period);
+  if (url.pathname.startsWith('/research/')) {
+    const from = researchSource(url.searchParams.get('from'), depth + 1);
+    if (from) params.set('from', from);
   }
   if (url.pathname === '/funds' || url.pathname.startsWith('/discover/')) {
     const from = listSource(url.searchParams.get('from'), depth + 1);
@@ -42,6 +54,13 @@ export function listSource(value: string | null, depth = 0): string | null {
       params.set('from', from);
   }
   return url.pathname + (params.size ? `?${params}` : '');
+}
+
+export function researchSource(value: string | null, depth = 0): string | null {
+  if (depth > 3) return null;
+  const source = listSource(value, depth);
+  if (source && !source.startsWith('/research/')) return source;
+  return value && /^\/funds\/[a-zA-Z0-9.-]+$/.test(value) ? value : null;
 }
 
 export function detailUrl(code: string, source: string) {
@@ -64,7 +83,11 @@ export function detailSource(value: string | null): string | null {
   )
     return null;
   const from = listSource(url.searchParams.get('from'));
-  return url.pathname + (from ? `?${new URLSearchParams({ from })}` : '');
+  const params = new URLSearchParams(from ? { from } : {});
+  const period = url.searchParams.get('period');
+  if (period && ['1W', '1M', '3M', '1Y'].includes(period))
+    params.set('period', period);
+  return url.pathname + (params.size ? `?${params}` : '');
 }
 
 export function rememberList(href: string, code: string) {
@@ -109,12 +132,16 @@ export const fundLinkId = (code: string) =>
 export const editPositionId = (code: string) =>
   `edit-position-${encodeURIComponent(code)}`;
 export const sourceLabel = (href: string) =>
-  href.startsWith('/watchlist')
-    ? '我的关注'
-    : href.startsWith('/portfolio')
-      ? '我的组合'
-      : href.startsWith('/discover')
-        ? href.startsWith('/discover/')
-          ? '观察方向'
-          : '发现市场'
-        : '基金目录';
+  href.startsWith('/research/')
+    ? '研究线索'
+    : href.startsWith('/watchlist')
+      ? '我的关注'
+      : href.startsWith('/portfolio')
+        ? '我的组合'
+        : href.startsWith('/discover')
+          ? href.startsWith('/discover/')
+            ? '观察方向'
+            : '发现市场'
+          : href.startsWith('/funds/')
+            ? '基金详情'
+            : '基金目录';

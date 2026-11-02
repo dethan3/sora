@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Fund } from '../../data/demo';
 
-export const currencySchema = z.enum(['CNY', 'USD', 'KRW']);
+export const currencySchema = z.enum(['CNY', 'USD', 'KRW', 'HKD']);
 export type Currency = z.infer<typeof currencySchema>;
 export const currencyDigits = (currency: Currency) =>
   currency === 'KRW' ? 0 : 2;
@@ -54,7 +54,7 @@ export function valuePosition(position: Position, fund?: Fund): number | null {
   return Number((product + divisor / 2n) / divisor);
 }
 export function summarizePositions(positions: Position[], funds: Fund[]) {
-  return (['CNY', 'USD', 'KRW'] as const).flatMap((currency) => {
+  return (['CNY', 'USD', 'HKD', 'KRW'] as const).flatMap((currency) => {
     const rows = positions.filter((p) => p.currency === currency);
     if (!rows.length) return [];
     const values = rows.map((p) =>

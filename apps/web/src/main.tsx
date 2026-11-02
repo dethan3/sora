@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { App } from './App';
 import './styles.css';
+import './density.css';
 import { pwa } from './pwa/runtime';
 
 pwa.start();

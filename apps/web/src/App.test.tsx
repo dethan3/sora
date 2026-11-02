@@ -24,7 +24,7 @@ function open(path: string) {
 describe('M0 routes', () => {
   it.each<[string, string | RegExp]>([
     ['/', /让每一份投资/],
-    ['/discover', '发现市场'],
+    ['/discover', 'AI 芯片'],
     ['/funds', '基金'],
     ['/watchlist', '我的关注'],
     ['/portfolio', '我的组合'],
@@ -37,14 +37,16 @@ describe('M0 routes', () => {
       screen.getByRole('link', { name: navigationLabel(path) }),
     ).toHaveAttribute('aria-current', 'page');
   });
-  it('navigates from Welcome to the fund library', async () => {
+  it('navigates from Welcome to research discovery', async () => {
     open('/');
     const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
-    await userEvent.click(within(hero).getByRole('link', { name: '浏览基金' }));
+    await userEvent.click(
+      within(hero).getByRole('link', { name: '发现研究线索' }),
+    );
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: '基金',
+        name: 'AI 芯片',
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveFocus();

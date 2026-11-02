@@ -179,7 +179,7 @@ describe('continuous product journeys', () => {
       JSON.stringify({ ...emptyPersonal(), positions: [position] }),
     );
     open(['/']);
-    await userEvent.click(screen.getByRole('link', { name: '回到我的组合' }));
+    await userEvent.click(screen.getByRole('link', { name: '我的组合' }));
     await click('+ 录入持仓');
     expect(screen.getByRole('combobox')).toHaveValue('');
     expect(screen.getByRole('combobox')).toHaveFocus();
@@ -312,7 +312,7 @@ describe('continuous product journeys', () => {
 
   it('provides a real first-use action and a recoverable empty search', async () => {
     open();
-    await userEvent.click(screen.getByRole('link', { name: '建立我的组合' }));
+    await userEvent.click(screen.getByRole('link', { name: '我的组合' }));
     await click('录入第一笔持仓');
     expect(screen.getByRole('combobox')).toHaveValue('');
     await userEvent.click(screen.getByRole('link', { name: '基金' }));

@@ -81,6 +81,19 @@ export function SiteHeader() {
               end={path !== '/funds' && path !== '/discover'}
               to={path}
               key={path}
+              className={({ isActive }) =>
+                isActive ||
+                (path === '/discover' &&
+                  location.pathname.startsWith('/research/'))
+                  ? 'active'
+                  : undefined
+              }
+              aria-current={
+                path === '/discover' &&
+                location.pathname.startsWith('/research/')
+                  ? 'page'
+                  : undefined
+              }
               onClick={() => navigate(path)}
             >
               {label}

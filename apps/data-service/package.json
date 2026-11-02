@@ -1,0 +1,20 @@
+{
+  "name": "@sora/data-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/*.test.ts",
+    "update": "node src/cli.ts update",
+    "serve": "node src/cli.ts serve",
+    "export": "node src/cli.ts export"
+  },
+  "dependencies": {
+    "@sora/market-data": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}
