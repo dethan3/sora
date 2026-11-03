@@ -390,3 +390,146 @@
     min-height: 44px;
   }
 }
+
+/* Sora 2.0: Research Pros/Cons Tug-of-War & Hub Styles */
+.research-tug-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 10px 0 14px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #f8f9fc;
+  border: 1px solid var(--line);
+}
+.tug-col small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.tug-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.research-tug-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.tug-board-col {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.tug-board-col h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.tug-board-col.is-pro {
+  border-left: 3px solid #1f9d68;
+}
+.tug-board-col.is-con {
+  border-left: 3px solid #d97706;
+}
+.research-theme-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.research-theme-tabs button {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+}
+.research-theme-tabs button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: #f0edff;
+  color: var(--accent);
+  font-weight: 600;
+}
+.research-hub-list {
+  display: grid;
+  gap: 18px;
+}
+.research-hub-item {
+  display: grid;
+  gap: 10px;
+}
+.saved-research-card-wrap + .saved-research-card-wrap {
+  margin-top: 16px;
+}
+.saved-checkpoints-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.research-verdict-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f8f9fc;
+  border: 1px solid var(--line);
+}
+.verdict-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.verdict-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.verdict-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.verdict-btn.is-valid.is-active {
+  border-color: #1f9d68;
+  background: #e9f7ef;
+  color: #1c6b43;
+  font-weight: 600;
+}
+.verdict-btn.is-watch.is-active {
+  border-color: #2f5597;
+  background: #eef3ff;
+  color: #2f5597;
+  font-weight: 600;
+}
+.verdict-btn.is-invalid.is-active {
+  border-color: #d97706;
+  background: #fef3e6;
+  color: #965315;
+  font-weight: 600;
+}
+.verdict-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+@media (max-width: 640px) {
+  .research-tug-preview,
+  .research-tug-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

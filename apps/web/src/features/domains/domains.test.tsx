@@ -5,12 +5,18 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import catalog from '../../../public/data/catalog.json';
 import raw from './ai-chips.json';
+import rawStorage from './ai-storage.json';
 import {
   aiChips,
+  aiStorage,
   domainSchema,
   equityOverlap,
+  fundAccessProfile,
+  fundIngredients,
   fundSnapshot,
   holdingFor,
+  summarizePortfolioImpacts,
+  themeExposure,
   topTenWeight,
 } from './model';
 import { research } from '../research/model';
@@ -31,10 +37,16 @@ function open(path = '/discover') {
   return { router, ...render(<RouterProvider router={router} />) };
 }
 
-it('joins one sourced domain to existing products and research without invented quote data', () => {
+it('joins sourced domains (AI Chips & AI Storage) to existing products and research without invented quote data', () => {
   expect(domainSchema.safeParse(raw).success).toBe(true);
+  expect(domainSchema.safeParse(rawStorage).success).toBe(true);
   expect(
     aiChips.fundSnapshots.every((item) =>
+      catalog.funds.some((fund) => fund.code === item.code),
+    ),
+  ).toBe(true);
+  expect(
+    aiStorage.fundSnapshots.every((item) =>
       catalog.funds.some((fund) => fund.code === item.code),
     ),
   ).toBe(true);
@@ -46,11 +58,31 @@ it('joins one sourced domain to existing products and research without invented 
     ),
   ).toBe(true);
   expect(
+    aiStorage.events.every(
+      (item) =>
+        !item.researchId ||
+        research.some((signal) => signal.id === item.researchId),
+    ),
+  ).toBe(true);
+  expect(
     aiChips.events.find((item) => item.company === 'NVDA')?.period,
   ).toContain('2027 财年');
   expect(fundSnapshot('QQQ')).toBeUndefined();
   expect(topTenWeight(fundSnapshot('SOXX')!)).toBe(62.43);
   expect(topTenWeight(fundSnapshot('AIQ')!)).toBe(32.73);
+});
+
+it('computes theme exposures and fund ingredient breakdowns for AI Storage and AI Chips', () => {
+  const soxx = fundSnapshot('SOXX')!;
+  const aiq = fundSnapshot('AIQ')!;
+  expect(themeExposure(soxx, 'ai-storage').weight).toBe(13.56);
+  expect(themeExposure(soxx, 'ai-chips').weight).toBe(18.78);
+  expect(themeExposure(aiq, 'ai-storage').weight).toBe(0);
+  expect(themeExposure(aiq, 'ai-chips').weight).toBe(5.73);
+  const soxxIngredients = fundIngredients(soxx);
+  expect(soxxIngredients.storageWeight).toBe(13.56);
+  expect(soxxIngredients.chipsWeight).toBe(18.78);
+  expect(soxxIngredients.otherReportedWeight).toBe(67.62);
 });
 
 it('distinguishes a partial list from verified absence and blocks incomplete overlap', () => {
@@ -89,7 +121,7 @@ it('rejects duplicated holdings, bad evidence, future records and partial data c
   expect(domainSchema.safeParse(future).success).toBe(false);
 });
 
-it('opens with actual domain information without a question, login or holdings entry', async () => {
+it('opens with actual domain information and concise stock impact tags without login or holdings entry', async () => {
   open();
   expect(
     await screen.findByRole('heading', { level: 1, name: 'AI 芯片' }),
@@ -98,6 +130,9 @@ it('opens with actual domain information without a question, login or holdings e
     screen.getByRole('heading', { name: '这个领域，发生了什么' }),
   ).toBeInTheDocument();
   expect(
+    screen.getByRole('region', { name: '股票近期影响标签卡' }),
+  ).toHaveTextContent('数据中心收入高增');
+  expect(
     screen.getByText('2027 财年第二季度，结束于 2026-07-26', { exact: false }),
   ).toBeInTheDocument();
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -105,6 +140,28 @@ it('opens with actual domain information without a question, login or holdings e
     screen.queryByRole('button', { name: /与我相关/ }),
   ).not.toBeInTheDocument();
   expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+});
+
+it('switches to AI Storage value chain, filters by node and maps Micron (MU) to SOXX', async () => {
+  const { router } = open();
+  await userEvent.click(
+    await screen.findByRole('button', { name: /AI 存储产业链/ }),
+  );
+  expect(router.state.location.search).toBe('?theme=ai-storage');
+  expect(
+    screen.getByRole('heading', { level: 1, name: 'AI 存储产业链' }),
+  ).toBeInTheDocument();
+  const impactWall = screen.getByRole('region', { name: '股票近期影响标签卡' });
+  expect(impactWall).toHaveTextContent('HBM 产能已锁死');
+  expect(impactWall).toHaveTextContent('手机电脑复苏慢');
+  await userEvent.click(
+    screen.getByRole('button', { name: /03 存储制造与封装设备/ }),
+  );
+  expect(router.state.location.search).toContain('node=storage-equipment');
+  expect(impactWall).toHaveTextContent('Lam Research 泛林');
+  expect(impactWall).not.toHaveTextContent('Western Digital 西部数据');
+  const bridge = screen.getByRole('complementary', { name: '公司与基金关联' });
+  expect(bridge).toHaveTextContent('13.56%');
 });
 
 it('connects a company selection to dated direct fund weights and preserves the return state', async () => {
@@ -126,6 +183,7 @@ it('connects a company selection to dated direct fund weights and preserves the 
   expect(router.state.location.pathname).toBe('/funds/SOXX');
   const structure = screen.getByRole('region', { name: '基金持仓结构' });
   expect(within(structure).getByText('62.43%')).toBeInTheDocument();
+  expect(within(structure).getByText('13.56%')).toBeInTheDocument();
   await userEvent.click(
     within(structure).getByText('查看 30 项已核对持仓及来源'),
   );
@@ -210,4 +268,43 @@ it('handles unsupported companies explicitly and keeps old market bookmarks avai
   expect(
     listSource('/discover?company=NVDA&redirect=https://outside.test'),
   ).toBe('/discover?company=NVDA');
+});
+
+it('summarizes portfolio impacts across single-stock snapshots and cross-market broad ETFs', () => {
+  const summary = summarizePortfolioImpacts(['SOXX', '2800.HK']);
+  expect(summary.verifiedFundCodes).toEqual(['SOXX']);
+  expect(summary.broadFundProfiles.map((item) => item.code)).toEqual([
+    '2800.HK',
+  ]);
+  expect(summary.companies.map((item) => item.symbol)).toContain('MU');
+  expect(summary.positiveTags).toContainEqual({
+    source: 'MU',
+    label: 'HBM 产能已锁死',
+  });
+  expect(fundAccessProfile('2800.HK')?.accessTag).toContain('HKD');
+});
+
+it('compares 2 to 3 funds side-by-side on /funds and shows portfolio impact health check on /watchlist', async () => {
+  const { router } = open('/funds');
+  const selector = await screen.findByRole('group', {
+    name: '选择并排对比的基金（最多3只）',
+  });
+  await userEvent.click(
+    within(selector).getByRole('button', { name: '2800.HK · 盈富基金' }),
+  );
+  expect(screen.getAllByText('港股 ETF · HKD 港元柜台').length).toBeGreaterThan(
+    0,
+  );
+  expect(screen.getByText(/互联网龙头回购分红/)).toBeInTheDocument();
+
+  await userEvent.click(
+    screen.getByRole('button', { name: '关注iShares 半导体 ETF' }),
+  );
+  await userEvent.click(screen.getByRole('button', { name: '关注盈富基金' }));
+  await router.navigate('/watchlist');
+  const health = await screen.findByRole('region', {
+    name: '关注组合 · 近期核心影响体检',
+  });
+  expect(health).toHaveTextContent('MU · HBM 产能已锁死');
+  expect(health).toHaveTextContent('2800.HK · 互联网龙头回购分红');
 });

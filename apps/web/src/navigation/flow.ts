@@ -1,4 +1,11 @@
-const listPaths = ['/funds', '/discover', '/watchlist', '/portfolio'];
+const listPaths = [
+  '/funds',
+  '/discover',
+  '/research',
+  '/watchlist',
+  '/following',
+  '/portfolio',
+];
 const positionKey = 'sora.navigation.v1';
 type ReturnPoint = { href: string; code: string; y: number };
 let memory: ReturnPoint[] = [];
@@ -28,7 +35,7 @@ export function listSource(value: string | null, depth = 0): string | null {
       : url.pathname === '/portfolio'
         ? ['currency']
         : url.pathname === '/discover'
-          ? ['q', 'market', 'kind', 'view', 'company']
+          ? ['q', 'market', 'kind', 'view', 'company', 'theme', 'node']
           : [];
   for (const key of keys) {
     const item = url.searchParams.get(key);
@@ -132,9 +139,9 @@ export const fundLinkId = (code: string) =>
 export const editPositionId = (code: string) =>
   `edit-position-${encodeURIComponent(code)}`;
 export const sourceLabel = (href: string) =>
-  href.startsWith('/research/')
+  href.startsWith('/research/') || href === '/research'
     ? '研究线索'
-    : href.startsWith('/watchlist')
+    : href.startsWith('/watchlist') || href.startsWith('/following')
       ? '我的关注'
       : href.startsWith('/portfolio')
         ? '我的组合'

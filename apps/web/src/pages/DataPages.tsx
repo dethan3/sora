@@ -9,7 +9,7 @@ import { LocalNotice } from '../features/local/BackupTools';
 import { DirectionDetailPage } from '../features/discover/DirectionDetailPage';
 import { DirectionNotice } from '../features/discover/DirectionProvider';
 import { MarketProvider } from '../features/market/MarketProvider';
-import { ResearchPage } from '../features/research/Research';
+import { ResearchHubPage, ResearchPage } from '../features/research/Research';
 import { DomainPage } from '../features/domains/DomainPage';
 
 function Discovery({ data }: { data: DemoData }) {
@@ -26,6 +26,7 @@ export function DataPages({ data }: { data: DemoData }) {
       <LocalNotice />
       <DirectionNotice />
       <Routes>
+        <Route path="/research" element={<ResearchHubPage />} />
         <Route path="/research/:id" element={<ResearchPage data={data} />} />
         <Route path="/discover" element={<Discovery data={data} />} />
         <Route
@@ -35,6 +36,7 @@ export function DataPages({ data }: { data: DemoData }) {
         <Route path="/funds" element={<FundsPage data={data} />} />
         <Route path="/funds/:code" element={<FundDetailPage data={data} />} />
         <Route path="/watchlist" element={<WatchlistPage data={data} />} />
+        <Route path="/following" element={<WatchlistPage data={data} />} />
         <Route path="/portfolio" element={<PortfolioPage data={data} />} />
       </Routes>
     </MarketProvider>

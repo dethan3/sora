@@ -55,7 +55,7 @@ it('requires dated traceable evidence and does not invent holdings or direct own
   future.signals[0].eventDate = '2099-01-01';
   expect(researchSchema.safeParse(future).success).toBe(false);
   expect(relatedSignals(['gold'], ['IAU'])).toHaveLength(0);
-  expect(relatedSignals(['ai'], ['SOXX'])).toHaveLength(1);
+  expect(relatedSignals(['ai'], ['SOXX'])).toHaveLength(2);
 });
 
 it('connects followed interests to research without requiring positions', async () => {
@@ -67,8 +67,10 @@ it('connects followed interests to research without requiring positions', async 
   await userEvent.click(
     screen.getByRole('button', { name: '关注方向：半导体' }),
   );
-  expect(screen.getByText('关联你关注的方向或自选基金')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('link', { name: '展开研究 →' }));
+  expect(
+    screen.getAllByText('关联你关注的方向或自选基金')[0],
+  ).toBeInTheDocument();
+  await userEvent.click(screen.getAllByRole('link', { name: '展开研究 →' })[0]);
   expect(
     await screen.findByRole('heading', { level: 1, name: title }),
   ).toBeInTheDocument();
@@ -76,6 +78,22 @@ it('connects followed interests to research without requiring positions', async 
   expect(screen.getByText('哪些情况会削弱这条线索？')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /^发现$/ })).toHaveClass('active');
   expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+});
+
+it('renders the AI Storage hypothesis with concise pros/cons tags and direct MU fund mapping', async () => {
+  open('/research/ai-storage-hbm');
+  expect(
+    await screen.findByRole('heading', {
+      level: 1,
+      name: '从美光与海力士财报，看 AI 存储缺货与扩产传导',
+    }),
+  ).toBeInTheDocument();
+  const tug = screen.getByRole('region', { name: '三秒看懂正反方拔河' });
+  expect(tug).toHaveTextContent('美光 HBM 产能高度锁死');
+  expect(tug).toHaveTextContent('手机电脑消费存储复苏慢');
+  expect(screen.getByText('直接持有 MU')).toBeInTheDocument();
+  expect(screen.getByText('7.70%')).toBeInTheDocument();
+  expect(screen.getByText('13.56%')).toBeInTheDocument();
 });
 
 it('preserves independent research follows on revisit and allows removal in watchlist', async () => {
@@ -177,7 +195,7 @@ it('handles missing research links without creating data', async () => {
 it('keeps discovery filters across research, fund details and the return journey', async () => {
   const { router } = open('/discover?q=芯片&kind=theme');
   await userEvent.click(
-    await screen.findByRole('link', { name: '展开研究 →' }),
+    (await screen.findAllByRole('link', { name: '展开研究 →' }))[0],
   );
   await userEvent.click(
     screen.getAllByRole('link', { name: '研究这只基金 →' })[0],
@@ -196,7 +214,7 @@ it('keeps discovery filters across research, fund details and the return journey
 it('returns to the original fund when research is opened from a fund detail', async () => {
   const { router } = open('/funds/SOXX');
   await userEvent.click(
-    await screen.findByRole('link', { name: '展开研究 →' }),
+    (await screen.findAllByRole('link', { name: '展开研究 →' }))[0],
   );
   await userEvent.click(screen.getByRole('link', { name: '← 基金详情' }));
   expect(router.state.location.pathname).toBe('/funds/SOXX');
@@ -213,4 +231,28 @@ it('opens a research chapter without resetting its position to the page start', 
       (element) => (element as HTMLElement).id === 'fund-mapping',
     ),
   ).toBe(true);
+});
+
+it('records 3-state research check-in verdicts and syncs them into watchlist', async () => {
+  const { router } = open('/research/ai-storage-hbm');
+  const verdictGroup = await screen.findByRole('group', {
+    name: /个人复盘打卡：从美光与海力士财报/,
+  });
+  await userEvent.click(
+    within(verdictGroup).getByRole('button', { name: '👍 逻辑继续成立' }),
+  );
+  expect(readResearch().ids).toEqual(['ai-storage-hbm']);
+  expect(readResearch().verdicts).toEqual({ 'ai-storage-hbm': 'valid' });
+
+  await act(async () => {
+    await router.navigate('/watchlist');
+  });
+  const savedRegion = await screen.findByRole('region', {
+    name: '关注的研究线索',
+  });
+  expect(savedRegion).toHaveTextContent('当前判断：顺风驱动仍在兑现');
+  await userEvent.click(
+    within(savedRegion).getByRole('button', { name: '🤔 存疑观望' }),
+  );
+  expect(readResearch().verdicts).toEqual({ 'ai-storage-hbm': 'watch' });
 });

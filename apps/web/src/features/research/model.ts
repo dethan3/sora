@@ -6,8 +6,11 @@ const date = z.iso.date();
 const signalSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/),
+    themeId: z.enum(['ai-chips', 'ai-storage']).optional(),
     title: text,
     summary: text,
+    prosTags: z.array(z.string().min(2).max(20)).min(1).max(4).optional(),
+    consTags: z.array(z.string().min(2).max(20)).min(1).max(4).optional(),
     directionIds: z.array(text).min(1),
     eventDate: date,
     reviewedAt: date,

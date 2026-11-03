@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "id": "ai-storage",
+  "name": "AI 存储产业链",
+  "tldr": "AI 训练与推理不仅费显卡，还极度消耗高速内存（HBM）与企业硬盘（eSSD）。上游原厂与设备已现业绩拐点，但仍需留意消费电子周期的分化。",
+  "description": "沿着 HBM 高速内存、企业级固态硬盘与存储制造设备，看清公司近期影响与基金真实配料。",
+  "reviewedAt": "2026-10-29",
+  "nodes": [
+    {
+      "id": "hbm-memory",
+      "title": "HBM 与高速内存",
+      "subtitle": "紧贴 AI 加速卡的显存核心"
+    },
+    {
+      "id": "enterprise-ssd",
+      "title": "企业级大容量存储",
+      "subtitle": "AI 数据湖与语料库高速读写"
+    },
+    {
+      "id": "storage-equipment",
+      "title": "存储制造与封装设备",
+      "subtitle": "3D NAND 堆叠与 HBM 硅通孔刻蚀"
+    }
+  ],
+  "companies": [
+    {
+      "symbol": "MU",
+      "name": "Micron 美光",
+      "nodeId": "hbm-memory",
+      "role": "HBM 与数据中心内存",
+      "roleTag": "AI 内存主力",
+      "purityTag": "纯存储大厂",
+      "description": "专注 DRAM 与 NAND 存储芯片；HBM3e 已进入主流 AI 加速卡供应链，但消费级业务仍受 PC 与手机换机节奏影响。",
+      "impactTags": [
+        { "label": "HBM 产能已锁死", "tone": "positive" },
+        { "label": "数据中心收入翻倍", "tone": "positive" },
+        { "label": "手机电脑复苏慢", "tone": "headwind" },
+        { "label": "盯下季毛利率斜率", "tone": "watch" }
+      ],
+      "sourceId": "micron-results"
+    },
+    {
+      "symbol": "SKHY",
+      "name": "SK Hynix 海力士",
+      "nodeId": "hbm-memory",
+      "role": "HBM 领军原厂",
+      "roleTag": "HBM 份额龙头",
+      "purityTag": "纯存储大厂",
+      "description": "全球 HBM 市场先发龙头，受益于高阶 AI 服务器内存出货，需同时观察行业扩产后的价格博弈。",
+      "impactTags": [
+        { "label": "HBM3e 核心供货", "tone": "positive" },
+        { "label": "高端内存推升盈利", "tone": "positive" },
+        { "label": "同行扩产加剧竞争", "tone": "headwind" },
+        { "label": "盯下代 HBM 量产", "tone": "watch" }
+      ],
+      "sourceId": "skhynix-results"
+    },
+    {
+      "symbol": "WDC",
+      "name": "Western Digital 西部数据",
+      "nodeId": "enterprise-ssd",
+      "role": "企业硬盘与闪存",
+      "roleTag": "数据中心存储",
+      "purityTag": "闪存+机械盘",
+      "description": "同时覆盖云数据中心大容量近线硬盘（HDD）与企业级闪存（SSD），业务不等于纯 AI 芯片。",
+      "impactTags": [
+        { "label": "云厂大容量盘热销", "tone": "positive" },
+        { "label": "云端收入占比过半", "tone": "positive" },
+        { "label": "含传统机械盘周期", "tone": "headwind" },
+        { "label": "盯云客户采购持续性", "tone": "watch" }
+      ],
+      "sourceId": "wdc-results"
+    },
+    {
+      "symbol": "LRCX",
+      "name": "Lam Research 泛林",
+      "nodeId": "storage-equipment",
+      "role": "存储刻蚀与沉积设备",
+      "roleTag": "存储造芯机器",
+      "purityTag": "多工序设备厂",
+      "description": "在 3D NAND 高层数堆叠和 HBM 先进封装（TSV）刻蚀环节占据关键位置，受益于存储厂产线升级。",
+      "impactTags": [
+        { "label": "存储升级拉动设备", "tone": "positive" },
+        { "label": "先进封装订单回暖", "tone": "positive" },
+        { "label": "受区域出口管制约束", "tone": "headwind" },
+        { "label": "盯存储厂明年扩产", "tone": "watch" }
+      ],
+      "sourceId": "lrcx-results"
+    }
+  ],
+  "events": [
+    {
+      "id": "micron-q4-fy2026",
+      "company": "MU",
+      "publishedAt": "2026-09-25",
+      "period": "2026 财年第四季度，结束于 2026-08-28",
+      "title": "HBM 产能高度锁定，数据中心需求领跑",
+      "tags": ["🟢 HBM 订单锁死", "🟢 数据中心高增", "🟠 消费电子温和"],
+      "fact": "美光披露当季总营收约 77.5 亿美元，同比增长 93%；数据中心业务受 AI 高带宽内存（HBM）与企业级 SSD 拉动创下季度新高。",
+      "interpretation": "AI 服务器对高带宽内存的拉动已体现在财务收入上，但传统 PC 和智能手机客户的库存消化节奏仍需分开评估。",
+      "watch": "后续 HBM 良率、毛利率爬坡幅度以及非 AI 存储价格走势。",
+      "sourceId": "micron-results",
+      "researchId": "ai-storage-hbm"
+    },
+    {
+      "id": "skhynix-q3-2026",
+      "company": "SKHY",
+      "publishedAt": "2026-10-24",
+      "period": "2026 年第三季度",
+      "title": "高端 HBM 与企业级 SSD 推动营业利润创新高",
+      "tags": ["🟢 HBM 占比提升", "🟢 营业利润新高", "🔍 盯明年供需平衡"],
+      "fact": "SK 海力士披露 2026 年第三季度营收约 17.57 万亿韩元，HBM 销售额环比显著增长，占 DRAM 总收入比重持续扩大。",
+      "interpretation": "高端 AI 内存具备较强的溢价能力，但需留意三星与美光产能跟进后的市场份额变化。",
+      "watch": "12 层 HBM3e 交付进度及下一代 HBM4 客户认证节点。",
+      "sourceId": "skhynix-results",
+      "researchId": "ai-storage-hbm"
+    },
+    {
+      "id": "wdc-q1-fy2027",
+      "company": "WDC",
+      "publishedAt": "2026-10-24",
+      "period": "2027 财年第一季度，结束于 2026-09-27",
+      "title": "云端存储收入同比增长超一倍，企业级需求回暖",
+      "tags": ["🟢 云端收入翻倍", "🟠 消费与终端平淡", "🔍 盯闪存分拆进展"],
+      "fact": "西部数据披露当季营收约 41.0 亿美元，其中云端业务（Cloud）收入约 22.1 亿美元，占总营收 54%。",
+      "interpretation": "AI 数据中心不仅需要高速内存，也需要大容量存储承载训练数据；但公司同时包含 HDD 与 NAND，不能简单等同于纯 HBM 原厂。",
+      "watch": "云服务商资本开支节奏及企业级 SSD 价格弹性。",
+      "sourceId": "wdc-results",
+      "researchId": "ai-storage-hbm"
+    },
+    {
+      "id": "lrcx-q1-fy2027",
+      "company": "LRCX",
+      "publishedAt": "2026-10-23",
+      "period": "2027 财年第一季度，结束于 2026-09-29",
+      "title": "存储产线技术升级与先进封装带动设备出货",
+      "tags": ["🟢 存储升级受益", "🟢 先进封装增长", "🟠 区域管制不确定"],
+      "fact": "泛林集团披露当季营收约 41.7 亿美元，系统收入中存储芯片客户（NVM 与 DRAM）产线升级及先进封装占比保持稳健。",
+      "interpretation": "存储原厂优先将资本开支投向 HBM 封装与高层数 NAND 升级，上游刻蚀设备率先受益于技术转型而非单纯盲目扩产。",
+      "watch": "存储大厂下一年度晶圆厂设备（WFE）资本开支预算。",
+      "sourceId": "lrcx-results",
+      "researchId": "ai-storage-hbm"
+    }
+  ],
+  "fundSnapshots": [
+    {
+      "code": "SOXX",
+      "asOf": "2026-10-27",
+      "coverage": "full-equity",
+      "reportedEquityCount": 30,
+      "sourceId": "soxx-holdings",
+      "scope": "美国上市半导体行业股票",
+      "description": "同时持有美光（7.70%）、泛林（3.17%）、SK海力士ADS（2.69%），合计确认约 13.56% 的 AI 存储链暴露，其余为算力与模拟芯片。",
+      "holdings": [
+        { "symbol": "AMD", "name": "AMD", "weight": 9.46 },
+        { "symbol": "INTC", "name": "Intel", "weight": 8.32 },
+        { "symbol": "NVDA", "name": "NVIDIA", "weight": 7.85 },
+        { "symbol": "MU", "name": "Micron", "weight": 7.7 },
+        { "symbol": "AVGO", "name": "Broadcom", "weight": 7.35 },
+        { "symbol": "TXN", "name": "Texas Instruments", "weight": 4.71 },
+        { "symbol": "ADI", "name": "Analog Devices", "weight": 4.67 },
+        { "symbol": "MRVL", "name": "Marvell", "weight": 4.57 },
+        { "symbol": "QCOM", "name": "Qualcomm", "weight": 4.29 },
+        { "symbol": "NXPI", "name": "NXP", "weight": 3.51 },
+        { "symbol": "KLAC", "name": "KLA", "weight": 3.48 },
+        { "symbol": "AMAT", "name": "Applied Materials", "weight": 3.43 },
+        { "symbol": "TSM", "name": "TSMC ADR", "weight": 3.2 },
+        { "symbol": "LRCX", "name": "Lam Research", "weight": 3.17 },
+        {
+          "symbol": "MPWR",
+          "name": "Monolithic Power Systems",
+          "weight": 3.16
+        },
+        { "symbol": "TER", "name": "Teradyne", "weight": 2.76 },
+        { "symbol": "SKHY", "name": "SK Hynix ADS", "weight": 2.69 },
+        { "symbol": "MCHP", "name": "Microchip", "weight": 2.35 },
+        { "symbol": "ALAB", "name": "Astera Labs", "weight": 2.24 },
+        { "symbol": "ON", "name": "ON Semiconductor", "weight": 1.67 },
+        { "symbol": "CRDO", "name": "Credo", "weight": 1.55 },
+        { "symbol": "ASML", "name": "ASML ADR", "weight": 1.47 },
+        { "symbol": "ENTG", "name": "Entegris", "weight": 1.25 },
+        { "symbol": "TSEM", "name": "Tower Semiconductor", "weight": 1.09 },
+        { "symbol": "MTSI", "name": "MACOM", "weight": 1.0 },
+        { "symbol": "ASX", "name": "ASE Technology ADR", "weight": 0.94 },
+        { "symbol": "CBRS", "name": "Cerebras", "weight": 0.63 },
+        { "symbol": "UMC", "name": "UMC ADR", "weight": 0.6 },
+        { "symbol": "ARM", "name": "Arm ADS", "weight": 0.43 },
+        { "symbol": "STM", "name": "STMicroelectronics ADR", "weight": 0.42 }
+      ]
+    },
+    {
+      "code": "AIQ",
+      "asOf": "2026-10-28",
+      "coverage": "top-ten",
+      "reportedEquityCount": null,
+      "sourceId": "aiq-holdings",
+      "scope": "AI 应用、软件与硬件主题",
+      "description": "前十大持仓以软件、云平台及算力芯片为主，前十节选中未出现美光、海力士等存储原厂。",
+      "holdings": [
+        { "symbol": "PLTR", "name": "Palantir", "weight": 4.35 },
+        { "symbol": "MSFT", "name": "Microsoft", "weight": 3.8 },
+        { "symbol": "TSLA", "name": "Tesla", "weight": 3.45 },
+        {
+          "symbol": "SPCX",
+          "name": "Space Exploration Technologies",
+          "weight": 3.35
+        },
+        { "symbol": "ORCL", "name": "Oracle", "weight": 3.28 },
+        { "symbol": "AMZN", "name": "Amazon", "weight": 2.97 },
+        { "symbol": "AMD", "name": "AMD", "weight": 2.92 },
+        { "symbol": "AAPL", "name": "Apple", "weight": 2.92 },
+        { "symbol": "TSM", "name": "TSMC ADR", "weight": 2.88 },
+        { "symbol": "NVDA", "name": "NVIDIA", "weight": 2.81 }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "micron-results",
+      "name": "Micron · FY2026 Q4 业绩公告",
+      "url": "https://investors.micron.com/news-releases/news-release-details/micron-technology-reports-results-fourth-quarter-and-full-year",
+      "kind": "company-release"
+    },
+    {
+      "id": "skhynix-results",
+      "name": "SK Hynix · 2026 Q3 业绩公告",
+      "url": "https://news.skhynix.com/sk-hynix-reports-third-quarter-2026-financial-results/",
+      "kind": "company-release"
+    },
+    {
+      "id": "wdc-results",
+      "name": "Western Digital · FY2027 Q1 业绩公告",
+      "url": "https://investor.wdc.com/news-releases/news-release-details/western-digital-reports-fiscal-first-quarter-2027-financial",
+      "kind": "company-release"
+    },
+    {
+      "id": "lrcx-results",
+      "name": "Lam Research · FY2027 Q1 业绩公告",
+      "url": "https://newsroom.lamresearch.com/2026-10-23-Lam-Research-Corporation-Reports-Financial-Results-for-the-Quarter-Ended-September-29-2026",
+      "kind": "company-release"
+    },
+    {
+      "id": "soxx-holdings",
+      "name": "iShares · SOXX 持仓 CSV",
+      "url": "https://www.ishares.com/us/products/239705/ishares-semiconductor-etf/latest-holdings.csv",
+      "kind": "issuer-holdings"
+    },
+    {
+      "id": "aiq-holdings",
+      "name": "Global X · AIQ 持仓表",
+      "url": "https://www.globalxetfs.com/funds/aiq",
+      "kind": "issuer-holdings"
+    }
+  ]
+}

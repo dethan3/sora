@@ -21,6 +21,7 @@ import {
   rememberList,
 } from '../../navigation/flow';
 import { useUnsavedChanges } from '../../navigation/useUnsavedChanges';
+import { PortfolioImpactHealthCard } from '../domains/FundStructure';
 
 export function PortfolioPage({ data }: { data: DemoData }) {
   const local = usePersonal();
@@ -189,6 +190,12 @@ export function PortfolioPage({ data }: { data: DemoData }) {
             <Link to="/funds">浏览基金 →</Link>
           </p>
         )}
+      {local.state.positions.length > 0 && (
+        <PortfolioImpactHealthCard
+          codes={local.state.positions.map((item) => item.code)}
+          title="持仓组合 · 近期核心影响体检"
+        />
+      )}
       {groups.length > 0 && (
         <div className="currency-switch" role="group" aria-label="组合币种">
           {groups.map((group) => (

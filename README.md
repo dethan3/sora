@@ -1,464 +1,174 @@
-# Sora
+# Sora 2.0 · 面向日常投资者的智能基金与产业投研平台
 
-`dev` 分支当前承载的是新的 `Sora` 监控内核，而不是旧版 ETF 量化实验。
+> **投资，清晰可见。**  
+> 不堆砌复杂 K 线与拗口研报黑话，用**几个字的股票近期影响胶囊**、**可视化的基金真实配料表**与**正反方逻辑拔河卡**，帮普通投资者看懂产业变化、看清基金底层到底持有什么，并持续跟踪自己的判断。
 
-当前目标不是一次性做成完整产品，而是先把下面这条主链路做稳定：
+---
 
-`watchlist` 管理 -> 行情获取 -> 规则分析 -> 告警评估 -> 结果持久化 -> 组合查询
+## 1. 为什么重构为 Sora 2.0？
 
-后续的 `OpenClaw skill`、飞书 Bot、Web UI，都应作为外层 adapter 逐步接入这套内核。
+大多数个人投资者在买基金或看科技股时，面临三个最真实的痛点：
 
-当前更明确的方向是：
+1. **知道名字，不知道里面装了什么**：同样叫“半导体”或“人工智能” ETF（如 `SOXX`、`AIQ`、`QQQ`），底层到底是纯算力显卡、AI 存储芯片，还是云软件？普通人很难去翻几百页的英文季报或 CSV。
+2. **看不懂长篇财报，也不想盯复杂 K 线**：看到美光（`MU`）、海力士（`SKHY`）、阿斯麦（`ASML`）发财报，普通投资者真正想一眼看清的是——**“这只股票近期受什么利好驱动？有什么逆风风险？下季度盯哪个指标？”**
+3. **买了或关注了之后，缺乏简单的复盘工具**：关注了几只基金和研究线索后，不知道自己的组合近期整体受哪些底层公司牵动，也没有轻量的方式记录“这条逻辑还成不成立”。
 
-- 把 `sora` 做成“持仓与观察池的监控内核”
-- 先服务基金 / 指数 / ETF 的持续跟踪、告警和复盘
-- 先把组合监控、规则体系和运行可靠性做深，再考虑 Web / Bot / Agent
+**Sora 2.0** 围绕上述痛点进行了产品级重构，将复杂的产业与基金数据转化为普通人 **3 秒能扫读、10 秒能对比** 的结构化微卡片。
 
-## 当前状态
+---
 
-- 阶段：Portfolio Monitoring Core Alpha Frozen
-- 分支：`dev`
-- 当前策略：冻结 core，进入真实使用验证期
-- 已有能力：
-  - 初始化本地 SQLite 数据库
-  - 管理监控标的
-  - 为新基金记录入场基准点位
-  - 为基金记录轻量持仓信息（份额 / 持仓成本）
-  - 执行单次监控运行
-  - 基于 interval 的本地调度与运行锁
-  - 查询当前运行状态和最近运行历史
-  - 查询资产最新结果、历史快照、告警和通知
-  - 查询组合摘要、回撤、仓位分布和持仓列表
-  - 导出资产简版报告（markdown / json）
-  - 导出组合简版报告（markdown / json）
-  - provider registry 与本地快照降级路径
-  - 查询当前 provider 能力与标的支持情况
-  - 发送 pending 通知事件到配置好的 webhook
-  - 保存快照、分析结果、告警事件和待发送通知事件
-- 尚未包含：
-  - 多数据源聚合
-  - 组合级规则的抑制 / 节流 / 去重
-  - 守护进程 / 服务化运行形态
-  - skill / Bot / HTTP API / Web UI
+## 2. 核心功能与四大交互微卡片
 
-当前不再主动扩展新功能。接下来只根据真实运行反馈处理三类问题：运行 bug、阻碍使用的 CLI / 数据问题、以及阻断下一阶段的结构问题。
+### 2.1 股票近期影响胶囊卡（Stock Impact Card）
 
-## 当前能力
+告别满屏技术指标，用 4~8 个字的高对比度胶囊直接概括每家核心公司近期的真实处境：
 
-### 1. 数据持久化
+- `🟢 顺风利好`（基于已披露财报事实，如：`HBM 产能已锁死`、`数据中心收入翻倍`）
+- `🟠 逆风风险`（潜在拖累与周期干扰，如：`手机电脑复苏慢`、`受区域出口管制约束`）
+- `🔍 跟踪观察`（下季财报验证点，如：`盯下季毛利率斜率`、`盯下代 HBM 量产`）
 
-当前使用 `sqlite3` 直接落库，默认数据库路径为 `data/sora.db`。
+### 2.2 基金“配料表”透视与并排 PK 台（Fund Ingredient Bar & PK）
 
-已落表：
+像看食品配料表一样拆解基金持仓：
 
-- `watchlist_assets`
-- `monitoring_runs`
-- `snapshots`
-- `analysis_history`
-- `alert_rules`
-- `alert_events`
-- `notification_events`
+- **主题配料分段条**：直观展示基金在 `🟩 AI 存储链`、`🟦 AI 芯片与光刻` 与 `⬜ 其他已披露持仓` 的真实权重占比。
+- **2~3 只基金并排 PK**：在 `/funds` 一键勾选 `SOXX`、`AIQ`、`2800.HK`、`QQQ`、`IAU` 等产品，并排对比**购买门槛（美股 USD / 港股 HKD 柜台）**、**核心主题配料**、**重仓股近期影响**与**同日持仓重叠率说明**。
 
-### 2. Watchlist 管理
+### 2.3 研究假设“正反方拔河卡”（Pros & Cons Tug-of-War）
 
-支持管理监控标的：
+每条产业研究线索（如《从美光与海力士财报，看 AI 存储缺货与扩产传导》）都不给武断的“买入/卖出”喊单，而是并排呈现：
 
-- `fund`
-- `index`
+- **🟢 看多理由（已披露事实）** vs **🟠 泼盆冷水（潜在风险与干扰）**
+- 完整串联 **原始财报证据 → 产业链传导路径 → 关联基金持仓权重 → 下次验证大考**。
 
-对新加入的基金，CLI 可以在添加时记录当下净值作为入场基准，后续运行时可以直接看到“持有以来涨幅”。
+### 2.4 组合近期影响体检 + 三态轻复盘打卡（Portfolio Health & Verdict Check-in）
 
-如果已经持有该基金，也可以记录：
+- **组合级一句话体检**：在 `/watchlist` 与 `/portfolio` 自动穿透用户已关注或持仓的基金，汇总底层重仓股与宽基的顺风驱动、逆风风险与观察重点。
+- **三态轻复盘打卡**：无需写长篇笔记，在研究线索上一键打卡 **`👍 逻辑继续成立`** / **`🤔 存疑观望`** / **`🛑 逻辑失效`**，状态实时保存在本地浏览器并支持跨标签页同步。
 
-- `position_units`
-- `position_cost_amount`
+---
 
-这样在后续 `run-once` 中可以直接看到浮盈金额和浮盈比例。
+## 3. 页面与路由导览
 
-当前市场枚举：
+| 模块           | 路由路径                        | 核心职责                                                                                                                                                                                                |
+| :------------- | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **首页**       | `/`                             | 免登录产品导览，首屏直出核心股票近期影响胶囊（`MU` / `NVDA`）与基金配料对比预览（`SOXX` vs `AIQ`）。                                                                                                    |
+| **产业发现**   | `/discover`（及 `/domains`）    | 切换 **AI 存储产业链** 与 **AI 芯片** 主题，按产业链环节（HBM / 企业级 SSD / 存储设备 / 算力芯片 / 光刻）筛选公司影响卡，并联动右侧基金持仓权重。支持 `/discover?view=markets` 切换宽基与市场方向目录。 |
+| **研究实验室** | `/research` & `/research/:id`   | 按主题浏览研究线索总览、阅读正反方拔河卡、核对财报事实原文与基金映射，并进行三态复盘打卡。                                                                                                              |
+| **基金透视**   | `/funds` & `/funds/:code`       | 2~3 只基金并排 PK、搜索筛选基金目录、查看基金配料表、重仓股近期影响、前十大/完整持仓明细及未复权日线收盘价走势。                                                                                        |
+| **我的关注**   | `/watchlist`（及 `/following`） | 查看**关注组合近期核心影响体检**、已关注研究线索的“下次验证大考”、已关注基金的重仓股风向及本地备份工具。                                                                                                |
+| **我的组合**   | `/portfolio`                    | 查看**持仓组合近期核心影响体检**，按币种（`CNY` / `USD` / `HKD` / `KRW`）独立记录基金份额与持仓成本，支持 JSON 备份导入导出。                                                                           |
 
-- `cn`
-- `global`
+---
 
-当前 `global` 的首个落地范围已经接入：
+## 4. 严格的数据边界与投研纪律
 
-- `fund`:
-  - `QQQ`
-  - `SPY`
-  - `VOO`
-  - `DIA`
-  - `IWM`
-  - `VTI`
-  - `VT`
-- `index`:
-  - `SPX`
-  - `NDX`
-  - `IXIC`
-  - `DJI`
+Sora 2.0 在代码契约（Zod Schema）与自动化校验层强制执行以下投研纪律：
 
-这个范围之外的 global 标的暂时仍不支持。
+1. **区分已确认事实、研究推断与不确定性**：公司营收增速与持仓权重必须附带原始披露日期与 HTTPS 来源；产业传导路径明确标记为“待验证研究假设”。
+2. **区分完整持仓、前十节选与宽基基准**：
+   - `full-equity`（如 `SOXX` 全部 30 项权益持仓）：未出现在列表中的公司明确标记为“未持有”。
+   - `top-ten`（如 `AIQ` 前十大持仓节选）：未出现在前十中的公司标记为“节选未列出，持有状态待核实”，绝不捏造为 `0%`。
+   - 未收录单股快照的宽基或实物信托（如 `QQQ`、`2800.HK`、`IAU`）：展示跟踪基准与宏观驱动标签，不虚构单股科技配料权重。
+3. **价格、净值与指数点位严格分离**：ETF 二级市场未复权交易收盘价（`fund-price`）、基金单位净值（`nav`）与参考指数点位（`index`）使用独立标识与单位，绝不混用或用 ETF 价格冒充净值计算持仓估值。
 
-### 3. 单次运行编排
+---
 
-`run-once` 会执行一次完整链路：
+## 5. 仓库架构
 
-1. 读取启用中的监控标的
-2. 拉取行情和历史序列
-3. 生成规则化分析结果
-4. 评估告警规则
-5. 持久化运行结果
-
-### 4. 规则分析
-
-当前分析引擎是 V1 规则版，主要输出：
-
-- 日涨跌幅
-- 7 日变化
-- 30 日变化
-- `SMA5` / `SMA20` 趋势判断
-- 基础波动率风险等级
-- 简单综合分数 `score`
-
-这还不是完整策略系统，也没有 AI 总结层。
-
-### 5. 告警能力
-
-支持定义阈值规则：
-
-- scope：
-  - `asset`
-  - `portfolio`
-- 指标：
-  - `asset` scope:
-  - `daily_change_pct`
-  - `change_7d_pct`
-  - `change_30d_pct`
-  - `score`
-  - `portfolio` scope:
-  - `portfolio_unrealized_pnl_amount`
-  - `portfolio_unrealized_pnl_pct`
-  - `portfolio_daily_pnl_amount`
-  - `portfolio_since_entry_pnl_pct`
-- 方向：
-  - `above`
-  - `below`
-
-规则命中后当前会：
-
-- 写入 `alert_events`
-- 为每个 channel 生成一条 `notification_events`
-
-之后可通过 `notifications send-pending` 将事件发送到配置好的 webhook。当前已经具备通用 webhook adapter，但还没有 Telegram、企业微信等特定平台 adapter。
-
-其中组合级规则当前只在“全量 `run-once`”时评估；使用 `run-once --code ...` 进行局部运行时，会跳过组合规则，避免用局部刷新结果误判整个组合。
-
-### 6. 数据源能力
-
-当前 provider 层已经具备 registry 和 fallback 机制。
-
-实时 provider：
-
-- 中国公募基金代码，例如 `510300`
-- 部分中国指数代码，例如：
-  - `sh000001`
-  - `sz399001`
-  - `sz399006`
-  - 或内建别名 `000001` / `399001` / `399006`
-- 首批 global ETF / 指数代理标的：
-  - `QQQ`
-  - `SPY`
-  - `VOO`
-  - `DIA`
-  - `IWM`
-  - `VTI`
-  - `VT`
-  - `SPX`
-  - `NDX`
-  - `IXIC`
-  - `DJI`
-
-当前降级路径：
-
-- 当实时 provider 拉取失败时，如果本地数据库里已经有至少 2 条历史快照，`snapshot_cache` provider 会回退到本地持久化快照继续生成分析结果
-
-当前可以通过 CLI 查看 provider 声明能力和支持情况：
-
-- `providers list`
-- `providers check`
-
-暂未实现或仍有限制：
-
-- 更广的 global market 覆盖
-- 非首批 ticker 的自动发现与归一化
-
-### 7. 查询与报表
-
-当前已经支持通过 CLI 读取运行结果：
-
-- 资产最新概览：最新快照、分析结果、最近一次运行
-- 资产快照历史
-- 组合摘要：总成本、总市值、浮盈亏、当日盈亏、入场以来盈亏、峰值市值、当前回撤、最大仓位占比、前三仓位集中度
-- 持仓列表：逐资产查看当前值、趋势、分数、盈亏、权重占比
-- 告警历史
-- 通知历史
-- 资产简版报告导出
-- 组合简版报告导出（包含组合历史曲线）
-
-## 项目结构
+项目采用 **Node 24 + pnpm Workspace + TypeScript (Strict) + React 19 + Vite 8** 单体仓库架构：
 
 ```text
-src/sora/
-  __init__.py
-  alerts.py
-  analysis.py
-  config.py
-  domain.py
-  notifications.py
-  orchestrator.py
-  repository.py
-  scheduler.py
-  notifiers/
-    __init__.py
-    base.py
-    webhook.py
-  providers/
-    __init__.py
-    akshare.py
-    cache.py
-    base.py
-    registry.py
-
-tests/sora/
-  test_alerts.py
-  test_analysis.py
-  test_cli.py
-  test_config.py
-  test_notifications.py
-  test_orchestrator.py
-  test_repository.py
-  test_scheduler.py
+sora/
+├── apps/
+│   ├── web/                        # Sora 2.0 前端应用 (React 19 + React Router 8 + Tailwind 4 + PWA)
+│   │   ├── public/data/            # 公开基础目录 (catalog.json)
+│   │   ├── scripts/                # 构建与数据防呆校验脚本 (check-pwa.mjs, check-research-data.mjs)
+│   │   └── src/
+│   │       ├── components/         # 通用 UI、响应式表格 (FundTable)、导航栏与落地页组件
+│   │       ├── features/
+│   │       │   ├── domains/        # 产业主题引擎 (ai-storage.json, ai-chips.json, 配料表与影响体检计算)
+│   │       │   ├── research/       # 研究假设引擎 (research.json, 正反方拔河卡, 三态复盘持久化)
+│   │       │   ├── discover/       # 市场与宽基观察方向目录及本地关注同步
+│   │       │   ├── funds/          # 基金库、2~3 只基金并排 PK 台与基金详情页
+│   │       │   ├── market/         # 日线收盘价、区间走势图、快照缓存与 Mock 隔离层
+│   │       │   ├── watchlist/      # 我的关注页（研究跟进 + 关注组合影响体检）
+│   │       │   ├── portfolio/      # 多币种持仓记录、定点精度估值与未保存修改保护
+│   │       │   └── local/          # 浏览器本地存储契约、并发冲突检测与 JSON 备份恢复
+│   │       ├── navigation/         # 站内安全返回路径白名单、滚动位置与焦点恢复
+│   │       └── pwa/                # Service Worker 注册、离线提示与手动确认升级
+│   └── data-service/               # 行情采集与本地只读快照 API 服务 (Node 24 原生 TypeScript)
+│       └── src/                    # AKTools / Yahoo 适配器、时区与日期校验、独占锁更新与 HTTP 服务
+├── packages/
+│   └── market-data/                # 前后端共享的行情快照 Zod 契约与纯计算函数 (@sora/market-data)
+├── services/
+│   └── aktools/                    # 独立隔离的官方 AKTools (AKShare HTTP API) Python 容器与依赖配置
+└── docs/                           # 产品设计、系统架构、路线图与数据源文档
+    ├── PRODUCT.md                  # Sora 2.0 产品规范与用户体验设计说明
+    ├── ARCHITECTURE.md             # Sora 2.0 技术架构、数据契约与状态流转说明
+    ├── ROADMAP.md                  # 模块化演进路线与阶段验收记录
+    ├── AKTOOLS.md                  # AKTools 本地行情采集与快照服务运行指南
+    └── DATA_SOURCES.md             # 跨市场数据源边界与展示合规说明
 ```
 
-## 快速开始
+---
 
-要求：
+## 6. 快速开始
 
-- Python 3.12.15 或更新的 3.12.x 安全补丁版（见 `.python-version`）
-- 已安装 `requirements.txt`
+### 6.1 环境要求
 
-安装依赖：
+- **Node.js**：`24.x`（见 `.nvmrc`）
+- **包管理器**：`pnpm 11.x`（可通过 Corepack 启用）
+- **Python**（可选，仅在运行本地 `services/aktools` 采集真实行情时需要）：`Python 3.13`
 
-保留 NumPy 1.x 兼容性，因此当前使用 Python 3.12 系列。先更新系统 CA
-证书；已有环境也需更新 pip、certifi，以及独立安装的 uv（至少 0.13.4）。
-下方第一条命令通过固定 SHA256 校验的官方 wheel 引导到 pip 26.2.2，
-之后再安装项目依赖；仅更新解释器不能修复所有旧虚拟环境。
+### 6.2 安装与本地开发（默认演示模式）
 
 ```bash
-python -m pip install "pip @ https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
-python -m pip install -r requirements.txt
+# 1. 安装依赖
+pnpm install --frozen-lockfile
+
+# 2. 启动前端开发服务器 (http://127.0.0.1:5173)
+pnpm dev
 ```
 
-初始化数据库：
+### 6.3 连接本地 AKTools 采集真实日线行情（可选）
+
+如果需要在本地拉取纳斯达克100、标普500、恒生指数及 `SOXX`、`AIQ`、`QQQ`、`IVV`、`IAU`、`2800.HK` 的真实收盘日线：
 
 ```bash
-python main.py init-db
+# 终端 1：启动本地 AKTools 服务 (127.0.0.1:8080)
+cd services/aktools
+python3.13 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m aktools --host 127.0.0.1 --port 8080
+
+# 终端 2：执行单次行情采集并启动本地快照 API (127.0.0.1:8788)
+pnpm data:update
+pnpm data:serve
+
+# 终端 3：以真实行情模式启动前端
+pnpm dev:market
 ```
 
-添加监控标的：
+详细配置与故障恢复请参考 [docs/AKTOOLS.md](./docs/AKTOOLS.md)。
+
+### 6.4 质量检查、测试与生产构建
 
 ```bash
-python main.py watchlist add --code 510300 --name "沪深300ETF" --asset-type fund --market cn
-python main.py watchlist add --code sh000001 --name "上证指数" --asset-type index --market cn
+# 一键运行全量检查（Prettier 格式 + 研究数据防呆校验 + TypeScript 类型 + 158 项测试 + 生产构建 + PWA 校验）
+pnpm check
+
+# 单独运行研究与产业链数据防呆校验（检查标签字数上限、日期先后、HTTPS 来源与基金映射）
+pnpm --filter @sora/web run check:data
+
+# 单独运行前端与数据服务单元测试
+pnpm test
 ```
 
-对于新加入的基金，命令会询问是否记录当前净值为入场基准。也可以显式指定：
+---
 
-```bash
-python main.py watchlist add --code 510300 --name "沪深300ETF" --asset-type fund --market cn --record-baseline
-python main.py watchlist add --code 510300 --name "沪深300ETF" --asset-type fund --market cn --skip-baseline
-python main.py watchlist add --code 510300 --name "沪深300ETF" --asset-type fund --market cn --skip-baseline --position-units 100 --position-cost-amount 123.45
-```
+## 7. 风险提示与开源协议
 
-查看监控列表：
-
-```bash
-python main.py watchlist list
-```
-
-添加告警规则：
-
-```bash
-python main.py alert-rule add --asset-code 510300 --metric daily_change_pct --direction above --threshold 1.5 --channel feishu
-python main.py alert-rule add --scope portfolio --metric portfolio_unrealized_pnl_pct --direction below --threshold -3 --channel feishu
-python main.py alert-rule list
-```
-
-执行一次分析：
-
-```bash
-python main.py run-once
-python main.py run-once --code 510300
-```
-
-查看运行状态和最近运行历史：
-
-```bash
-python main.py runs status
-python main.py runs list --limit 10
-```
-
-查看资产最新结果和历史：
-
-```bash
-python main.py assets latest --code 510300
-python main.py assets history --code 510300 --limit 10
-```
-
-查看组合摘要和持仓列表：
-
-```bash
-python main.py portfolio summary
-python main.py portfolio positions
-```
-
-查看 provider 能力和支持情况：
-
-```bash
-python main.py providers list
-python main.py providers check --code 510300 --asset-type fund --market cn
-python main.py providers check --code QQQ --asset-type fund --market global
-```
-
-查看告警和通知历史：
-
-```bash
-python main.py alerts list --code 510300 --limit 20
-python main.py notifications list --code 510300 --limit 20
-```
-
-导出资产报告：
-
-```bash
-python main.py reports asset --code 510300 --format markdown
-python main.py reports asset --code 510300 --format json
-python main.py reports portfolio --format markdown
-python main.py reports portfolio --format json
-```
-
-发送 pending 通知：
-
-```bash
-python main.py notifications send-pending --limit 100
-```
-
-## 配置
-
-默认配置文件为 `config/sora.yaml`：
-
-```yaml
-database_path: data/sora.db
-analysis:
-  lookback_days: 90
-  short_window: 7
-  long_window: 30
-notifications:
-  request_timeout_seconds: 10
-  webhook_urls:
-    feishu: https://example.com/feishu-webhook
-    telegram: https://example.com/telegram-webhook
-```
-
-当前支持的配置项：
-
-- `database_path`
-- `analysis.lookback_days`
-- `analysis.short_window`
-- `analysis.long_window`
-- `notifications.request_timeout_seconds`
-- `notifications.webhook_urls`
-
-配置校验规则：
-
-- `lookback_days > long_window`
-- `short_window <= long_window`
-- 所有窗口参数都必须大于 0
-
-## 测试
-
-运行测试：
-
-```bash
-pytest -q tests
-```
-
-阶段验收直接运行真实 CLI 并观察结果：
-
-```bash
-python main.py init-db
-python main.py watchlist add --code 510300 --name "沪深300ETF" --asset-type fund --market cn --skip-baseline
-python main.py alert-rule add --asset-code 510300 --metric score --direction above --threshold 0 --channel feishu
-python main.py run-once --code 510300
-python main.py runs status
-python main.py notifications send-pending --limit 100
-```
-
-说明：
-
-- 阶段验收以真实运行反馈为准，而不是脚本内置断言
-- `run-once` 依赖外网访问 `AkShare / Eastmoney`
-- `notifications send-pending` 是否成功，取决于当前配置中的 webhook 是否可用
-
-当前测试主要覆盖：
-
-- 配置加载与校验
-- 分析引擎
-- 告警评估
-- 仓储层
-- 单次运行编排
-- CLI 命令行为
-- 调度器
-- 通知发送成功 / 失败路径
-- 查询与报表读取接口
-- 简版报告导出
-- provider registry 与 fallback
-
-尚未覆盖：
-
-- 更广的 provider fallback 与多数据源切换
-- 更完整的 AkShare 联网稳定性和错误分类
-- 更完整的查询 / 报表层回归测试
-
-## 设计原则
-
-- `src/sora/*` 只负责核心领域能力
-- 外部交互层不直接侵入 core
-- 先做稳定的规则化监控链路
-- 再逐步补调度、通知、查询、展示和多数据源
-- 当前优先保持实现简单，继续使用 `sqlite3` 直接持久化
-
-## 当前限制
-
-- 仅支持有限的中国市场标的
-- 没有对外 HTTP / Web 查询接口
-- 报表仍是简版导出
-- 本地快照 fallback 依赖历史运行数据，不能替代真实行情源
-- 没有 schema migration 机制
-
-## 下一步
-
-建议按这个顺序继续扩展：
-
-1. 扩大全球市场支持范围
-2. CI / 覆盖率 / 更完整集成测试
-3. schema migration 策略
-4. Web / Bot / API 等外层 adapter
-
-## 风险提示
-
-> 投资有风险，规则分析与告警结果仅供参考。
-> 
-> 当前输出基于第三方行情源和简化规则，不构成投资建议。
-
-## 开源协议
+> **免责声明**：Sora 仅用于整理公开财报事实、基金披露持仓结构与研究假设，所有影响标签、配料占比与研究线索均**不构成任何投资建议、收益预测或买卖指令**。基金交易价格、单位净值与参考指数点位分别展示，投资前请务必核阅基金发行人官方招募说明书与最新定期报告。
 
 本项目采用 MIT License。

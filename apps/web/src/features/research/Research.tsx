@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router';
 import type { DemoData } from '../../data/demo';
-import { EmptyState } from '../../components/ui';
+import { EmptyState, PageHeader } from '../../components/ui';
 import {
   detailUrl,
   researchSource,
@@ -19,10 +19,64 @@ import {
   researchUrl,
   type ResearchSignal,
 } from './model';
-import { RESEARCH_KEY, useResearchSaved } from './saved';
-import { fundSnapshot, holdingFor } from '../domains/model';
+import { RESEARCH_KEY, useResearchSaved, type ResearchVerdict } from './saved';
+import {
+  aiStorage,
+  fundSnapshot,
+  holdingFor,
+  themeExposure,
+} from '../domains/model';
 import { DomainSource } from '../domains/FundStructure';
 import './research.css';
+
+const VERDICT_OPTIONS: Array<{
+  value: ResearchVerdict;
+  label: string;
+  desc: string;
+}> = [
+  { value: 'valid', label: '👍 逻辑继续成立', desc: '顺风驱动仍在兑现' },
+  { value: 'watch', label: '🤔 存疑观望', desc: '等待下季财报确认' },
+  { value: 'invalid', label: '🛑 逻辑失效', desc: '逆风兑现或前提改变' },
+];
+
+export function ResearchVerdictBar({ signal }: { signal: ResearchSignal }) {
+  const saved = useResearchSaved();
+  const current = saved.verdicts[signal.id] ?? null;
+  return (
+    <div
+      className="research-verdict-bar"
+      role="group"
+      aria-label={`个人复盘打卡：${signal.title}`}
+    >
+      <span className="verdict-title">我的复盘判断：</span>
+      <div className="verdict-buttons">
+        {VERDICT_OPTIONS.map((option) => {
+          const active = current === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`verdict-btn is-${option.value}${active ? ' is-active' : ''}`}
+              aria-pressed={active}
+              onClick={() =>
+                saved.setVerdict(signal.id, active ? null : option.value)
+              }
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      {current && (
+        <small className="verdict-hint">
+          当前判断：
+          {VERDICT_OPTIONS.find((item) => item.value === current)?.desc}
+          （保存在本地浏览器）
+        </small>
+      )}
+    </div>
+  );
+}
 
 export function FollowResearch({ signal }: { signal: ResearchSignal }) {
   const saved = useResearchSaved();
@@ -62,7 +116,11 @@ function SignalCard({
   return (
     <article className="research-card">
       <div className="research-meta">
-        <span>半导体 / 设备</span>
+        <span>
+          {signal.themeId === 'ai-storage'
+            ? 'AI 存储 / HBM与企业盘'
+            : '半导体 / 设备'}
+        </span>
         <span className="research-status">{signal.status}</span>
         <time dateTime={signal.eventDate}>事件 {signal.eventDate}</time>
       </div>
@@ -77,6 +135,30 @@ function SignalCard({
         </Link>
       </h3>
       <p>{signal.summary}</p>
+      {(signal.prosTags || signal.consTags) && (
+        <div className="research-tug-preview" aria-label="正反方核心标签">
+          <div className="tug-col">
+            <small>看多事实</small>
+            <div className="tug-pills">
+              {signal.prosTags?.map((tag) => (
+                <span key={tag} className="impact-pill impact-positive">
+                  🟢 {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="tug-col">
+            <small>冷水提醒</small>
+            <div className="tug-pills">
+              {signal.consTags?.map((tag) => (
+                <span key={tag} className="impact-pill impact-headwind">
+                  🟠 {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="research-card-bottom">
         <span>
           {signal.company.symbol} ·{' '}
@@ -103,7 +185,7 @@ export function ResearchFeed() {
         <div>
           <p className="eyebrow">RESEARCH / 01</p>
           <h2 id="research-feed-title">从变化，找到研究线索</h2>
-          <p>先读证据，再看公司与基金的关联。无需录入持仓。</p>
+          <p>先读正反方标签与事实证据，再看公司与基金的关联。无需录入持仓。</p>
         </div>
         <div className="segmented" aria-label="研究线索范围">
           <button aria-pressed={mode === 'all'} onClick={() => setMode('all')}>
@@ -133,8 +215,8 @@ export function ResearchFeed() {
         <div className="research-empty">
           <h3>还没有与你关注内容相关的线索</h3>
           <p>
-            当前先覆盖半导体设备。选择半导体、AI 方向，或关注 SOXX、AIQ、QQQ
-            后，这里会展示关联研究；其他方向暂未覆盖。
+            当前先覆盖 AI 存储与半导体设备。选择半导体、AI 方向，或关注
+            SOXX、AIQ、QQQ 后，这里会展示关联研究；其他方向暂未覆盖。
           </p>
           <a className="text-link" href="#explore-directions">
             选择关注方向 ↓
@@ -142,6 +224,59 @@ export function ResearchFeed() {
         </div>
       )}
     </section>
+  );
+}
+
+export function ResearchHubPage() {
+  const [themeFilter, setThemeFilter] = useState<
+    'all' | 'ai-storage' | 'ai-chips'
+  >('all');
+  const filtered = research.filter(
+    (item) => themeFilter === 'all' || item.themeId === themeFilter,
+  );
+  return (
+    <div className="research-hub-page">
+      <PageHeader
+        eyebrow="RESEARCH LAB"
+        title="研究线索与正反方拔河"
+        description="把复杂财报拆成几个字的看多事实与冷水提醒，穿透到基金真实配料。"
+      />
+      <div
+        className="research-theme-tabs"
+        role="group"
+        aria-label="按主题筛选研究"
+      >
+        <button
+          type="button"
+          aria-pressed={themeFilter === 'all'}
+          onClick={() => setThemeFilter('all')}
+        >
+          全部研究 ({research.length})
+        </button>
+        <button
+          type="button"
+          aria-pressed={themeFilter === 'ai-storage'}
+          onClick={() => setThemeFilter('ai-storage')}
+        >
+          AI 存储产业链
+        </button>
+        <button
+          type="button"
+          aria-pressed={themeFilter === 'ai-chips'}
+          onClick={() => setThemeFilter('ai-chips')}
+        >
+          AI 芯片与设备
+        </button>
+      </div>
+      <div className="research-hub-list">
+        {filtered.map((signal) => (
+          <div key={signal.id} className="research-hub-item">
+            <SignalCard signal={signal} />
+            <FollowResearch signal={signal} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -197,7 +332,7 @@ export function SavedResearch() {
         <div>
           <h2>研究线索 · {saved.ids.length}</h2>
           <p>
-            关注后可在这里继续阅读。研究状态由资料核对更新，当前未提供自动提醒。
+            关注后可在这里继续盯住下次验证大考。研究状态由资料核对更新，当前未提供自动提醒。
           </p>
         </div>
       </div>
@@ -205,8 +340,17 @@ export function SavedResearch() {
         <p role="alert">{saved.issue || saved.error || exportError}</p>
       )}
       {signals.map((signal) => (
-        <div key={signal.id}>
+        <div key={signal.id} className="saved-research-card-wrap">
           <SignalCard signal={signal} />
+          <div className="saved-checkpoints-strip" aria-label="下次验证大考">
+            <strong>下次大考盯什么：</strong>
+            {signal.checkpoints.map((cp) => (
+              <span key={cp.title} className="impact-pill impact-watch">
+                🔍 {cp.title}（{cp.state}）
+              </span>
+            ))}
+          </div>
+          <ResearchVerdictBar signal={signal} />
           <FollowResearch signal={signal} />
         </div>
       ))}
@@ -262,6 +406,7 @@ export function ResearchPage({ data }: { data: DemoData }) {
         <Link to="/discover">返回发现市场</Link>
       </EmptyState>
     );
+  const activeDomain = signal.themeId === 'ai-storage' ? aiStorage : undefined;
   return (
     <article className="research-page">
       <Link className="back-link" to={source} state={{ restoreList: true }}>
@@ -269,7 +414,11 @@ export function ResearchPage({ data }: { data: DemoData }) {
       </Link>
       <header className="research-heading">
         <div>
-          <p className="eyebrow">SORA RESEARCH / 半导体</p>
+          <p className="eyebrow">
+            {signal.themeId === 'ai-storage'
+              ? 'SORA RESEARCH / AI 存储产业链'
+              : 'SORA RESEARCH / 半导体'}
+          </p>
           <h1>{signal.title}</h1>
           <p>{signal.summary}</p>
           <div className="research-meta">
@@ -280,6 +429,32 @@ export function ResearchPage({ data }: { data: DemoData }) {
         </div>
         <FollowResearch signal={signal} />
       </header>
+
+      {(signal.prosTags || signal.consTags) && (
+        <section className="research-tug-board" aria-label="三秒看懂正反方拔河">
+          <div className="tug-board-col is-pro">
+            <h3>🟢 看多理由（已披露事实）</h3>
+            <div className="tug-pills">
+              {signal.prosTags?.map((tag) => (
+                <span key={tag} className="impact-pill impact-positive">
+                  🟢 {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="tug-board-col is-con">
+            <h3>🟠 泼盆冷水（潜在风险与干扰）</h3>
+            <div className="tug-pills">
+              {signal.consTags?.map((tag) => (
+                <span key={tag} className="impact-pill impact-headwind">
+                  🟠 {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <nav className="research-anchor-nav" aria-label="研究章节">
         <a href="#evidence">事实与证据</a>
         <a href="#transmission">影响路径</a>
@@ -336,10 +511,14 @@ export function ResearchPage({ data }: { data: DemoData }) {
                 const fund = data.funds.find(
                   (item) => item.code === mapping.code,
                 );
-                const snapshot = fundSnapshot(mapping.code);
+                const snapshot = fundSnapshot(mapping.code, activeDomain);
                 const holding =
                   snapshot && holdingFor(snapshot, signal.company.symbol);
                 const confirmed = holding?.status === 'held';
+                const exposure =
+                  snapshot && signal.themeId
+                    ? themeExposure(snapshot, signal.themeId)
+                    : undefined;
                 return (
                   <article key={mapping.code}>
                     <div className="research-mapping-heading">
@@ -375,6 +554,16 @@ export function ResearchPage({ data }: { data: DemoData }) {
                                 : mapping.weight + '%'}
                         </dd>
                       </div>
+                      {exposure && (
+                        <div>
+                          <dt>{exposure.domainName}合计</dt>
+                          <dd>
+                            {exposure.weight > 0
+                              ? `${exposure.weight.toFixed(2)}%`
+                              : '前十未列出'}
+                          </dd>
+                        </div>
+                      )}
                       <div>
                         <dt>核对日期</dt>
                         <dd>{signal.reviewedAt}（投资范围）</dd>
@@ -433,12 +622,25 @@ export function ResearchPage({ data }: { data: DemoData }) {
             <p className="research-disclosure">
               当前仅建立研究问题，尚未自动追踪后续公告，也没有回测或验证超额收益。
             </p>
+            <ResearchVerdictBar signal={signal} />
             <FollowResearch signal={signal} />
           </section>
           <section className="research-block research-extension">
             <p className="eyebrow">BEYOND THE SECTOR</p>
             <h2>{signal.extension.title}</h2>
             <p>{signal.extension.text}</p>
+            {signal.id === 'semiconductor-equipment' ? (
+              <Link className="text-link" to="/research/ai-storage-hbm">
+                阅读 AI 存储产业链传导线索 →
+              </Link>
+            ) : (
+              <Link
+                className="text-link"
+                to="/research/semiconductor-equipment"
+              >
+                阅读半导体设备传导线索 →
+              </Link>
+            )}
           </section>
         </div>
         <aside className="research-sidebar">

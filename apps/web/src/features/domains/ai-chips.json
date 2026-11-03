@@ -2,28 +2,68 @@
   "schemaVersion": 1,
   "id": "ai-chips",
   "name": "AI 芯片",
+  "tldr": "算力扩建带动加速卡与制造设备高增长，但单季交付不等同于长期扩产，需同时拆开 CPU/GPU 混合口径与传统芯片干扰。",
   "description": "沿着计算芯片与制造设备，连接公司披露、基金持仓与产业变化。",
   "reviewedAt": "2026-10-29",
+  "nodes": [
+    {
+      "id": "compute-accelerators",
+      "title": "计算与加速器",
+      "subtitle": "数据中心训练与推理算力核心"
+    },
+    {
+      "id": "chip-equipment",
+      "title": "先进制造设备",
+      "subtitle": "光刻系统与晶圆厂扩产投入"
+    }
+  ],
   "companies": [
     {
       "symbol": "NVDA",
       "name": "NVIDIA",
+      "nodeId": "compute-accelerators",
       "role": "计算与加速器",
+      "roleTag": "AI 算力龙头",
+      "purityTag": "数据中心主导",
       "description": "从数据中心业务观察计算需求；业务增长与基金价格表现分别阅读。",
+      "impactTags": [
+        { "label": "数据中心收入高增", "tone": "positive" },
+        { "label": "AI 算力需求旺盛", "tone": "positive" },
+        { "label": "高基数下预期严格", "tone": "headwind" },
+        { "label": "盯毛利率与客户部署", "tone": "watch" }
+      ],
       "sourceId": "nvidia-results"
     },
     {
       "symbol": "AMD",
       "name": "AMD",
+      "nodeId": "compute-accelerators",
       "role": "CPU 与 GPU",
+      "roleTag": "服务器CPU+GPU",
+      "purityTag": "算力+传统PC",
       "description": "数据中心同时包含 EPYC 处理器与 Instinct GPU，分部收入不等于 AI 芯片收入。",
+      "impactTags": [
+        { "label": "数据中心同比翻倍", "tone": "positive" },
+        { "label": "MI 加速卡持续放量", "tone": "positive" },
+        { "label": "混合 CPU 非纯 AI", "tone": "headwind" },
+        { "label": "盯 GPU 单独份额", "tone": "watch" }
+      ],
       "sourceId": "amd-results"
     },
     {
       "symbol": "ASML",
       "name": "ASML",
+      "nodeId": "chip-equipment",
       "role": "制造设备",
+      "roleTag": "光刻机核心厂",
+      "purityTag": "纯半导体设备",
       "description": "通过光刻设备交付观察制造投入，属于上游设备环节。",
+      "impactTags": [
+        { "label": "光刻交付环比增加", "tone": "positive" },
+        { "label": "先进制程产线扩建", "tone": "positive" },
+        { "label": "客户扩产节奏分化", "tone": "headwind" },
+        { "label": "盯后续新增订单额", "tone": "watch" }
+      ],
       "sourceId": "asml-results"
     }
   ],
@@ -34,6 +74,11 @@
       "publishedAt": "2026-10-14",
       "period": "2026 年第三季度",
       "title": "设备交付增加，继续观察制造投入",
+      "tags": [
+        "🟢 售出 113 台光刻机",
+        "🟠 单季交付非长期扩产",
+        "🔍 盯后续客户订单"
+      ],
       "fact": "ASML 披露当季净销售额约 117 亿欧元，新光刻系统售出 113 台；上一季度为 86 台。",
       "interpretation": "设备环节出现交付变化，但单季交付不能直接证明整个 AI 产业持续扩产。",
       "watch": "后续订单、客户资本开支与设备交付能否相互印证。",
@@ -46,6 +91,11 @@
       "publishedAt": "2026-08-26",
       "period": "2027 财年第二季度，结束于 2026-07-26",
       "title": "数据中心业务增长，关注需求能否延续",
+      "tags": [
+        "🟢 数据中心 890 亿美元",
+        "🟠 勿混同单一芯片收入",
+        "🔍 盯后续毛利率"
+      ],
       "fact": "NVIDIA 披露当季总收入约 962 亿美元，数据中心收入约 890 亿美元。",
       "interpretation": "数据中心业务可作为计算需求的一项观察依据，不能把整个分部收入都归为单一芯片产品。",
       "watch": "后续收入、毛利率和客户部署披露；历史增长不直接推出未来收益。",
@@ -58,6 +108,11 @@
       "publishedAt": "2026-08-04",
       "period": "2026 年第二季度，结束于 2026-06-27",
       "title": "数据中心收入增长，拆开 CPU 与 GPU 理解",
+      "tags": [
+        "🟢 数据中心同比 +107%",
+        "🟠 含 CPU 与 GPU 混合",
+        "🔍 盯产品构成拆分"
+      ],
       "fact": "AMD 披露当季数据中心收入约 67 亿美元，同比增长 107%，驱动因素包括 EPYC CPU 和 Instinct GPU 需求。",
       "interpretation": "分部业务提供需求线索，但不同产品贡献需要更多披露才能拆分。",
       "watch": "后续产品部署、业务构成及需求持续性。",

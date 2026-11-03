@@ -19,12 +19,15 @@ export function Welcome({ data }: { data?: DemoData }) {
             <span>清晰可见。</span>
           </h1>
           <p className="hero-description">
-            从你关心的方向，发现值得研究的变化。
+            不用看复杂 K 线，也不用啃长篇财报。
             <br />
-            沿着事实、公司与基金的关联，建立有据可循的观察。
+            用几个字的直白标签，看清股票近期影响与基金真实配料。
           </p>
           <div className="hero-actions">
             <ActionLink to="/discover">发现研究线索</ActionLink>
+            <Link className="text-link" to="/discover?theme=ai-storage">
+              看 AI 存储产业链 <span aria-hidden="true">→</span>
+            </Link>
             <Link className="text-link" to="/research/semiconductor-equipment">
               阅读第一条研究 <span aria-hidden="true">→</span>
             </Link>
@@ -34,71 +37,48 @@ export function Welcome({ data }: { data?: DemoData }) {
         <div className="preview-scene">
           <div className="preview-caption">
             <span className="status-dot" />
-            智能投研助手 <span>发现 · 研究 · 验证</span>
+            智能投研助手 <span>极简标签 · 配料穿透 · 正反拔河</span>
           </div>
           <section className="portfolio-preview" aria-label="Sora 观察路径">
             <div className="preview-top">
               <span className="preview-wordmark">sora</span>
               <span>
-                我的观察 <span aria-hidden="true">↗</span>
+                近期影响速览 <span aria-hidden="true">↗</span>
               </span>
             </div>
             <div className="preview-balance">
-              <p>找到想持续了解的方向</p>
-              <strong style={{ fontSize: '28px' }}>AI · 半导体 · 黄金</strong>
+              <p>几个字看清：这只股票近期受什么影响？</p>
+              <strong style={{ fontSize: '24px' }}>
+                AI 存储 · AI 算力芯片
+              </strong>
               <div className="preview-profit">
-                <span>从事件出发，理解公司与基金的关联。</span>
+                <span>从公司财报标签，一键穿透到基金配料表。</span>
               </div>
             </div>
-            <div className="illustration-chart">
-              <svg
-                viewBox="0 0 440 116"
-                role="img"
-                aria-label="市场、主题与基金相连的观察路径"
-              >
-                <path
-                  d="M30 58H410"
-                  fill="none"
-                  stroke="#e1def8"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M30 58C100 58 140 28 220 58S340 88 410 58"
-                  fill="none"
-                  stroke="#635bff"
-                  strokeWidth="2.5"
-                />
-                {[30, 220, 410].map((x) => (
-                  <circle key={x} cx={x} cy="58" r="6" fill="#635bff" />
-                ))}
-                <text
-                  x="30"
-                  y="98"
-                  textAnchor="middle"
-                  fill="#63718a"
-                  fontSize="12"
-                >
-                  市场
-                </text>
-                <text
-                  x="220"
-                  y="98"
-                  textAnchor="middle"
-                  fill="#63718a"
-                  fontSize="12"
-                >
-                  主题
-                </text>
-                <text
-                  x="410"
-                  y="98"
-                  textAnchor="middle"
-                  fill="#63718a"
-                  fontSize="12"
-                >
-                  基金
-                </text>
-              </svg>
+            <div className="hero-tag-preview" aria-label="股票影响标签示意">
+              <div className="hero-tag-row">
+                <strong>MU 美光</strong>
+                <span className="impact-pill impact-positive">
+                  🟢 HBM 产能已锁死
+                </span>
+                <span className="impact-pill impact-headwind">
+                  🟠 手机电脑复苏慢
+                </span>
+              </div>
+              <div className="hero-tag-row">
+                <strong>NVDA 英伟达</strong>
+                <span className="impact-pill impact-positive">
+                  🟢 数据中心高增
+                </span>
+                <span className="impact-pill impact-watch">
+                  🔍 盯毛利率斜率
+                </span>
+              </div>
+              <div className="hero-tag-row">
+                <strong>SOXX 配料</strong>
+                <span className="mini-tag is-storage">🟩 AI存储 13.6%</span>
+                <span className="mini-tag is-chips">🟦 AI芯片 18.8%</span>
+              </div>
             </div>
             <div className="preview-holdings">
               <div className="preview-row-label">
@@ -119,7 +99,7 @@ export function Welcome({ data }: { data?: DemoData }) {
               ))}
             </div>
             <div className="preview-foot">
-              按自己的节奏探索 <span>在发现页管理观察方向</span>
+              按自己的节奏探索 <span>在发现页切换 AI 存储与芯片</span>
             </div>
           </section>
           <div className="preview-note">

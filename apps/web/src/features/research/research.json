@@ -3,8 +3,19 @@
   "signals": [
     {
       "id": "semiconductor-equipment",
+      "themeId": "ai-chips",
       "title": "从 ASML 财报，观察半导体设备投入的传导",
       "summary": "设备公司的收入变化，能否反映更广泛的扩产需求？沿着制造、设备与 AI 应用，比较三种基金覆盖方式。",
+      "prosTags": [
+        "光刻机单季售出 113 台",
+        "季度净销售增至 117 亿欧元",
+        "先进制程产线仍在投建"
+      ],
+      "consTags": [
+        "单季交付受确认节奏影响",
+        "客户扩产与出口限制存变数",
+        "股价或已提前反映预期"
+      ],
       "directionIds": ["semiconductors", "ai"],
       "eventDate": "2026-10-14",
       "reviewedAt": "2026-10-29",
@@ -94,8 +105,8 @@
         }
       ],
       "extension": {
-        "title": "下一条跨领域问题：算力扩张与电力、散热",
-        "text": "这是待研究的问题，目前没有在此线索中核验其数据或映射基金。先跟踪需求与供给证据，再判断是否建立独立线索。"
+        "title": "下一条跨领域问题：AI 存储（HBM 与企业级硬盘）传导",
+        "text": "算力扩张除了拉动光刻与晶圆制造，还直接消耗高带宽内存（HBM）与企业级固态硬盘（eSSD）。可继续查看 AI 存储产业链线索。"
       },
       "sources": [
         {
@@ -103,6 +114,146 @@
           "name": "ASML · 2026 Q3 业绩公告",
           "url": "https://www.investor.asml.com/news-releases/news-release-details/asml-reports-eu11.7-billion-total-net-sales-and-eu5.0-billion-net-income-q3-2026",
           "publishedAt": "2026-10-14"
+        },
+        {
+          "id": "soxx",
+          "name": "iShares · SOXX 投资目标",
+          "url": "https://www.ishares.com/us/products/239705/ishares-phlx-semiconductor-etf",
+          "publishedAt": null
+        },
+        {
+          "id": "aiq",
+          "name": "Global X · AIQ 投资范围",
+          "url": "https://www.globalxetfs.com/funds/aiq",
+          "publishedAt": null
+        },
+        {
+          "id": "qqq",
+          "name": "Invesco · QQQ 产品资料",
+          "url": "https://www.invesco.com/us/en/financial-products/etfs/invesco-qqq-trust-series-1.html",
+          "publishedAt": null
+        }
+      ]
+    },
+    {
+      "id": "ai-storage-hbm",
+      "themeId": "ai-storage",
+      "title": "从美光与海力士财报，看 AI 存储缺货与扩产传导",
+      "summary": "AI 服务器不仅缺显卡，更缺高速内存（HBM）与大容量硬盘。拆解美光、海力士、西部数据与泛林的真实受益度及 ETF 配料差异。",
+      "prosTags": [
+        "美光 HBM 产能高度锁死",
+        "数据中心存储收入翻倍",
+        "上游刻蚀与封装设备回暖"
+      ],
+      "consTags": [
+        "手机电脑消费存储复苏慢",
+        "三大原厂扩产或加剧竞争",
+        "部分公司含传统机械盘周期"
+      ],
+      "directionIds": ["semiconductors", "ai"],
+      "eventDate": "2026-10-24",
+      "reviewedAt": "2026-10-29",
+      "status": "待验证",
+      "company": {
+        "symbol": "MU",
+        "name": "Micron 美光",
+        "role": "HBM 与数据中心内存 · AI 存储核心环节"
+      },
+      "facts": [
+        {
+          "text": "美光（MU）在 FY2026 Q4 公告中披露季度总营收约 77.5 亿美元，同比增长 93%，数据中心业务受 HBM 与企业级 SSD 拉动创新高。",
+          "sourceId": "micron-q4"
+        },
+        {
+          "text": "SK 海力士（SKHY）披露 2026 Q3 营收约 17.57 万亿韩元，HBM 销售额环比显著增长；泛林集团（LRCX）同步披露存储客户产线升级与先进封装订单回暖。",
+          "sourceId": "skhynix-q3"
+        }
+      ],
+      "hypothesis": "若 AI 训练与推理集群持续扩容，HBM 与大容量企业级 SSD 的高毛利占比有望抵消传统消费电子波动，并向上游刻蚀/封装设备传导。",
+      "chain": [
+        {
+          "title": "HBM 与企业盘放量",
+          "text": "已披露事实：美光与海力士的数据中心内存收入高增，西部数据云端收入占比过半。"
+        },
+        {
+          "title": "利润率与设备传导",
+          "text": "待验证：高端存储溢价能否持续盖过 PC/手机需求平淡，并拉动泛林（LRCX）明年设备订单。"
+        },
+        {
+          "title": "基金配料穿透",
+          "text": "研究映射：SOXX 合计持有约 13.56% 存储链公司（MU + LRCX + SKHY），而 AIQ 前十大未见存储原厂。"
+        }
+      ],
+      "counterpoints": [
+        "智能手机与 PC 换机需求若持续疲软，传统 DRAM/NAND 价格压力会拖累原厂整体毛利率。",
+        "原厂资本开支加速后，若明年云厂商 AI 算力投资放缓，可能引发高端存储阶段性供过于求。",
+        "不同公司纯度差异大（如西部数据同时含机械硬盘，泛林受出口管制影响），不能一概而论。"
+      ],
+      "checkpoints": [
+        {
+          "title": "美光下季毛利率与 HBM 排产",
+          "question": "HBM3e 出货占比提升能否带动综合毛利率继续环比上行？",
+          "state": "待核对"
+        },
+        {
+          "title": "云大厂资本开支与存储设备预算",
+          "question": "明年存储晶圆厂设备（WFE）投入是否从技术升级转向全面扩产？",
+          "state": "待补充来源"
+        },
+        {
+          "title": "ETF 存储链持仓权重跟踪",
+          "question": "SOXX 中 MU（7.70%）、LRCX（3.17%）、SKHY（2.69%）的合计权重是否随调仓变化？",
+          "state": "已核对 SOXX 全量"
+        }
+      ],
+      "funds": [
+        {
+          "code": "SOXX",
+          "relation": "同领域",
+          "scope": "半导体行业（含 13.56% 存储链）",
+          "reason": "已核对全量 30 只持仓中直接包含美光（7.70%）、泛林（3.17%）与 SK 海力士 ADS（2.69%）。",
+          "difference": "虽然包含存储核心股，但其余约 86% 为算力、模拟与制造芯片，并非纯存储 ETF。",
+          "sourceId": "soxx",
+          "holdingsAsOf": null,
+          "weight": null
+        },
+        {
+          "code": "AIQ",
+          "relation": "相邻主题",
+          "scope": "AI 软件、平台与硬件",
+          "reason": "覆盖 AI 大数据与应用生态，但前十大持仓以软件和平台巨头为主。",
+          "difference": "前十大节选中未出现美光、海力士等存储原厂，不宜作为直接投资存储缺货逻辑的工具。",
+          "sourceId": "aiq",
+          "holdingsAsOf": null,
+          "weight": null
+        },
+        {
+          "code": "QQQ",
+          "relation": "宽基参照",
+          "scope": "Nasdaq-100 科技宽基",
+          "reason": "包含云服务巨头（存储买方）与部分半导体公司，适合作为科技整体水位参照。",
+          "difference": "权重高度集中于大型科技平台，单一存储原厂的弹性被大幅稀释。",
+          "sourceId": "qqq",
+          "holdingsAsOf": null,
+          "weight": null
+        }
+      ],
+      "extension": {
+        "title": "关联对照：AI 芯片与光刻设备传导",
+        "text": "存储扩产与算力芯片扩产共同消耗晶圆厂资本开支。可结合 ASML 光刻设备交付线索交叉验证。"
+      },
+      "sources": [
+        {
+          "id": "micron-q4",
+          "name": "Micron · FY2026 Q4 业绩公告",
+          "url": "https://investors.micron.com/news-releases/news-release-details/micron-technology-reports-results-fourth-quarter-and-full-year",
+          "publishedAt": "2026-09-25"
+        },
+        {
+          "id": "skhynix-q3",
+          "name": "SK Hynix · 2026 Q3 业绩公告",
+          "url": "https://news.skhynix.com/sk-hynix-reports-third-quarter-2026-financial-results/",
+          "publishedAt": "2026-10-24"
         },
         {
           "id": "soxx",

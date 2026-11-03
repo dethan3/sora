@@ -12,7 +12,7 @@ Yahoo 可作为后续本地原型的候选，公开产品展示暂不选定供�
 
 [Yahoo 服务条款](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html) 对内容商业利用与分发设有约束；能在网页看到、或通过端点读取到数据，不足以确认可在 Sora 对外展示。此处记录公开文档边界，不作法律结论，也不声称免费端点有固定 SLA / 限流额度。
 
-仓库已存在 `src/sora/providers/yahoo.py`，访问 Yahoo chart 端点；白名单含 QQQ、SPY 等部分 ETF，以及 NDX / SPX 等指数别名。它没有覆盖 AIQ、SOXX、IAU、IVV、2800.HK 或恒生指数，不应直接宣称满足新目录。后续可以评估日期归一化、异常处理与缓存逻辑的复用，本轮不修改、运行或连接旧采集器。
+早期原型曾验证过 Yahoo chart 端点的基础读取，目前已在 `apps/data-service/src/yahoo.ts` 中收敛为显式可选的 TypeScript 备用适配器（默认禁用，主数据源为本地 `services/aktools`）。它需要针对具体标的做符号、类型、币种与时区核对。
 
 具体符号仍须分别验证，包括香港代码的前导零、后缀，以及指数 / 股票 / 信托类型。Yahoo 不是本轮 Mock 的来源，页面也不标注其为数据提供者。
 

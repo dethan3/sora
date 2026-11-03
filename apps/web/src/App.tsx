@@ -43,7 +43,7 @@ function AppContent() {
     return () => controller.abort();
   }, [attempt]);
   useLayoutEffect(() => {
-    document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname.startsWith('/research/') ? (research.find((signal) => '/research/' + signal.id === location.pathname)?.title ?? '研究线索') : location.pathname.startsWith('/discover/') ? (data?.modules.find((item) => '/discover/' + item.id === location.pathname)?.title ?? '方向详情') : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
+    document.title = `${location.pathname === '/' ? '看清每一份投资' : location.pathname === '/research' ? '研究线索' : location.pathname === '/following' ? '我的关注' : location.pathname.startsWith('/research/') ? (research.find((signal) => '/research/' + signal.id === location.pathname)?.title ?? '研究线索') : location.pathname.startsWith('/discover/') ? (data?.modules.find((item) => '/discover/' + item.id === location.pathname)?.title ?? '方向详情') : location.pathname.startsWith('/funds/') ? (data?.funds.find((fund) => `/funds/${fund.code}` === location.pathname)?.name ?? '基金详情') : (navigation.find(([path]) => path === location.pathname)?.[1] ?? '页面未找到')} · Sora`;
     const previous = previousFocus.current;
     previousFocus.current = { path: location.pathname, data };
     if (/^#[a-z0-9-]+$/.test(location.hash)) {
@@ -98,6 +98,8 @@ function AppContent() {
     navigationType,
   ]);
   const knownDataRoute =
+    location.pathname === '/research' ||
+    location.pathname === '/following' ||
     /^\/research\/[a-z0-9-]+\/?$/.test(location.pathname) ||
     navigation.some(
       ([path]) =>
