@@ -108,10 +108,11 @@ data/market/market.json (本地快照文件)
 
 - **日线口径与时区安全**：仅采纳交易所当地时区（`America/New_York` 或 `Asia/Hong_Kong`）“今天”之前的已完成日线收盘价，排除当日盘中未完结数据；产品价格显式请求未复权（`adjust=""`），并在 UI 明确提示拆分/除息边界。
 - **容错与回退保护**：按单条序列独立更新；若某只产品上游采集失败，保留其上一次有效报价与原始获取时间，标记 `freshness: 'stale'` 与 `updateStatus: 'failed'`，绝不伪造价格或静默切换为虚构 Mock 数据。
-- **三种构建模式严格隔离**：
+- **四种构建模式严格隔离**：
   - `pnpm build`（默认 `dist`）：生产目录构建，不含任何虚构 Mock 代码块。
   - `pnpm --filter @sora/web build:mock`（`dist-mock`）：显式演示构建，包含固定日期的确定性演示数列。
   - `pnpm --filter @sora/web build:snapshot`（`dist-market`）：导出经校验的真实行情快照（不钉入 Service Worker 预缓存，走浏览器运行时缓存回退）。
+  - `pnpm build:worker`（`dist-worker`）：读取 Worker `/api/catalog`，API 不可用时回退到随应用预缓存的公共目录并显示日期与重试入口；读取 D1 `/api/market` 已发布的价格日线。
 
 ---
 
@@ -123,16 +124,20 @@ data/market/market.json (本地快照文件)
 
 ---
 
-## 7. 下一阶段架构演进：SQLite 动态数据库与 AKTools 在线搜索入库
+## 7. Phase 5 架构演进：Worker + D1 与异步采集
 
-在当前静态基线与 AKTools 日线链路之上，下一阶段将在 `apps/data-service` 中引入 **Node 24 原生 `node:sqlite` 数据库持久化层**，将系统升级为支持**在线搜索、一键添加、自动抓取季报重仓股与日线行情**的动态投研平台：
+已采用全 Cloudflare v2 方案，替代原本的 data-service 文件 SQLite 主服务设想：
 
-1. **SQLite 核心表设计（`data/sora.db`）**：
-   - `funds`：存储动态添加的基金/ETF 元数据（代码、名称、市场、币种、基准、来源）。
-   - `fund_holdings`：存储通过 AKTools（如 `fund_portfolio_hold_em`）自动抓取的基金季报前十大重仓股、占净值比例与披露期。
-   - `companies`：存储重仓股基础信息、产业链环节归属及用户/系统维护的几字近期影响标签（`impact_tags_json`）。
-   - `market_series`：存储按标的采集的历史日线收盘价序列与来源元数据。
-2. **动态 API 路由扩展（`apps/data-service/src/server.ts`）**：
-   - `GET /api/search?q=...`：通过 AKTools 检索全市场基金、ETF 与股票候选列表。
-   - `POST /api/funds`：一键入库指定基金，自动触发 AKTools 拉取最新季报重仓股与历史日线，实时生成基金配料表与重仓股影响卡。
-   - `GET /api/catalog` & `GET /api/domains`：将数据库中的动态基金与重仓股无缝合并到前端视图中。
+```text
+浏览器 SPA / PWA → 同源 Worker（静态 Assets + /api）→ D1
+管理员添加 / 批准收录 → D1 ingest_jobs → GitHub Actions 调度
+Actions / 管理员本机执行器 → AKTools → 内部机器鉴权接口 → D1
+```
+
+`apps/worker` 已包含 D1 初始迁移、目录种子、`/api/catalog`、健康检查与 ETag，并托管 `apps/web/dist-worker`。5.1 已完成公共目录回退、专用构建/联调入口和 CI；`pnpm check:worker` 在临时本地 D1 上验证迁移、种子和 HTTP 路由。5.2 已接入邀请码密码鉴权、HttpOnly Cookie 会话、Origin/限流/Turnstile 校验、首个管理员引导，以及账号页的邀请码生成。5.3 已提供完整管理后台及 API，0003 迁移增加用户管理版本、邀请撤销信息和最后管理员触发器；用户管理写入、审计与会话吊销在同一 D1 batch 事务内完成。5.4 已加入 0004 标的身份/快照/租约迁移、机器协议、目录同步、请求审批和 Actions 工作流；`apps/data-service` 同时提供 `sync` / `directory` 执行器命令，保留原快照命令。5.5 已使用 0005 增加精确总成本、个人版本及幂等记录，接通 `/api/me/personal`、关注 / 持仓和导入接口；当前仅在本地 D1 验收，远程部署留到 5.6。
+
+公共库仅管理员可写；普通用户搜索 D1 中定期同步的代码目录并申请收录。搜索不在 Worker 中直接调用 AKTools。动态详情从 `/api/instruments/:id` 读取持仓和日线，按管理员维护的公司产业链归属分组；`/api/market` 输出经过共享 Schema 校验的已发布 ETF 价格，基金净值独立展示，静态精品研究保持独立。采集失败保留上一份快照，目录通过 staging 原子发布。完整契约、恢复规则与来源覆盖见 [采集说明](./INGEST.md)。
+
+实施拆分、首个管理员引导、标的身份、持仓总成本映射和任务恢复要求见 [Phase 5 接续实施计划](./PHASE5.md)。
+
+个人数据由共享 `personalSchema` 校验：游客维持本地存储，登录后只读写当前会话对应的账号，按 revision 原子保存并使用 operationId 防止重复导入。Provider 按账号隔离并取消旧请求，账号状态和数据读取失败不会回退为本地写入。静态登录、页头与管理员一次性结果独立于个人页面生命周期。导入先预览可用基金和冲突，保留原件。详见 [个人数据说明](./PERSONAL.md)。

@@ -1,11 +1,16 @@
-# Sora 2.0 · 面向日常投资者的智能基金与产业投研平台
+# Sora · 从你关注的领域，找到相关基金与参与方向
 
-> **投资，清晰可见。**  
-> 不堆砌复杂 K 线与拗口研报黑话，用**几个字的股票近期影响胶囊**、**可视化的基金真实配料表**与**正反方逻辑拔河卡**，帮普通投资者看懂产业变化、看清基金底层到底持有什么，并持续跟踪自己的判断。
+> **Sora，北极星，帮你找到前行的方向。**
+>
+> 从用户自定义的领域出发，研究相关资产、指数和公司，寻找有依据的基金、ETF、联接等参与路径，并理解各条路径的覆盖程度和适用条件。
+
+2026-11-05 已明确以上产品主线，目前尚未完整实现。现有版本具备部分产业研究、基金资料、动态目录与采集、关注和持仓账号保存的本地基础；下一步优先接通“领域 → 相关基金 → 参与路径”，暂不部署。详见 [产品定位](docs/PRODUCT.md) 和 [接续顺序](docs/ROADMAP.md)。
+
+当前沿用原有 UI，暂不部署 Cloudflare。GitHub Actions 中，Web CI 只做测试、构建及本地 Worker / D1 检查；Cloudflare Preview 已暂停，重新运行需要先启用 workflow 并设置仓库变量 `SORA_CLOUDFLARE_PREVIEW_ENABLED=true`，仍受 workflow 原有分支条件约束。云端采集已移除定时触发，手动运行也要求 `SORA_INGEST_ENABLED=true`；本机采集不受影响，详见 [采集说明](docs/INGEST.md)。
 
 ---
 
-## 1. 为什么重构为 Sora 2.0？
+## 1. 已有研究功能与实现背景
 
 大多数个人投资者在买基金或看科技股时，面临三个最真实的痛点：
 
@@ -155,7 +160,7 @@ pnpm dev:market
 ### 6.4 质量检查、测试与生产构建
 
 ```bash
-# 一键运行全量检查（Prettier 格式 + 研究数据防呆校验 + TypeScript 类型 + 158 项测试 + 生产构建 + PWA 校验）
+# 一键运行全量检查（Prettier 格式 + 研究数据防呆校验 + TypeScript 类型 + 单元测试 + 生产构建 + PWA 校验）
 pnpm check
 
 # 单独运行研究与产业链数据防呆校验（检查标签字数上限、日期先后、HTTPS 来源与基金映射）
@@ -165,6 +170,33 @@ pnpm --filter @sora/web run check:data
 pnpm test
 ```
 
+### 6.5 Worker + D1 本地开发（Phase 5.1～5.5）
+
+已接入公共基金目录、邀请码登录与管理员后台。已接入搜索目录、申请审批及异步采集；登录后的基金关注与持仓已接入账号保存，当前先在本地 D1 联调。首次准备无需 Cloudflare 登录：
+
+```bash
+cp apps/worker/.dev.vars.example apps/worker/.dev.vars
+pnpm build:worker
+pnpm db:setup:local
+pnpm --filter @sora/worker admin:bootstrap --local
+pnpm --filter @sora/worker dev
+```
+
+初始化脚本会提示输入首个管理员邮箱和密码；登录后在账号菜单打开“管理后台”，可管理用户、邀请码和审计日志。“我的账号”也保留邀请码生成入口。示例配置使用仅限本机的 Turnstile 测试 keys，正式部署需配置真实 keys。已有 `.dev.vars` 时请合并配置。
+
+访问 `http://localhost:8787`。后续可直接运行 `pnpm dev:worker`，自动重建前端并启动 Worker；需要 React 热更新时，保持 Worker 运行，在另一个终端执行 `pnpm dev:web:worker` 并访问 Vite 地址。
+
+Worker 使用独立的 `apps/web/dist-worker`，读取同源 `/api/catalog`。在线目录不可用时，页面显示随应用保存的公共资料、资料日期及重试按钮；两端都不可用时显示错误。默认 `pnpm dev` / `pnpm build` 继续使用静态目录，`pnpm dev:market` 继续连接原本地行情服务。Worker 模式读取 D1 `/api/market` 的已发布日线；未采集的标的显示暂无数据。
+
+```bash
+# 专用构建 + Worker 打包检查 + 临时本地 D1 / HTTP 集成验收
+pnpm check:worker
+```
+
+已有本地数据库时，先执行 `pnpm db:setup:local` 应用最新迁移（含 0004），再启动 Worker。禁用、角色修改和密码重置会使目标用户旧会话失效；重置后的新密码只显示一次。
+
+此检查不会修改开发数据库，也不操作远程资源。完整进度和后续计划见 [docs/PHASE5.md](./docs/PHASE5.md)。
+
 ---
 
 ## 7. 风险提示与开源协议
@@ -172,3 +204,7 @@ pnpm test
 > **免责声明**：Sora 仅用于整理公开财报事实、基金披露持仓结构与研究假设，所有影响标签、配料占比与研究线索均**不构成任何投资建议、收益预测或买卖指令**。基金交易价格、单位净值与参考指数点位分别展示，投资前请务必核阅基金发行人官方招募说明书与最新定期报告。
 
 本项目采用 MIT License。
+
+5.4 管理员在「公共库与采集」搜索和添加标的、处理申请、查看任务及维护研究标签。本机执行 `pnpm data:directory` 同步目录，`pnpm data:sync` 处理待办，`pnpm data:sync -- --refresh` 刷新日线。机器令牌、AKTools、Actions 配置及数据覆盖边界见 [公共库采集说明](docs/INGEST.md)。
+
+5.5 本地账号同步已接入：游客保留原浏览器数据，登录后使用账号数据，原记录可选择导入；关注合并、持仓冲突逐项选择。运行 `pnpm db:setup:local` 应用 0005 后启动 `pnpm dev:worker`，无需配置远程 Cloudflare。保存范围、精度和本地验收见 [个人数据说明](docs/PERSONAL.md)。

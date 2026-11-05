@@ -1,0 +1,57 @@
+name: Collect public instruments
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Collection mode
+        type: choice
+        options: [jobs, refresh, directory]
+        default: jobs
+# Scheduled collection is paused until the remote Worker is deployed.
+# Keep the manual entry point, guarded by explicit repository opt-in below.
+permissions:
+  contents: read
+concurrency:
+  group: sora-ingest
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: vars.SORA_INGEST_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SORA_WORKER_URL: ${{ secrets.SORA_WORKER_URL }}
+      SORA_INGEST_TOKEN: ${{ secrets.SORA_INGEST_TOKEN }}
+      AKTOOLS_BASE_URL: http://127.0.0.1:8080
+      SORA_MAX_JOBS: '100'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate executor configuration
+        run: node -e "if (!process.env.SORA_WORKER_URL || !process.env.SORA_INGEST_TOKEN) throw Error('Configure SORA_WORKER_URL and SORA_INGEST_TOKEN repository secrets')"
+      - name: Start pinned AKTools
+        run: docker compose -f services/aktools/compose.yaml up -d --build
+      - name: Wait for AKTools
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8080/openapi.json > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Synchronize weekly directory
+        if: inputs.mode == 'directory' || github.event.schedule == '37 21 * * 6'
+        run: pnpm data:directory
+      - name: Refresh daily series and drain queued jobs
+        if: inputs.mode == 'refresh' || github.event.schedule == '17 22 * * *'
+        run: pnpm data:sync -- --refresh
+      - name: Drain queued jobs
+        if: inputs.mode == 'jobs' || inputs.mode == 'directory' || github.event.schedule == '37 21 * * 6'
+        run: pnpm data:sync
+      - name: Stop AKTools
+        if: always()
+        run: docker compose -f services/aktools/compose.yaml down

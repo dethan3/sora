@@ -14,7 +14,7 @@ data/market/market.json（不提交到 Git）
 Sora 页面（读取统一快照，不直接采集）
 ```
 
-定时更新可由未来 VPS 的任务调度或独立 CI 执行一次性 `pnpm data:update`；本轮未创建任何定时任务。网页刷新按钮只重读已有快照，不调用上游采集。
+原快照模式可由 VPS 的任务调度执行一次性 `pnpm data:update`。5.4 新增 Actions 执行器工作流；Worker / D1 的目录同步和批量采集用 `pnpm data:directory` / `pnpm data:sync`，见 [公共库采集说明](./INGEST.md)。工作流尚未远程启用。网页刷新按钮只重读已有快照，不调用上游采集。
 
 ## 本地启动
 
