@@ -9,7 +9,7 @@ export function WatchButton({ fund }: { fund: Fund }) {
       className={`watch-button ${watched ? 'is-watched' : ''}`}
       aria-label={`${watched ? '取消关注' : '关注'}${fund.name}`}
       aria-pressed={watched}
-      disabled={!!local.issue}
+      disabled={!local.canWrite}
       onClick={() =>
         local.commit(
           {
@@ -18,7 +18,11 @@ export function WatchButton({ fund }: { fund: Fund }) {
               ? local.state.watchlist.filter((code) => code !== fund.code)
               : [...local.state.watchlist, fund.code],
           },
-          watched ? '已取消关注。' : '已加入关注，保存在此浏览器。',
+          watched
+            ? '已取消关注。'
+            : local.mode === 'account'
+              ? '已加入关注，保存在当前账号。'
+              : '已加入关注，保存在此浏览器。',
         )
       }
     >

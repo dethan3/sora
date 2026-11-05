@@ -1,13 +1,20 @@
 import { z } from 'zod';
 import type { Fund } from '../../data/demo';
 
-export const currencySchema = z.enum(['CNY', 'USD', 'KRW', 'HKD']);
+export { currencySchema, positionSchema } from '@sora/market-data/personal';
+import { currencySchema, positionSchema } from '@sora/market-data/personal';
 export type Currency = z.infer<typeof currencySchema>;
 export const currencyDigits = (currency: Currency) =>
   currency === 'KRW' ? 0 : 2;
 
-export function scaledDecimal(value: string, digits: number): bigint {
-  if (!new RegExp(`^\\d{1,10}(?:\\.\\d{1,${digits}})?$`).test(value))
+export function scaledDecimal(
+  value: string,
+  digits: number,
+  wholeDigits = 10,
+): bigint {
+  if (
+    !new RegExp(`^\\d{1,${wholeDigits}}(?:\\.\\d{1,${digits}})?$`).test(value)
+  )
     throw new Error(`请输入非负数字，最多 ${digits} 位小数`);
   const [whole, fraction = ''] = value.split('.');
   return (
@@ -23,27 +30,12 @@ export function parseUnits(value: string): string {
 export function parseCost(value: string, currency: Currency): number {
   const text = value.trim();
   const digits = currencyDigits(currency);
-  if (!digits && !/^\d{1,10}$/.test(text))
+  if (!digits && !/^\d{1,13}$/.test(text))
     throw new Error('韩元成本须为非负整数');
-  const minor = digits ? scaledDecimal(text, digits) : BigInt(text);
+  const minor = digits ? scaledDecimal(text, digits, 13) : BigInt(text);
   if (minor > 1000000000000n) throw new Error('成本金额超出支持范围');
   return Number(minor);
 }
-export const positionSchema = z
-  .object({
-    code: z.string().min(1).max(50),
-    units: z.string().refine((value) => {
-      try {
-        parseUnits(value);
-        return true;
-      } catch {
-        return false;
-      }
-    }, '持仓份额无效'),
-    costMinor: z.number().int().min(0).max(1000000000000),
-    currency: currencySchema,
-  })
-  .strict();
 export type Position = z.infer<typeof positionSchema>;
 
 export function valuePosition(position: Position, fund?: Fund): number | null {

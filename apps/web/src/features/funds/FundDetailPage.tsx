@@ -1,3 +1,5 @@
+import { useAuth } from '../auth/AuthProvider';
+import { InstrumentData } from '../ingest/InstrumentPage';
 import { useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router';
 import type { DemoData, Fund } from '../../data/demo';
@@ -24,6 +26,7 @@ export function historyWindow(
 }
 export function FundDetailPage({ data }: { data: DemoData }) {
   const { code } = useParams();
+  const auth = useAuth();
   const location = useLocation();
   const [params] = useSearchParams();
   const source = listSource(params.get('from')) ?? '/funds';
@@ -64,19 +67,29 @@ export function FundDetailPage({ data }: { data: DemoData }) {
         />
         <WatchButton fund={fund} />
       </div>
-      {data.source === 'reference-catalog' && (
-        <FundStructure code={fund.code} />
+      {auth.enabled ? (
+        <InstrumentData
+          id={fund.id ?? fund.code}
+          heading={false}
+          fallback={!fund.id ? <FundStructure code={fund.code} /> : undefined}
+        />
+      ) : (
+        data.source === 'reference-catalog' && (
+          <FundStructure code={fund.code} />
+        )
       )}
       <RelatedResearch fundCode={fund.code} />
       {data.source === 'reference-catalog' && <MarketNotice />}
       <div className="detail-grid">
         {data.source === 'reference-catalog' ? (
-          <MarketPanel
-            id={fundMarketId(fund.code)}
-            fund={fund}
-            benchmark={fund.name}
-            note="交易价格与每份净值、指数点位分别展示。日线收盘不代表盘中即时价格。"
-          />
+          auth.enabled ? null : (
+            <MarketPanel
+              id={fundMarketId(fund.code)}
+              fund={fund}
+              benchmark={fund.name}
+              note="交易价格与每份净值、指数点位分别展示。日线收盘不代表盘中即时价格。"
+            />
+          )
         ) : (
           <Panel title="净值与走势">
             <div className="fund-quote">
@@ -215,7 +228,10 @@ export function FundDetailPage({ data }: { data: DemoData }) {
               ))}
             {fund.sourceUrl && (
               <p className="muted">
-                资料核对日期 {data.asOf} ·{' '}
+                {fund.cataloguedAt
+                  ? `收录日期 ${fund.cataloguedAt}`
+                  : `资料核对日期 ${data.asOf}`}{' '}
+                ·{' '}
                 <a
                   className="landing-inline-link"
                   href={fund.sourceUrl}
@@ -241,7 +257,7 @@ export function FundDetailPage({ data }: { data: DemoData }) {
               <span aria-hidden="true">→</span>
             </Link>
           </Panel>
-          {data.source === 'reference-catalog' && (
+          {data.source === 'reference-catalog' && !auth.enabled && (
             <Panel title="基金净值与持仓估值">
               <p className="muted">暂无净值数据</p>
               <p className="muted">

@@ -7,8 +7,10 @@ export function ConfirmDialog({
   confirmLabel = '确认',
   cancelLabel = '取消',
   children,
+  busy = false,
 }: PropsWithChildren<{
   title: string;
+  busy?: boolean;
   onCancel: () => void;
   onConfirm?: () => void;
   confirmLabel?: string;
@@ -60,7 +62,7 @@ export function ConfirmDialog({
       }}
       onCancel={(event) => {
         event.preventDefault();
-        onCancel();
+        if (!busy) onCancel();
       }}
     >
       <h2 id={titleId}>{title}</h2>
@@ -70,6 +72,7 @@ export function ConfirmDialog({
       <div className="button-row">
         <button
           ref={cancelButton}
+          disabled={busy}
           className="button-secondary"
           onClick={onCancel}
           autoFocus
@@ -77,7 +80,7 @@ export function ConfirmDialog({
           {cancelLabel}
         </button>
         {onConfirm && (
-          <button className="action" onClick={onConfirm}>
+          <button className="action" disabled={busy} onClick={onConfirm}>
             {confirmLabel}
           </button>
         )}

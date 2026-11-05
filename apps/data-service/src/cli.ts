@@ -4,6 +4,7 @@ import { updateSnapshot, yahooFallback } from './update.ts';
 import { atomicWrite, readSnapshot, withUpdateLock } from './storage.ts';
 import { snapshotServer } from './server.ts';
 import { instruments } from './instruments.ts';
+import { executorFromEnvironment, runJobs, syncDirectory } from './ingest.ts';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const path = resolve(
@@ -11,7 +12,22 @@ const path = resolve(
 );
 try {
   const action = process.argv[2];
-  if (action === 'update') {
+  if (action === 'sync' || action === 'directory') {
+    const { machine, ak } = executorFromEnvironment();
+    if (action === 'directory') {
+      const scopes = process.env.SORA_DIRECTORY_SCOPES?.split(',');
+      const result = await syncDirectory(machine, ak, scopes);
+      if (result.failed) process.exitCode = 1;
+    } else {
+      if (process.argv.includes('--refresh'))
+        await machine('/api/internal/refresh');
+      const result = await runJobs(machine, ak, {
+        maxJobs: Number(process.env.SORA_MAX_JOBS ?? '50'),
+      });
+      console.log(`Completed ${result.completed}; failed ${result.failed}`);
+      if (result.failed) process.exitCode = 1;
+    }
+  } else if (action === 'update') {
     await withUpdateLock(path + '.lock', async () => {
       const previous = await readSnapshot(path);
       const result = await updateSnapshot({
@@ -63,7 +79,7 @@ try {
       snapshot,
     );
     console.log('Exported verified snapshot into dist-market/data/market.json');
-  } else throw new Error('Use update, serve or export');
+  } else throw new Error('Use sync, directory, update, serve or export');
 } catch (error) {
   console.error(error instanceof Error ? error.message : 'Data task failed');
   process.exitCode = 1;

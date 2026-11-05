@@ -89,6 +89,22 @@ importers:
         specifier: ^4.151.1
         version: 4.151.1(@types/node@26.6.5)
 
+  apps/worker:
+    dependencies:
+      '@sora/market-data':
+        specifier: workspace:*
+        version: link:../../packages/market-data
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      wrangler:
+        specifier: ^4.151.1
+        version: 4.151.1(@types/node@26.6.5)
+
   packages/market-data:
     dependencies:
       zod:

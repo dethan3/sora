@@ -14,7 +14,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "preview:mock": "vite preview --host 127.0.0.1 --outDir dist-mock",
     "cf:check": "wrangler deploy --dry-run",
-    "cf:preview": "wrangler versions upload"
+    "cf:preview": "wrangler versions upload",
+    "build:worker": "tsc --noEmit && vite build --mode worker --outDir dist-worker && node scripts/check-pwa.mjs dist-worker"
   },
   "dependencies": {
     "@sora/market-data": "workspace:*",

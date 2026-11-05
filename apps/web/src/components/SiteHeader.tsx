@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useAuth } from '../features/auth/AuthProvider';
+import { AccountControls } from '../features/auth/AccountControls';
 
 export const navigation = [
   ['/', '首页'],
@@ -12,6 +14,7 @@ export const navigation = [
 
 export function SiteHeader() {
   const location = useLocation();
+  const auth = useAuth();
   const [open, setOpen] = useState(false);
   const [accountEntry, setAccountEntry] = useState<'登录' | '注册'>();
   const header = useRef<HTMLElement>(null);
@@ -104,28 +107,34 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="header-actions">
-          <button
-            type="button"
-            className="header-login"
-            aria-haspopup="dialog"
-            onClick={() => {
-              setOpen(false);
-              setAccountEntry('登录');
-            }}
-          >
-            登录
-          </button>
-          <button
-            type="button"
-            className="header-register"
-            aria-haspopup="dialog"
-            onClick={() => {
-              setOpen(false);
-              setAccountEntry('注册');
-            }}
-          >
-            注册
-          </button>
+          {auth.enabled ? (
+            <AccountControls />
+          ) : (
+            <>
+              <button
+                type="button"
+                className="header-login"
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setOpen(false);
+                  setAccountEntry('登录');
+                }}
+              >
+                登录
+              </button>
+              <button
+                type="button"
+                className="header-register"
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setOpen(false);
+                  setAccountEntry('注册');
+                }}
+              >
+                注册
+              </button>
+            </>
+          )}
         </div>
         <button
           ref={toggle}

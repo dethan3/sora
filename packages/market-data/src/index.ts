@@ -10,8 +10,19 @@ export const marketSeriesSchema = z
     name: z.string().min(1),
     instrumentType: z.enum(['index', 'fund-price']).default('index'),
     fundCode: z.string().min(1).optional(),
-    unit: z.enum(['points', 'usd-per-ounce', 'usd-per-share', 'hkd-per-share']),
-    timeZone: z.enum(['America/New_York', 'Asia/Hong_Kong', 'UTC']),
+    unit: z.enum([
+      'points',
+      'usd-per-ounce',
+      'usd-per-share',
+      'hkd-per-share',
+      'cny-per-share',
+    ]),
+    timeZone: z.enum([
+      'America/New_York',
+      'Asia/Hong_Kong',
+      'Asia/Shanghai',
+      'UTC',
+    ]),
     session: z.enum(['open', 'closed', 'holiday', 'unknown']),
     freshness: z.enum(['current', 'stale']),
     quote: z
@@ -43,13 +54,19 @@ export const marketSeriesSchema = z
       isPrice
         ? !series.fundCode ||
           series.id !== `fund:${series.fundCode}` ||
-          !['usd-per-share', 'hkd-per-share'].includes(series.unit) ||
+          !['usd-per-share', 'hkd-per-share', 'cny-per-share'].includes(
+            series.unit,
+          ) ||
           (series.unit === 'hkd-per-share'
             ? series.timeZone !== 'Asia/Hong_Kong'
-            : series.timeZone !== 'America/New_York')
+            : series.unit === 'cny-per-share'
+              ? series.timeZone !== 'Asia/Shanghai'
+              : series.timeZone !== 'America/New_York')
         : !!series.fundCode ||
           series.id.startsWith('fund:') ||
-          ['usd-per-share', 'hkd-per-share'].includes(series.unit)
+          ['usd-per-share', 'hkd-per-share', 'cny-per-share'].includes(
+            series.unit,
+          )
     )
       ctx.addIssue({
         code: 'custom',
@@ -169,6 +186,7 @@ export const unitText = (unit: MarketSeries['unit']) =>
     'usd-per-ounce': 'USD / 盎司',
     'usd-per-share': 'USD / 份',
     'hkd-per-share': 'HKD / 份',
+    'cny-per-share': 'CNY / 份',
   })[unit];
 export const fundMarketId = (code: string) => `fund:${code}`;
 export function observationTime(series: MarketSeries) {
@@ -180,6 +198,7 @@ export function observationTime(series: MarketSeries) {
       {
         'America/New_York': '纽约交易日',
         'Asia/Hong_Kong': '香港交易日',
+        'Asia/Shanghai': '上海交易日',
         UTC: 'UTC 日期',
       }[series.timeZone]
     );
@@ -198,6 +217,7 @@ export function observationTime(series: MarketSeries) {
     {
       'America/New_York': '纽约时间',
       'Asia/Hong_Kong': '香港时间',
+      'Asia/Shanghai': '上海时间',
       UTC: 'UTC',
     }[series.timeZone]
   );

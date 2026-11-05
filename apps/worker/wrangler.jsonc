@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sora",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": true,
+  "preview_urls": true,
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "assets": {
+    "directory": "../web/dist-worker",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sora-db",
+      // Replace with the id printed by `wrangler d1 create sora-db` before the first remote deploy.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+}

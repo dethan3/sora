@@ -4,6 +4,7 @@ import { demoSchema } from '../../data/demo';
 import {
   money,
   parseCost,
+  costInput,
   parseUnits,
   positionSchema,
   summarizePositions,
@@ -98,4 +99,16 @@ describe('portfolio arithmetic and input boundaries', () => {
     ).toBeNull();
     expect(summarizePositions([], data.funds)).toEqual([]);
   });
+});
+
+it('round-trips the largest supported total cost across every currency', () => {
+  for (const currency of ['CNY', 'USD', 'HKD', 'KRW'] as const) {
+    const position = {
+      code: 'test',
+      units: '1',
+      costMinor: 1000000000000,
+      currency,
+    };
+    expect(parseCost(costInput(position), currency)).toBe(position.costMinor);
+  }
 });

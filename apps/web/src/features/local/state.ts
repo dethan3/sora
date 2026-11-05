@@ -1,29 +1,15 @@
-import { z } from 'zod';
-import { positionSchema } from '../portfolio/model';
-
+import {
+  personalSchema,
+  emptyPersonal,
+  type PersonalState,
+} from '@sora/market-data/personal';
+export {
+  personalSchema,
+  emptyPersonal,
+  type PersonalState,
+} from '@sora/market-data/personal';
 export const STORAGE_KEY = 'sora.personal.v1';
 export const MAX_IMPORT_BYTES = 1024 * 1024;
-export const personalSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    watchlist: z.array(z.string().min(1).max(50)).max(200),
-    positions: z.array(positionSchema).max(200),
-  })
-  .strict()
-  .superRefine((data, ctx) => {
-    if (
-      new Set(data.watchlist).size !== data.watchlist.length ||
-      new Set(data.positions.map((p) => p.code)).size !== data.positions.length
-    ) {
-      ctx.addIssue({ code: 'custom', message: '关注或持仓中存在重复代码' });
-    }
-  });
-export type PersonalState = z.infer<typeof personalSchema>;
-export const emptyPersonal = (): PersonalState => ({
-  schemaVersion: 1,
-  watchlist: [],
-  positions: [],
-});
 export type Snapshot = {
   state: PersonalState;
   raw: string | null;

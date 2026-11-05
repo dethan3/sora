@@ -8,7 +8,9 @@
     "test": "node --test src/*.test.ts",
     "update": "node src/cli.ts update",
     "serve": "node src/cli.ts serve",
-    "export": "node src/cli.ts export"
+    "export": "node src/cli.ts export",
+    "sync": "node src/cli.ts sync",
+    "directory": "node src/cli.ts directory"
   },
   "dependencies": {
     "@sora/market-data": "workspace:*"

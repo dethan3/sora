@@ -10,6 +10,8 @@ export const demoSchema = z
     funds: z.array(
       z.object({
         code: z.string().min(1),
+        id: z.string().optional(),
+        cataloguedAt: z.iso.date().optional(),
         name: z.string().min(1),
         market: z.string(),
         category: z.string(),
@@ -133,12 +135,59 @@ export const demoSchema = z
 export type DemoData = z.infer<typeof demoSchema>;
 export type Fund = DemoData['funds'][number];
 
-export async function loadDemo(signal?: AbortSignal): Promise<DemoData> {
-  const response = await fetch(`${import.meta.env.BASE_URL}data/catalog.json`, {
-    signal,
+// `VITE_CATALOG_SOURCE=api` reads the catalog from the Worker (D1);
+// the default keeps the bundled static reference catalog.
+export function catalogUrl(source = import.meta.env.VITE_CATALOG_SOURCE) {
+  return source === 'api'
+    ? '/api/catalog'
+    : `${import.meta.env.BASE_URL}data/catalog.json`;
+}
+
+export type CatalogResult = {
+  data: DemoData;
+  origin: 'api' | 'static' | 'fallback';
+};
+
+async function fetchCatalog(url: string, signal?: AbortSignal) {
+  const response = await fetch(url, {
+    signal: AbortSignal.any([
+      ...(signal ? [signal] : []),
+      AbortSignal.timeout(8000),
+    ]),
+    cache: 'no-cache',
   });
   if (!response.ok) throw new Error('数据读取失败');
   return demoSchema.parse(await response.json());
+}
+
+// Only the public catalog can fall back to the application's precached file.
+// Never use this loader for authenticated or user-owned data.
+export async function loadCatalog(
+  signal?: AbortSignal,
+): Promise<CatalogResult> {
+  const url = catalogUrl();
+  if (url !== '/api/catalog')
+    return { data: await fetchCatalog(url, signal), origin: 'static' };
+  try {
+    const data = await fetchCatalog(url, signal);
+    if (data.source !== 'reference-catalog')
+      throw new Error('公共目录来源无效');
+    return { data, origin: 'api' };
+  } catch (error) {
+    // Navigation/unmount cancellation must not start another request.
+    if (signal?.aborted) throw error;
+    const data = await fetchCatalog(
+      `${import.meta.env.BASE_URL}data/catalog.json`,
+      signal,
+    );
+    if (data.source !== 'reference-catalog')
+      throw new Error('公共目录来源无效');
+    return { data, origin: 'fallback' };
+  }
+}
+
+export async function loadDemo(signal?: AbortSignal): Promise<DemoData> {
+  return (await loadCatalog(signal)).data;
 }
 
 export function portfolioSummary(positions: DemoData['positions']) {

@@ -1,0 +1,25 @@
+{
+  "name": "@sora/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/*.test.ts",
+    "db:migrate:local": "wrangler d1 migrations apply sora-db --local",
+    "db:seed:local": "node scripts/seed.ts && wrangler d1 execute sora-db --local --file .wrangler/seed.sql",
+    "db:setup:local": "pnpm db:migrate:local && pnpm db:seed:local",
+    "cf:check": "wrangler deploy --dry-run",
+    "check:local": "node scripts/check-local.ts",
+    "admin:bootstrap": "node scripts/bootstrap-admin.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.151.1"
+  },
+  "dependencies": {
+    "@sora/market-data": "workspace:*"
+  }
+}

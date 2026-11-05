@@ -3,8 +3,17 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
-  server: { proxy: { '/api/market': { target: 'http://127.0.0.1:8788' } } },
+export default defineConfig(({ mode }) => ({
+  server: {
+    proxy: {
+      // Local AKTools snapshot service (apps/data-service).
+      ...(mode === 'worker'
+        ? {}
+        : { '/api/market': { target: 'http://127.0.0.1:8788' } }),
+      // Cloudflare Worker + D1 via `pnpm --filter @sora/worker dev`.
+      '/api': { target: 'http://127.0.0.1:8787' },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -55,4 +64,4 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     restoreMocks: true,
   },
-});
+}));

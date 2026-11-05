@@ -1,9 +1,12 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from './test/fixtures/demo.json';
+import catalog from '../public/data/catalog.json';
 import { App } from './App';
+
+afterEach(() => vi.unstubAllEnvs());
 
 beforeEach(() => {
   localStorage.clear();
@@ -132,3 +135,40 @@ function navigationLabel(path: string) {
     } as Record<string, string>
   )[path];
 }
+
+describe('Worker catalog fallback', () => {
+  it('shows the fallback date and recovers to API data on retry', async () => {
+    vi.stubEnv('VITE_CATALOG_SOURCE', 'api');
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(Response.json(catalog))
+      .mockResolvedValueOnce(Response.json(catalog));
+    open('/funds');
+    expect(await screen.findByText(/在线目录暂不可用/)).toHaveTextContent(
+      catalog.asOf,
+    );
+    expect(
+      screen.getByRole('searchbox', { name: '搜索基金' }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '重试在线目录' }));
+    await waitFor(() =>
+      expect(screen.queryByText(/在线目录暂不可用/)).not.toBeInTheDocument(),
+    );
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => url)).toEqual([
+      '/api/catalog',
+      '/data/catalog.json',
+      '/api/catalog',
+    ]);
+  });
+
+  it('shows a retryable error if the API and fallback are both unavailable', async () => {
+    vi.stubEnv('VITE_CATALOG_SOURCE', 'api');
+    vi.mocked(fetch).mockRejectedValue(new TypeError('offline'));
+    open('/funds');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '暂时无法读取数据',
+    );
+    expect(screen.getByRole('button', { name: '重新加载' })).toBeEnabled();
+    expect(screen.queryByText(/在线目录暂不可用/)).not.toBeInTheDocument();
+  });
+});

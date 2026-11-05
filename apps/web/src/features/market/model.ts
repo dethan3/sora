@@ -15,6 +15,8 @@ export function fundPriceSeries(
           ? 'hkd-per-share'
           : currency === 'USD'
             ? 'usd-per-share'
-            : ''),
+            : currency === 'CNY'
+              ? 'cny-per-share'
+              : ''),
   );
 }

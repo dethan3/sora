@@ -1,0 +1,11 @@
+# Copy to .dev.vars for local development only. These are Cloudflare dummy keys.
+TURNSTILE_SITE_KEY="1x00000000000000000000AA"
+TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
+# Only needed for the optional Vite hot-reload frontend; match its exact origin.
+AUTH_TRUSTED_ORIGIN="http://127.0.0.1:5173"
+# 5.4: generate a random token (at least 32 chars); match SORA_INGEST_TOKEN on the executor.
+# INGEST_TOKEN="replace-with-a-random-machine-secret"
+# Optional Actions dispatch; leave unset for the local executor.
+# GITHUB_TOKEN="fine-grained-token-with-actions-write"
+# GITHUB_REPOSITORY="owner/repository"
+# GITHUB_REF="main"

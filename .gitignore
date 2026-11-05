@@ -122,6 +122,9 @@ celerybeat.pid
 
 # Environments
 .env
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 .venv
 env/
 venv/
@@ -190,12 +193,14 @@ services/aktools/.cache/
 services/aktools/.venv/
 data/market/
 dist-market/
+dist-worker/
 dist-mock/
 node_modules/
 .pnpm-store/
 .wrangler/
 coverage/
 playwright-report/
+.playwright-cli/
 test-results/
 work/
 

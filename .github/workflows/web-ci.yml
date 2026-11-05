@@ -25,6 +25,8 @@ jobs:
       - name: Check isolated mock preview build
         run: pnpm --filter @sora/web build:mock
       - run: pnpm --filter @sora/web cf:check
+      - name: Check Worker build and isolated local D1 integration
+        run: pnpm check:worker
       - uses: actions/upload-artifact@v4
         with:
           name: sora-v2-static

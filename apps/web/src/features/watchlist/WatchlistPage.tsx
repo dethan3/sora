@@ -95,6 +95,7 @@ export function WatchlistPage({ data }: { data: DemoData }) {
                 <span>{code} · 目录中已无此基金</span>
                 <button
                   className="button-quiet"
+                  disabled={!local.canWrite}
                   onClick={() =>
                     local.commit({
                       ...local.state,

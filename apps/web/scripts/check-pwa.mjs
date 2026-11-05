@@ -3,7 +3,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { marketSnapshotSchema } from '@sora/market-data';
 
 const dist = new URL(
-  `../${['dist-mock', 'dist-market'].includes(process.argv[2]) ? process.argv[2] : 'dist'}/`,
+  `../${['dist-mock', 'dist-market', 'dist-worker'].includes(process.argv[2]) ? process.argv[2] : 'dist'}/`,
   import.meta.url,
 );
 const publicData = await readdir(new URL('data/', dist));
@@ -59,6 +59,10 @@ const html = await readFile(new URL('index.html', dist), 'utf8');
 assert.match(html, /rel="manifest"/);
 assert.match(html, /apple-touch-icon/);
 const sw = await readFile(new URL('sw.js', dist), 'utf8');
+assert.ok(
+  !/url:\s*["']\/?api(?:\/|["'])/.test(sw),
+  'API responses must not be precached',
+);
 if (process.argv[2] === 'dist-market') {
   const snapshot = marketSnapshotSchema.parse(
     JSON.parse(await readFile(new URL('data/market.json', dist), 'utf8')),

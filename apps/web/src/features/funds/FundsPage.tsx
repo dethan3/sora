@@ -1,3 +1,4 @@
+import { DirectorySearch } from '../ingest/DirectorySearch';
 import { useState } from 'react';
 import { useSearchParams, Link, useLocation } from 'react-router';
 import type { DemoData } from '../../data/demo';
@@ -70,6 +71,7 @@ export function FundsPage({ data }: { data: DemoData }) {
         description="先看基金配料表（含多少 AI 存储与算力芯片），再看产品价格与跟踪对象。"
       />
       <MarketNotice />
+      <DirectorySearch />
       {data.source === 'reference-catalog' && (
         <Panel title="热门科技基金配料一眼对比">
           <div

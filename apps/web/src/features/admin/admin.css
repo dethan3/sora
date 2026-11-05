@@ -1,0 +1,79 @@
+.admin-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.admin-tabs {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.admin-tabs button[aria-pressed='true'] {
+  background: #eeecff;
+  color: var(--accent);
+}
+.admin-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+.admin-filter input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.admin-filter select {
+  max-width: 100%;
+}
+.admin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.admin-card {
+  padding: 20px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin-card h2 {
+  font-size: 19px;
+  margin: 0 0 12px;
+}
+.admin-card p {
+  line-height: 1.7;
+}
+.admin-card .button-row {
+  flex-wrap: wrap;
+}
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 28px 0;
+}
+.admin-result {
+  max-width: 560px;
+  margin: 32px auto;
+  padding: 24px;
+}
+.password-result input,
+.invite-issuer input {
+  width: 100%;
+  min-width: 0;
+  margin: 12px 0;
+}
+.invite-issuer {
+  margin: 24px 0;
+}
+@media (max-width: 767px) {
+  .admin-card {
+    padding: 16px;
+  }
+  .admin-filter {
+    align-items: stretch;
+  }
+}

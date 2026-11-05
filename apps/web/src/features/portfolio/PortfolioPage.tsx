@@ -25,6 +25,13 @@ import { PortfolioImpactHealthCard } from '../domains/FundStructure';
 
 export function PortfolioPage({ data }: { data: DemoData }) {
   const local = usePersonal();
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const location = useLocation();
   const [params, setParams] = useSearchParams();
   const source = detailSource(params.get('from'));
@@ -50,7 +57,21 @@ export function PortfolioPage({ data }: { data: DemoData }) {
   const [loadDemo, setLoadDemo] = useState(false);
   const [error, setError] = useState('');
   const [dirty, setDirty] = useState(false);
-  const unsaved = useUnsavedChanges(dirty);
+  const unsaved = useUnsavedChanges(dirty || local.busy);
+  const initialized = useRef(local.status === 'ready');
+  useEffect(() => {
+    if (initialized.current || local.status !== 'ready') return;
+    initialized.current = true;
+    if (
+      requestedCode &&
+      data.funds.some((f) => f.code === requestedCode) &&
+      !dirty
+    ) {
+      const held = local.state.positions.find((p) => p.code === requestedCode);
+      setEditor(held ? { original: held } : { code: requestedCode });
+      setEditorSession((value) => value + 1);
+    }
+  }, [local.status, local.state.positions, requestedCode, data.funds, dirty]);
   const editorTrigger = useRef<HTMLElement | null>(null);
   const focusAfterChange = useRef<string | null>(null);
   const groups = summarizePositions(local.state.positions, data.funds);
@@ -107,7 +128,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
       unsaved.approved(() => setParams(next, { replace: true }));
     });
   }
-  function save(position: Position) {
+  async function save(position: Position) {
     setError('');
     const existing = local.state.positions.find(
       (item) => item.code === position.code,
@@ -132,11 +153,12 @@ export function PortfolioPage({ data }: { data: DemoData }) {
       data.funds.find((fund) => fund.code === position.code)?.name ??
       position.code;
     if (
-      local.commit(
+      await local.commit(
         { ...local.state, positions },
-        `已保存${name}，保存在此浏览器。`,
+        `已保存${name}，${local.mode === 'account' ? '保存在当前账号' : '保存在此浏览器'}。`,
       )
     ) {
+      if (!mounted.current) return false;
       closeEditor(position.code, position.currency);
       return true;
     }
@@ -158,7 +180,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
         <button
           id="add-position"
           className="action"
-          disabled={!!local.issue}
+          disabled={!local.canWrite}
           onClick={(event) => openEditor(undefined, event.currentTarget)}
         >
           + 录入持仓
@@ -175,6 +197,9 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           submitError={error}
           onDirtyChange={setDirty}
           onSelectFund={(code) => openEditor(code)}
+          disabled={!local.canWrite}
+          saving={local.busy}
+          account={local.mode === 'account'}
           heldCodes={local.state.positions.map((position) => position.code)}
         />
       )}
@@ -291,7 +316,9 @@ export function PortfolioPage({ data }: { data: DemoData }) {
         {visiblePositions.length ? (
           <div className="table-scroll responsive-list">
             <table className="responsive-table holding-table" role="table">
-              <caption className="sr-only">本地持仓列表</caption>
+              <caption className="sr-only">
+                {local.mode === 'account' ? '账号持仓列表' : '本地持仓列表'}
+              </caption>
               <thead role="rowgroup">
                 <tr role="row">
                   <th role="columnheader" scope="col">
@@ -430,7 +457,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                           <button
                             className="button-quiet"
                             id={editPositionId(position.code)}
-                            disabled={!!local.issue}
+                            disabled={!local.canWrite}
                             onClick={(event) =>
                               openEditor(position.code, event.currentTarget)
                             }
@@ -442,7 +469,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                           </button>
                           <button
                             className="button-quiet danger"
-                            disabled={!!local.issue}
+                            disabled={!local.canWrite}
                             onClick={() =>
                               unsaved.request(() => {
                                 closeEditor();
@@ -465,11 +492,12 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           </div>
         ) : (
           <EmptyState title="从第一笔持仓开始">
-            录入基金份额和总成本，建立你的本地组合。
+            录入基金份额和总成本，建立你的
+            {local.mode === 'account' ? '账号' : '本地'}组合。
             <div className="empty-actions">
               <button
                 className="action"
-                disabled={!!local.issue}
+                disabled={!local.canWrite}
                 onClick={(event) => openEditor(undefined, event.currentTarget)}
               >
                 录入第一笔持仓
@@ -502,7 +530,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
         {data.source === 'fictional-demo' && (
           <button
             className="button-quiet"
-            disabled={!!local.issue}
+            disabled={!local.canWrite}
             onClick={() =>
               unsaved.request(() => {
                 closeEditor();
@@ -520,12 +548,13 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           title="删除这笔持仓？"
           confirmLabel="确认删除"
           onCancel={() => setPendingDelete(undefined)}
-          onConfirm={() => {
+          busy={local.busy}
+          onConfirm={async () => {
             const remaining = local.state.positions.filter(
               (position) => position.code !== pendingDelete.code,
             );
             if (
-              local.commit(
+              await local.commit(
                 {
                   ...local.state,
                   positions: remaining,
@@ -533,6 +562,7 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                 '持仓已删除。',
               )
             ) {
+              if (!mounted.current) return;
               const index = visiblePositions.findIndex(
                 (position) => position.code === pendingDelete.code,
               );
@@ -557,7 +587,10 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           <p>
             {data.funds.find((f) => f.code === pendingDelete.code)?.name ??
               pendingDelete.code}
-            ，{pendingDelete.units} 份。删除只影响此浏览器的记录。
+            ，{pendingDelete.units} 份。
+            {local.mode === 'account'
+              ? '删除会同步到当前账号的其他设备。'
+              : '删除只影响此浏览器的记录。'}
           </p>
           {local.error && (
             <p role="alert" className="form-error">
@@ -571,7 +604,8 @@ export function PortfolioPage({ data }: { data: DemoData }) {
           title="用演示持仓替换当前持仓？"
           confirmLabel="载入演示"
           onCancel={() => setLoadDemo(false)}
-          onConfirm={() => {
+          busy={local.busy}
+          onConfirm={async () => {
             const positions = data.positions.flatMap((row) => {
               const fund = data.funds.find((f) => f.code === row.code);
               return fund?.nav
@@ -588,11 +622,12 @@ export function PortfolioPage({ data }: { data: DemoData }) {
                 : [];
             });
             if (
-              local.commit(
+              await local.commit(
                 { ...local.state, positions },
                 '已载入虚构演示持仓。',
               )
             ) {
+              if (!mounted.current) return;
               closeEditor();
               setLoadDemo(false);
             }

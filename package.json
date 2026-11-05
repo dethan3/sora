@@ -14,8 +14,15 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "check": "pnpm format:check && pnpm --filter @sora/web run check:data && pnpm typecheck && pnpm test && pnpm build",
-    "format:check": "prettier --check README.md apps/data-service packages/market-data services/aktools/compose.yaml apps/web/src apps/web/scripts apps/web/index.html apps/web/vite.config.ts apps/web/tsconfig.json apps/web/package.json apps/web/public/data apps/web/public/icons/*.svg apps/web/wrangler.jsonc docs/PRODUCT.md docs/ARCHITECTURE.md docs/ROADMAP.md docs/DATA_SOURCES.md docs/AKTOOLS.md .github/workflows package.json pnpm-workspace.yaml .prettierrc.json",
-    "preview": "pnpm --filter @sora/web preview"
+    "format:check": "prettier --check README.md apps/data-service apps/worker/src apps/worker/scripts apps/worker/migrations apps/worker/package.json apps/worker/wrangler.jsonc apps/worker/tsconfig.json packages/market-data services/aktools/compose.yaml apps/web/src apps/web/scripts apps/web/index.html apps/web/vite.config.ts apps/web/tsconfig.json apps/web/package.json apps/web/public/data apps/web/public/icons/*.svg apps/web/wrangler.jsonc docs/PRODUCT.md docs/ARCHITECTURE.md docs/ROADMAP.md docs/PHASE5.md docs/INGEST.md docs/PERSONAL.md docs/DATA_SOURCES.md docs/AKTOOLS.md .github/workflows package.json pnpm-workspace.yaml .prettierrc.json",
+    "preview": "pnpm --filter @sora/web preview",
+    "build:worker": "pnpm --filter @sora/web build:worker",
+    "dev:worker": "pnpm build:worker && pnpm --filter @sora/worker dev",
+    "dev:web:worker": "pnpm --filter @sora/web dev --mode worker",
+    "db:setup:local": "pnpm --filter @sora/worker db:setup:local",
+    "check:worker": "pnpm build:worker && pnpm --filter @sora/worker cf:check && pnpm --filter @sora/worker check:local",
+    "data:sync": "pnpm --filter @sora/data-service run sync",
+    "data:directory": "pnpm --filter @sora/data-service run directory"
   },
   "devDependencies": {
     "prettier": "^3.9.10"

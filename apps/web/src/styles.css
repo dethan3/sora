@@ -2197,6 +2197,15 @@ main,
   border-radius: 50%;
   background: #72829b;
 }
+.catalog-notice {
+  flex-wrap: wrap;
+}
+.catalog-notice [role='status'] {
+  flex: 1 1 260px;
+}
+.catalog-notice button {
+  flex-shrink: 0;
+}
 .pwa-update {
   justify-content: space-between;
   background: #f0eeff;
@@ -2363,4 +2372,22 @@ footer {
     justify-content: flex-start;
     gap: 4px 12px;
   }
+}
+.personal-sync-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block: 1rem;
+  color: var(--muted, #64748b);
+}
+.personal-import-conflict {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 0.75rem;
+}
+.personal-import-conflict select {
+  width: 100%;
+  margin-top: 0.5rem;
 }

@@ -1,0 +1,81 @@
+.directory-search {
+  margin-block: 1.5rem;
+}
+.directory-search > input {
+  display: block;
+  width: min(100%, 32rem);
+  margin-top: 0.5rem;
+}
+.ingest-list {
+  list-style: none;
+  padding: 0;
+  margin-block: 1rem;
+}
+.ingest-list > li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line, #e5e7eb);
+}
+.ingest-list > li > div:first-child {
+  flex: 1;
+  min-width: min(100%, 12rem);
+}
+.ingest-list small,
+.ingest-symbol {
+  display: block;
+  color: var(--muted, #64748b);
+  margin-top: 0.3rem;
+}
+.ingest-actions,
+.ingredient-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-block: 0.75rem;
+}
+.ingest-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+  padding-block: 1rem;
+}
+.ingest-form textarea,
+.ingest-form input,
+.ingest-form select {
+  width: 100%;
+}
+.ingest-chart {
+  display: block;
+  width: 100%;
+  color: #635bff;
+  margin-block: 1rem;
+}
+.ingest-history {
+  max-height: 24rem;
+  overflow: auto;
+}
+.ingredient-summary > span {
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+}
+.ingest-admin {
+  margin-block: 1rem;
+}
+.ingest-admin pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ingest-admin nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 1rem;
+}
+.ingest-list button {
+  white-space: normal;
+}

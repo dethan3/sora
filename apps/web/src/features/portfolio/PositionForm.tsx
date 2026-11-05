@@ -20,11 +20,17 @@ export function PositionForm({
   onDirtyChange,
   onSelectFund,
   heldCodes,
+  disabled = false,
+  saving = false,
+  account = false,
 }: {
   funds: Fund[];
   position?: Position;
   defaultCode?: string;
-  onSave: (position: Position) => boolean;
+  onSave: (position: Position) => Promise<boolean>;
+  disabled?: boolean;
+  saving?: boolean;
+  account?: boolean;
   onCancel: () => void;
   submitError?: string;
   onDirtyChange: (dirty: boolean) => void;
@@ -87,7 +93,7 @@ export function PositionForm({
       field?.focus();
       return;
     }
-    onSave({ code, units: parsedUnits, costMinor, currency });
+    void onSave({ code, units: parsedUnits, costMinor, currency });
   }
   let estimate: number | null = null;
   try {
@@ -108,7 +114,7 @@ export function PositionForm({
     >
       <div className="section-heading">
         <h2>{position ? '编辑持仓' : '录入持仓'}</h2>
-        <button className="button-quiet" onClick={onCancel}>
+        <button className="button-quiet" disabled={saving} onClick={onCancel}>
           取消编辑
         </button>
       </div>
@@ -121,7 +127,7 @@ export function PositionForm({
               ref={codeRef}
               data-position-autofocus={!code ? '' : undefined}
               value={code}
-              disabled={!!position}
+              disabled={disabled || !!position}
               aria-invalid={!!errors.code}
               aria-describedby={description('code')}
               onChange={(event) => {
@@ -153,7 +159,7 @@ export function PositionForm({
               ref={unitsRef}
               data-position-autofocus={code ? '' : undefined}
               inputMode="decimal"
-              disabled={!code}
+              disabled={disabled || !code}
               autoComplete="off"
               value={units}
               onChange={(event) => {
@@ -172,7 +178,7 @@ export function PositionForm({
             <input
               id={`${id}-cost`}
               ref={costRef}
-              disabled={!code}
+              disabled={disabled || !code}
               inputMode={currency === 'KRW' ? 'numeric' : 'decimal'}
               autoComplete="off"
               value={cost}
@@ -209,11 +215,13 @@ export function PositionForm({
           </p>
         )}
         <div className="button-row form-actions">
-          <button className="action" type="submit">
-            保存持仓
+          <button className="action" type="submit" disabled={disabled}>
+            {saving ? '正在保存…' : '保存持仓'}
           </button>
           <span className="field-help">
-            只保存到此浏览器，暂无净值时不显示估值。
+            {account
+              ? '保存到当前账号，其他设备登录后可读取。'
+              : '只保存到此浏览器，暂无净值时不显示估值。'}
           </span>
         </div>
       </form>
